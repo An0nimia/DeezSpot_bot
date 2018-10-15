@@ -200,16 +200,17 @@ def Link1(music, chat_id):
          bot.sendMessage(chat_id, ("About " + str((times * 13) // 60)) + " minutes")
          z = downloa.download_playlistdee(music, check=False)  
        if type(z) is str:
-        z = [z]
+        z = [z] 
        for b in range(len(z)):
            try:
               sendAudio(chat_id, open(z[b], "rb"), image[b])
            except FileNotFoundError:
-              Link2(chat_id, links[b], image[b])
-    except deezloader.TrackNotFound as error:
-       Link2(chat_id, music, image[0])
-    except deezloader.AlbumNotFound as error: 
-       bot.editMessageText(msg, ("About " + str((b * 22) // 60)) + " minutes")
+              Link2(chat_id, links[b], image)
+    except deezloader.TrackNotFound:
+       Link2(chat_id, music, image)
+    except deezloader.AlbumNotFound:
+       bot.deleteMessage(msg)
+       bot.sendMessage(chat_id, ("About " + str((b * 22) // 60)) + " minutes")
        Link2(chat_id, music, image)
     except deezloader.InvalidLink as error:
        bot.sendMessage(chat_id, str(error))
@@ -248,19 +249,22 @@ def Link2(chat_id, music, image):
          z = dwytsongs.download_trackspo(music, check=False)
         elif "album" in music:
          z = dwytsongs.download_albumspo(music, check=False)
+        elif "playlist" in music:
+         z = dwytsongs.download_playlistspo(music, check=False)
        elif "deezer" in music:
         if "track" in music:   
          z = dwytsongs.download_trackdee(music, check=False)
         elif "album" in music:
          z = dwytsongs.download_albumdee(music, check=False)
+        elif "playlist" in music:
+         z = dwytsongs.download_playlistdee(music, check=False)
        if type(z) is str:
         z = [z]
-        image = [image]
        for a in range(len(z)): 
            try:
               sendAudio(chat_id, open(z[a], "rb"), image[a])
            except FileNotFoundError:
-              bot.sendMessage(chat_id, "Error downloading " + z.split("/")[-1] + " :(")
+              bot.sendMessage(chat_id, "Error downloading " + z.split(".")[-1] + " :(")
     except UnboundLocalError:
        bot.sendMessage(chat_id, "Invalid link ;)")
 def Name2(artist, song, chat_id, image):
@@ -285,65 +289,48 @@ def Audio(audio, chat_id):
         album = audio['metadata']['music'][0]['album']['name']
         try:
            date = audio['metadata']['music'][0]['release_date']
+           album += ">" + date
         except KeyError:
            None 
         try:
            label = audio['metadata']['music'][0]['label']
+           album += ">" + label
         except KeyError:
            None
         try:
            genre = audio['metadata']['music'][0]['genres'][0]['name']
-        except KeyError:
-           None
-        try:
-           album += ">" + date
-        except NameError:
-           None 
-        try:
-           album += ">" + label
-        except NameError:
-           None
-        try:
            album += ">" + genre
-        except NameError:
+        except KeyError:
            None
         if len(album) > 64:
          album = "Infos with too many bytes"
-        if len(album.split(">")) == 1:
+        elif len(album.split(">")) == 1:
          album = "No informations"
         url = json.loads(requests.get("https://api.deezer.com/search/track/?q=" + track.replace("#", "") + " + " + artist.replace("#", "")).text)
         try:
            for a in range(url['total'] + 1):
-               if url['data'][a]['title'] == track or url['data'][a]['title_short'] in track:
+               if url['data'][a]['title'] == track:
                 id = url['data'][a]['link']
                 image = url['data'][a]['album']['cover_xl']
                 break
         except IndexError:
            try:
-              url = json.loads(requests.get("https://api.deezer.com/search/track/?q=" + track.replace("#", "").split(" ")[0] + " + " + artist.replace("#", "")).text)
-              for a in range(url['total'] + 1):
-                  if track.split(" ")[0] in url['data'][a]['title']:
-                   id = url['data'][a]['link']
-                   image = url['data'][a]['album']['cover_xl']
-                   break
-           except IndexError:
+              id = "https://open.spotify.com/track/" + audio['metadata']['music'][0]['external_metadata']['spotify']['track']['id']
               try:
-                 id = "https://open.spotify.com/track/" + audio['metadata']['music'][0]['external_metadata']['spotify']['track']['id']
-                 try:
-                    url = spo.track(id)
-                 except:
-                    token = generate_token()
-                    spo = spotipy.Spotify(auth=token)
-                    url = spo.track(id)
-                 image = url['album']['images'][0]['url']
-              except KeyError:
-                 None
-              try:
-                 id = "https://www.deezer.com/track/" + str(audio['metadata']['music'][0]['external_metadata']['deezer']['track']['id'])
-                 url = json.loads(requests.get("http://api.deezer.com/track/" + id.split("/")[-1]).text)
-                 image = url['album']['cover_xl']
-              except KeyError:
-                 None        
+                 url = spo.track(id)
+              except:
+                 token = generate_token()
+                 spo = spotipy.Spotify(auth=token)
+                 url = spo.track(id)
+              image = url['album']['images'][0]['url']
+           except KeyError:
+              None
+           try:
+              id = "https://www.deezer.com/track/" + str(audio['metadata']['music'][0]['external_metadata']['deezer']['track']['id'])
+              url = json.loads(requests.get("http://api.deezer.com/track/" + id.split("/")[-1]).text)
+              image = url['album']['cover_xl']
+           except KeyError:
+              None
         try:
            bot.sendPhoto(chat_id, image, caption=track + " - " + artist,
                          reply_markup=InlineKeyboardMarkup(
@@ -473,7 +460,9 @@ try:
          bot.message_loop({
                            "chat": start2,
                            "callback_query": download
-                          }) 
+                          })
+        else:
+            break 
         print("Bot started")
         while True:
             sleep(1)
