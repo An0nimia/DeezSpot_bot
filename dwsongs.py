@@ -153,10 +153,10 @@ def Link1(music, chat_id):
          except:
             URL = "http://www.deezer.com/track/" + music.split("/")[-1]
             try:
-               image = requests.get(URL).text
+               images = requests.get(URL).text
             except:
-               image = requests.get(URL).text
-            image = BeautifulSoup(image, "html.parser").find("img", class_="img_main").get("src").replace("200", "1200")
+               images = requests.get(URL).text
+            image.append(BeautifulSoup(images, "html.parser").find("img", class_="img_main").get("src").replace("200", "1200"))
          z = downloa.download_trackdee(music, check=False)
         elif "album/" in music:
          if "?" in music:
@@ -175,17 +175,17 @@ def Link1(music, chat_id):
              except:
                 URL = "http://www.deezer.com/album/" + music.split("/")[-1]
                 try:
-                   image = requests.get(URL).text
+                   images = requests.get(URL).text
                 except:
-                   image = requests.get(URL).text
-                image = BeautifulSoup(image, "html.parser").find("img", class_="img_main").get("src").replace("200", "1200")
+                   images = requests.get(URL).text
+                image.append(BeautifulSoup(images, "html.parser").find("img", class_="img_main").get("src").replace("200", "1200"))
          b = url['nb_tracks']
          msg = telepot.message_identifier(bot.sendMessage(chat_id,  ("About " + str((b * 13) // 60)) + " minutes"))
          z = downloa.download_albumdee(music, check=False)
         elif "playlist/" in music:
          if "?" in music:
           music,a = music.split("?")
-         url = json.loads(requests.get("https://api.deezer.com/playlist/" + music.split("/")[-1] + "/tracks").text)
+         url = json.loads(requests.get("https://api.deezer.com/playlist/" + music.split("/")[-1]).text)
          try:
             if "error" in str(url):
              bot.sendMessage(chat_id, "Invalid link ;)")
@@ -194,8 +194,9 @@ def Link1(music, chat_id):
          except KeyError:
             None
          times = 0
-         for a in url['data']:
+         for a in url['tracks']['data']:
              image.append(json.loads(requests.get("http://api.deezer.com/track/" + str(a['id'])).text)['album']['cover_xl'].replace("1000", "90"))
+             links.append(a['link'])
              times += 1
          bot.sendMessage(chat_id, ("About " + str((times * 13) // 60)) + " minutes")
          z = downloa.download_playlistdee(music, check=False)  
@@ -249,15 +250,11 @@ def Link2(chat_id, music, image):
          z = dwytsongs.download_trackspo(music, check=False)
         elif "album" in music:
          z = dwytsongs.download_albumspo(music, check=False)
-        elif "playlist" in music:
-         z = dwytsongs.download_playlistspo(music, check=False)
        elif "deezer" in music:
         if "track" in music:   
          z = dwytsongs.download_trackdee(music, check=False)
         elif "album" in music:
          z = dwytsongs.download_albumdee(music, check=False)
-        elif "playlist" in music:
-         z = dwytsongs.download_playlistdee(music, check=False)
        if type(z) is str:
         z = [z]
        for a in range(len(z)): 
@@ -277,6 +274,7 @@ def Audio(audio, chat_id):
     file = local + "/Songs/" + audio + ".ogg"
     bot.download_file(audio, file)
     audio = acrcloud.recognizer(config, file)
+    print(audio)
     try:
        os.remove(file)
     except FileNotFoundError:
