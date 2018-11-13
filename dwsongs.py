@@ -54,7 +54,7 @@ def delete(chat_id):
        None
     array2.append(chat_id)
     temp = 1
-def sendAudio(chat_id, audio, image):
+def sendAudio(chat_id, audio, image, lang):
     url = "https://api.telegram.org/bot" + token + "/sendAudio"
     data = {
             "chat_id": chat_id
@@ -63,7 +63,8 @@ def sendAudio(chat_id, audio, image):
             "audio": audio,
             "thumb": requests.get(image).content
     }
-    requests.post(url, params=data, files=file)
+    if requests.post(url, params=data, files=file).status_code == 413:
+     bot.sendMessage(chat_id, translate(lang, "The song is too big to be sended"))
 def Link1(music, chat_id, lang, quality):
     global spo
     image = []
@@ -212,14 +213,14 @@ def Link1(music, chat_id, lang, quality):
         z = [z] 
        for b in range(len(z)):
            try:
-              sendAudio(chat_id, open(z[b], "rb"), image[b])
+              sendAudio(chat_id, open(z[b], "rb"), image[b], lang)
            except FileNotFoundError:
               Link2(chat_id, links[b], image, lang)
     except deezloader.TrackNotFound:
        Link2(chat_id, music, image, lang)
     except deezloader.AlbumNotFound:
        bot.deleteMessage(msg)
-       bot.sendMessage(chat_id, translate(lang, ("About " + str((b * 22) // 60)) + " minutes"))
+       bot.sendMessage(chat_id, translate(lang, ("About " + str((b * 40) // 60)) + " minutes"))
        Link2(chat_id, music, image, lang)
     except deezloader.InvalidLink as error:
        bot.sendMessage(chat_id, translate(lang, str(error)))
@@ -245,7 +246,7 @@ def Name1(artist, song, chat_id, lang, quality):
           delete(chat_id)
           return
        a = downloa.download_name(artist, song, check=False, quality=quality, recursive=False)
-       sendAudio(chat_id, open(a, "rb"), image)
+       sendAudio(chat_id, open(a, "rb"), image, lang)
     except deezloader.TrackNotFound:
        Name2(artist, song, chat_id, image, lang)
     except dwytsongs.TrackNotFound as error:
@@ -267,14 +268,14 @@ def Link2(chat_id, music, image, lang):
         z = [z]
        for a in range(len(z)): 
            try:
-              sendAudio(chat_id, open(z[a], "rb"), image[a])
+              sendAudio(chat_id, open(z[a], "rb"), image[a], lang)
            except FileNotFoundError:
-              bot.sendMessage(chat_id, translate(lang, "Error downloading " + z.split(".")[-1] + " :("))
+              bot.sendMessage(chat_id, translate(lang, "Error downloading " + z[a].split(".")[-1] + " :("))
     except UnboundLocalError:
        bot.sendMessage(chat_id, translate(lang, "Invalid link ;)"))
-def Name2(artist, song, chat_id, image):
+def Name2(artist, song, chat_id, image, lang):
     a = dwytsongs.download_name(artist, song, check=False)
-    sendAudio(chat_id, open(a, "rb"), image)
+    sendAudio(chat_id, open(a, "rb"), image, lang)
 def Audio(audio, chat_id, lang):
     global spo
     global goes
@@ -367,7 +368,6 @@ def download(msg):
              return
             else:
                 users[from_id] += 1
-                bot.answerCallbackQuery(query_id, translate(langua[from_id], "Song is downloading"))
          except KeyError:
             users[from_id] = 1
         bot.answerCallbackQuery(query_id, translate(langua[from_id], "Song is downloading"))
@@ -387,7 +387,7 @@ def start1(msg):
      bot.sendMessage(chat_id, translate(msg['from']['language_code'], "This bot has been created for download songs by a Spotify or Deezer link, by an artist and song name or by an audio or voice message"))
      bot.sendPhoto(chat_id, open("example.jpg", "rb"), caption="The bot commands can find here")
     elif content_type == "text" and msg['text'] == "/link":
-     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Insert the link to download the music or album from spotify or deezer"))
+     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Insert a Deezer or Spotify link to download"))
      stage[chat_id] = 1
     elif content_type == "text" and msg['text'] != "/link" and msg['text'] != "/name" and msg['text'] != "/quality" and stage[chat_id] == 1:
      music = msg['text']
@@ -419,10 +419,11 @@ def start1(msg):
                                  ]
                      ))
      stage[chat_id] = 4
-    elif content_type == "text" and stage[chat_id] == 4:
+    elif content_type == "text" and (msg['text'] == "FLAC" or msg['text'] == "MP3_320" or msg['text'] == "MP3_256" or msg['text'] == "MP3_128") and stage[chat_id] == 4:
      qualit[chat_id] = msg['text']
      bot.sendMessage(chat_id, translate(msg['from']['language_code'], "The songs will be downloaded with " + msg['text'] + " quality"), reply_markup=ReplyKeyboardRemove())
-     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "The songs that cannot be downloaded with the quality that you choose will be downloaded in quality MP3_128"))
+     if msg['text'] != "MP3_128":
+      bot.sendMessage(chat_id, translate(msg['from']['language_code'], "The songs that cannot be downloaded with the quality that you choose will be downloaded in quality MP3_128"))
      stage[chat_id] = 5
     elif content_type == "voice" or content_type == "audio":
      audio = msg[content_type]['file_id']
@@ -442,7 +443,7 @@ def start2(msg):
      bot.sendMessage(chat_id, translate(msg['from']['language_code'], "This bot has been created for download songs by a Spotify or Deezer link, by an artist and song name or by an audio or voice message"))
      bot.sendPhoto(chat_id, open("example.jpg", "rb"), caption=translate(msg['from']['language_code'], "The bot commands can find here"))
     elif content_type == "text" and msg['text'] == "/link":
-     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Insert the link to download the music or album from spotify or deezer"))
+     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Insert a Deezer or Spotify link to download"))
      stage[chat_id] = 1
     elif content_type == "text" and msg['text'] != "/link" and msg['text'] != "/name" and msg['text'] != "/quality" and stage[chat_id] == 1:
      music = msg['text']
@@ -472,6 +473,10 @@ def start2(msg):
      print(artist[chat_id])
      print(msg)
      try:
+        name = qualit[chat_id]
+     except KeyError:
+        qualit[chat_id] = "MP3_128"
+     try:
         if users[chat_id] == 2:
          bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Wait to finish and resend the " + content_type + ", did you thought that you could download how much songs did you want? :)"))
         else:
@@ -489,10 +494,11 @@ def start2(msg):
                                  ]
                      ))
      stage[chat_id] = 4
-    elif content_type == "text" and stage[chat_id] == 4:
+    elif content_type == "text" and (msg['text'] == "FLAC" or msg['text'] == "MP3_320" or msg['text'] == "MP3_256" or msg['text'] == "MP3_128") and stage[chat_id] == 4:
      qualit[chat_id] = msg['text']
      bot.sendMessage(chat_id, translate(msg['from']['language_code'], "The songs will be downloaded with " + msg['text'] + " quality"), reply_markup=ReplyKeyboardRemove())
-     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "The songs that cannot be downloaded with the quality that you choose will be downloaded in quality MP3_128"))    
+     if msg['text'] != "MP3_128":
+      bot.sendMessage(chat_id, translate(msg['from']['language_code'], "The songs that cannot be downloaded with the quality that you choose will be downloaded in quality MP3_128"))
      stage[chat_id] = 5
     elif content_type == "voice" or content_type == "audio":
      audio = msg[content_type]['file_id']
@@ -507,30 +513,27 @@ try:
        print("2):Strict")
        print("3):Exit")
        ans = input("Choose:")
-       if ans == "3":
-        break
-       elif ans != "1" or ans != "2" or ans != "3":
-        if ans == "1":
-         bot.message_loop({
-                           "chat": start1,
-                           "callback_query": download
-                          })
-        elif ans == "2":
-         bot.message_loop({
-                           "chat": start2,
-                           "callback_query": download
-                          })
-        else:
-            break
-        print("Bot started")
-        while True:
-            sleep(1)
-            if temp == 1 and (goes == 0 or goes == 2):
-             if len(array2) == len(array3):
-              for a in os.listdir(local + "/Songs"):
-                  shutil.rmtree(local + "/Songs/" + a)
-                  del array2[:]
-                  del array3[:]
+       if ans == "1":
+        bot.message_loop({
+                          "chat": start1,
+                          "callback_query": download
+                         })
+       elif ans == "2":
+        bot.message_loop({
+                          "chat": start2,
+                          "callback_query": download
+                         })
+       else:
+           break
+       print("Bot started")
+       while True:
+           sleep(1)
+           if temp == 1 and (goes == 0 or goes == 2):
+            if len(array2) == len(array3):
+             for a in os.listdir(local + "/Songs"):
+                 shutil.rmtree(local + "/Songs/" + a)
+                 del array2[:]
+                 del array3[:]
 except KeyboardInterrupt:
    os.rmdir(local + "/Songs")
    print("\nSTOPPED")
