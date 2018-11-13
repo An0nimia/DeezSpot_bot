@@ -2,6 +2,7 @@
 import os
 import json
 import shutil
+import setting
 import spotipy
 import telepot
 import acrcloud
