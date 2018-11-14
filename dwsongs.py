@@ -101,20 +101,21 @@ def Link1(music, chat_id, lang, quality):
             token = generate_token()
             spo = spotipy.Spotify(auth=token)
             tracks = spo.album(music)
-         for a in range(tracks['total_tracks']):
+         b = tracks['total_tracks']   
+         for a in range(b):
              image.append(tracks['images'][2]['url'])
          for a in tracks['tracks']['items']:
              links.append(a['external_urls']['spotify'])
-         b = tracks['total_tracks']
-         for a in range(b // 50):
-             try:
-                tracks = spo.next(tracks['tracks'])
-             except:
-                token = generate_token()
-                spo = spotipy.Spotify(auth=token)
-                tracks = spo.next(tracks['tracks'])
-             for a in tracks['items']:
-                 links.append(a['external_urls']['spotify'])
+         if b != 50:
+          for a in range(b // 50):
+              try:
+                 tracks = spo.next(tracks['tracks'])
+              except:
+                 token = generate_token()
+                 spo = spotipy.Spotify(auth=token)
+                 tracks = spo.next(tracks['tracks'])
+              for a in tracks['items']:
+                  links.append(a['external_urls']['spotify'])
          msg = telepot.message_identifier(bot.sendMessage(chat_id, translate(lang, ("About " + str((b * 13) // 60)) + " minutes")))
          z = downloa.download_albumspo(music, check=False, quality=quality, recursive=False)
         elif "playlist/" in music:
@@ -134,16 +135,17 @@ def Link1(music, chat_id, lang, quality):
          for a in tracks['items']:
              image.append(a['track']['album']['images'][2]['url'])
              links.append(a['track']['external_urls']['spotify'])
-         for a in range(tracks['total'] // 100):
-             try:
-                tracks = spo.next(tracks)
-             except:
-                token = generate_token()
-                spo = spotipy.Spotify(auth=token)
-                tracks = spo.next(tracks)
-             for a in tracks['items']:
-                 image.append(a['track']['album']['images'][2]['url'])
-                 links.append(a['track']['external_urls']['spotify'])
+         if tracks['total'] != 100:
+          for a in range(tracks['total'] // 100):
+              try:
+                 tracks = spo.next(tracks)
+              except:
+                 token = generate_token()
+                 spo = spotipy.Spotify(auth=token)
+                 tracks = spo.next(tracks)
+              for a in tracks['items']:
+                  image.append(a['track']['album']['images'][2]['url'])
+                  links.append(a['track']['external_urls']['spotify'])
          bot.sendMessage(chat_id, translate(lang, ("About " + str((tracks['total'] * 13) // 60)) + " minutes"))
          z = downloa.download_playlistspo(music, check=False, quality=quality, recursive=False)
        elif "deezer" in music:
@@ -228,7 +230,7 @@ def Link1(music, chat_id, lang, quality):
     except dwytsongs.TrackNotFound as error:
        bot.sendMessage(chat_id, translate(lang, str(error) + " :("))
     except UnboundLocalError:
-       bot.sendMessage(chat_id, translate(lang, "Invalid link ;)"))
+       bot.sendMessage(chat_id, translate(lang, "Invalid link ;)")) 
     delete(chat_id)
 def Name1(artist, song, chat_id, lang, quality):
     global spo
@@ -254,26 +256,23 @@ def Name1(artist, song, chat_id, lang, quality):
        bot.sendMessage(chat_id, translate(lang, str(error) + " :("))
     delete(chat_id)
 def Link2(chat_id, music, image, lang):
-    try:
-       if "spotify" in music:
-        if "track" in music:
-         z = dwytsongs.download_trackspo(music, check=False)
-        elif "album" in music:
-         z = dwytsongs.download_albumspo(music, check=False)
-       elif "deezer" in music:
-        if "track" in music:   
-         z = dwytsongs.download_trackdee(music, check=False)
-        elif "album" in music:
-         z = dwytsongs.download_albumdee(music, check=False)
-       if type(z) is str:
-        z = [z]
-       for a in range(len(z)): 
-           try:
-              sendAudio(chat_id, open(z[a], "rb"), image[a], lang)
-           except FileNotFoundError:
-              bot.sendMessage(chat_id, translate(lang, "Error downloading " + z[a].split(".")[-1] + " :("))
-    except UnboundLocalError:
-       bot.sendMessage(chat_id, translate(lang, "Invalid link ;)"))
+    if "spotify" in music:
+     if "track" in music:
+      z = dwytsongs.download_trackspo(music, check=False)
+     elif "album" in music:
+      z = dwytsongs.download_albumspo(music, check=False)
+    elif "deezer" in music:
+     if "track" in music:
+      z = dwytsongs.download_trackdee(music, check=False)
+     elif "album" in music:
+      z = dwytsongs.download_albumdee(music, check=False)
+    if type(z) is str:
+     z = [z]
+    for a in range(len(z)):
+        try:
+           sendAudio(chat_id, open(z[a], "rb"), image[a], lang)
+        except FileNotFoundError:
+           bot.sendMessage(chat_id, translate(lang, "Error downloading " + z[a].split(".")[-1] + " :("))
 def Name2(artist, song, chat_id, image, lang):
     a = dwytsongs.download_name(artist, song, check=False)
     sendAudio(chat_id, open(a, "rb"), image, lang)
