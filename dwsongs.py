@@ -41,12 +41,13 @@ def generate_token():
 spotoken = generate_token()
 spo = spotipy.Spotify(auth=spotoken)
 def translate(language, sms):
-    sms = sms.split("-")[0]
-    api = ("https://api.mymemory.translated.net/get?q={}&langpair={}").format(sms, "en|" + language)
-    result = json.loads(requests.get(api).text)
-    if result['responseData']['translatedText'] != "PLEASE SELECT TWO DISTINCT LANGUAGES":
-     sms = result['responseData']['translatedText']
-    return sms.replace("&#39;", "'")
+    try:
+       language = language.split("-")[0]
+       api = "https://translate.yandex.net/api/v1.5/tr.json/translate?key=trnsl.1.1.20181114T193428Z.ec0fb3fb93e116c0.24b2ccfe2d150324e23a5571760e9a827d953003&text=%s&lang=en-%s" % (sms, language)
+       sms = json.loads(requests.get(api).text)['text'][0]
+    except:
+       None
+    return sms
 def delete(chat_id):
     global temp
     try:
@@ -57,8 +58,17 @@ def delete(chat_id):
     temp = 1
 def sendAudio(chat_id, audio, image, lang):
     url = "https://api.telegram.org/bot" + token + "/sendAudio"
+    try:
+       tag = EasyID3(audio.name)
+       duration = MP3(audio.name).info.length
+    except mutagen.id3._util.ID3NoHeaderError:
+       tag = FLAC(audio.name)
+       duration = tag.info.length
     data = {
-            "chat_id": chat_id
+            "chat_id": chat_id,
+            "duration": duration,
+            "performer": tag['artist'],
+            "title": tag['title']
     }
     file = {
             "audio": audio,
@@ -394,21 +404,21 @@ def start1(msg):
      try:
         name = qualit[chat_id]
      except KeyError:
-        qualit[chat_id] = "MP3_128"
+        qualit[chat_id] = "MP3_320"
      threading.Thread(target=Link1, args=(music, chat_id, msg['from']['language_code'], qualit[chat_id])).start()
     elif content_type == "text" and msg['text'] == "/name":
-     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Insert the artist's name:"))
+     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Insert the artist's name"))
      stage[chat_id] = 2
     elif content_type == "text" and msg['text'] != "/link" and msg['text'] != "/name" and msg['text'] != "/quality" and stage[chat_id] == 2:
      artist[chat_id] = msg['text']
-     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Insert the name song:"))
+     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Insert the name song"))
      stage[chat_id] = 3
     elif content_type == "text" and msg['text'] != "/link" and msg['text'] != "/name" and msg['text'] != "/quality" and stage[chat_id] == 3:
      song = msg['text']
      try:
         name = qualit[chat_id]
      except KeyError:
-        qualit[chat_id] = "MP3_128"
+        qualit[chat_id] = "MP3_320"
      threading.Thread(target=Name1, args=(artist[chat_id], song, chat_id, msg['from']['language_code'], qualit[chat_id])).start()
     elif content_type == "text" and msg['text'] == "/quality":
      bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Choose the quality that you want to download the song"),
@@ -430,7 +440,7 @@ def start1(msg):
      try:
         name = qualit[chat_id]
      except KeyError:
-        qualit[chat_id] = "MP3_128"
+        qualit[chat_id] = "MP3_320"
      threading.Thread(target=Audio, args=(audio, chat_id, msg['from']['language_code'])).start()
 def start2(msg):
     content_type, chat_type, chat_id = telepot.glance(msg)
@@ -450,7 +460,7 @@ def start2(msg):
      try:
         name = qualit[chat_id]
      except KeyError:
-        qualit[chat_id] = "MP3_128"
+        qualit[chat_id] = "MP3_320"
      print(msg)
      try:
         if users[chat_id] == 2:
@@ -462,11 +472,11 @@ def start2(msg):
         users[chat_id] = 1
         threading.Thread(target=Link1, args=(music, chat_id, msg['from']['language_code'], qualit[chat_id])).start()
     elif content_type == "text" and msg['text'] == "/name":
-     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Insert the artist's name:"))
+     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Insert the artist's name"))
      stage[chat_id] = 2
     elif content_type == "text" and msg['text'] != "/link" and msg['text'] != "/name" and msg['text'] != "/quality" and stage[chat_id] == 2:
      artist[chat_id] = msg['text']
-     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Insert the name song:"))
+     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Insert the name song"))
      stage[chat_id] = 3
     elif content_type == "text" and msg['text'] != "/link" and msg['text'] != "/name" and msg['text'] != "/quality" and stage[chat_id] == 3:
      song = msg['text']
@@ -475,7 +485,7 @@ def start2(msg):
      try:
         name = qualit[chat_id]
      except KeyError:
-        qualit[chat_id] = "MP3_128"
+        qualit[chat_id] = "MP3_320"
      try:
         if users[chat_id] == 2:
          bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Wait to finish and resend the " + content_type + ", did you thought that you could download how much songs did you want? :)"))
@@ -505,7 +515,7 @@ def start2(msg):
      try:
         name = qualit[chat_id]
      except KeyError:
-        qualit[chat_id] = "MP3_128"
+        qualit[chat_id] = "MP3_320"
      threading.Thread(target=Audio, args=(audio, chat_id, msg['from']['language_code'])).start()
 try:
    while True:
