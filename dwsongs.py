@@ -370,20 +370,23 @@ def search(msg):
     query_string = query_string.split(",")
     try:
        if len(query_string) == 2:
-        search = spo.search(q="track:" + query_string[0] + " artist:" + query_string[1])
+        search = spo.search(q="track:" + query_string[0] + " artist:" + query_string[1], limit=30)
        else:
-           search = spo.search(q="track:" + query_string[0])
+           search = spo.search(q="track:" + query_string[0], limit=30)
     except:
        token = generate_token()
        spo = spotipy.Spotify(auth=token)
        if len(query_string) == 2:
-        search = spo.search(q="track:" + query_string[0] + " artist:" + query_string[1])
+        search = spo.search(q="track:" + query_string[0] + " artist:" + query_string[1], limit=30)
        else:
-           search = spo.search(q="track:" + query_string[0]) 
-    result = ([InlineQueryResultArticle(id=a['external_urls']['spotify'], title=a['name'] + "\n" + a['artists'][0]['name'], thumb_url=a['album']['images'][0]['url'], input_message_content=
-                                           InputTextMessageContent(message_text=a['external_urls']['spotify'])
-                                          ) for a in search['tracks']['items']
-             ])
+           search = spo.search(q="track:" + query_string[0], limit=30)
+    try:       
+       result = ([InlineQueryResultArticle(id=a['external_urls']['spotify'], title=a['name'] + "\n" + a['artists'][0]['name'], thumb_url=a['album']['images'][0]['url'], input_message_content=
+                                              InputTextMessageContent(message_text=a['external_urls']['spotify'])
+                                             ) for a in search['tracks']['items']
+                ])
+    except IndexError:
+       return
     try:
        bot.answerInlineQuery(query_id, result)
     except telepot.exception.TelegramError:
@@ -436,6 +439,7 @@ def start1(msg):
                                                 [InlineKeyboardButton(text="Search", switch_inline_query_current_chat="")]
                                      ]
                          ))
+     stage[chat_id] = 2 
     elif content_type == "text" and msg['text'] == "/quality":
      bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Choose the quality that you want to download the song"),
                      reply_markup=ReplyKeyboardMarkup(
@@ -444,13 +448,13 @@ def start1(msg):
                                      [KeyboardButton(text="MP3_256"), KeyboardButton(text="MP3_128")]
                                  ]
                      ))
-     stage[chat_id] = 2
-    elif content_type == "text" and (msg['text'] == "FLAC" or msg['text'] == "MP3_320" or msg['text'] == "MP3_256" or msg['text'] == "MP3_128") and stage[chat_id] == 2:
+     stage[chat_id] = 3
+    elif content_type == "text" and (msg['text'] == "FLAC" or msg['text'] == "MP3_320" or msg['text'] == "MP3_256" or msg['text'] == "MP3_128") and stage[chat_id] == 3:
      qualit[chat_id] = msg['text']
      bot.sendMessage(chat_id, translate(msg['from']['language_code'], "The songs will be downloaded with " + msg['text'] + " quality"), reply_markup=ReplyKeyboardRemove())
      if msg['text'] != "MP3_128":
       bot.sendMessage(chat_id, translate(msg['from']['language_code'], "The songs that cannot be downloaded with the quality that you choose will be downloaded in quality MP3_128"))
-     stage[chat_id] = 3
+     stage[chat_id] = 4
     elif content_type == "voice" or content_type == "audio":
      audio = msg[content_type]['file_id']
      try:
@@ -499,6 +503,7 @@ def start2(msg):
                                                 [InlineKeyboardButton(text="Search", switch_inline_query_current_chat="")]
                                      ]
                          ))
+     stage[chat_id] = 2
     elif content_type == "text" and msg['text'] == "/quality":
      bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Choose the quality that you want to download the song"),
                      reply_markup=ReplyKeyboardMarkup(
@@ -507,13 +512,13 @@ def start2(msg):
                                      [KeyboardButton(text="MP3_256"), KeyboardButton(text="MP3_128")]
                                  ]
                      ))
-     stage[chat_id] = 2
-    elif content_type == "text" and (msg['text'] == "FLAC" or msg['text'] == "MP3_320" or msg['text'] == "MP3_256" or msg['text'] == "MP3_128") and stage[chat_id] == 2:
+     stage[chat_id] = 3
+    elif content_type == "text" and (msg['text'] == "FLAC" or msg['text'] == "MP3_320" or msg['text'] == "MP3_256" or msg['text'] == "MP3_128") and stage[chat_id] == 3:
      qualit[chat_id] = msg['text']
      bot.sendMessage(chat_id, translate(msg['from']['language_code'], "The songs will be downloaded with " + msg['text'] + " quality"), reply_markup=ReplyKeyboardRemove())
      if msg['text'] != "MP3_128":
       bot.sendMessage(chat_id, translate(msg['from']['language_code'], "The songs that cannot be downloaded with the quality that you choose will be downloaded in quality MP3_128"))
-     stage[chat_id] = 3
+     stage[chat_id] = 4
     elif content_type == "voice" or content_type == "audio":
      audio = msg[content_type]['file_id']
      try:
