@@ -2,18 +2,22 @@
 import os
 import json
 import shutil
-import setting
 import spotipy
 import telepot
+import mutagen
+import setting
 import acrcloud
 import requests
-import threading
 import dwytsongs
 import deezloader
 from time import sleep
+from mutagen.mp3 import MP3
+from threading import Thread
+from mutagen.flac import FLAC
 from bs4 import BeautifulSoup
 import spotipy.oauth2 as oauth2
-from telepot.namedtuple import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove, InlineKeyboardMarkup, InlineKeyboardButton
+from mutagen.easyid3 import EasyID3
+from telepot.namedtuple import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove, InlineKeyboardMarkup, InlineKeyboardButton, InlineQueryResultArticle, InputTextMessageContent
 downloa = deezloader.Login(setting.username, setting.password)
 token = setting.token
 bot = telepot.Bot(token)
@@ -242,29 +246,6 @@ def Link1(music, chat_id, lang, quality):
     except UnboundLocalError:
        bot.sendMessage(chat_id, translate(lang, "Invalid link ;)")) 
     delete(chat_id)
-def Name1(artist, song, chat_id, lang, quality):
-    global spo
-    array3.append(chat_id)
-    try:
-       try:
-          search = spo.search(q="track:" + song + " artist:" + artist)
-       except:
-          token = generate_token()
-          spo = spotipy.Spotify(auth=token)
-          search = spo.search(q="track:" + song + " artist:" + artist)
-       try:
-          image = search['tracks']['items'][0]['album']['images'][2]['url']
-       except IndexError:
-          bot.sendMessage(chat_id, translate(lang, "Song not found :("))
-          delete(chat_id)
-          return
-       a = downloa.download_name(artist, song, check=False, quality=quality, recursive=False)
-       sendAudio(chat_id, open(a, "rb"), image, lang)
-    except deezloader.TrackNotFound:
-       Name2(artist, song, chat_id, image, lang)
-    except dwytsongs.TrackNotFound as error:
-       bot.sendMessage(chat_id, translate(lang, str(error) + " :("))
-    delete(chat_id)
 def Link2(chat_id, music, image, lang):
     if "spotify" in music:
      if "track" in music:
@@ -283,9 +264,6 @@ def Link2(chat_id, music, image, lang):
            sendAudio(chat_id, open(z[a], "rb"), image[a], lang)
         except FileNotFoundError:
            bot.sendMessage(chat_id, translate(lang, "Error downloading " + z[a].split(".")[-1] + " :("))
-def Name2(artist, song, chat_id, image, lang):
-    a = dwytsongs.download_name(artist, song, check=False)
-    sendAudio(chat_id, open(a, "rb"), image, lang)
 def Audio(audio, chat_id, lang):
     global spo
     global goes
@@ -384,8 +362,48 @@ def download(msg):
         try:
            name = qualit[from_id]
         except KeyError:
-           qualit[from_id] = "MP3_128"
-        threading.Thread(target=Link1, args=(query_data, from_id, langua[from_id], qualit[from_id])).start()
+           qualit[from_id] = "MP3_320"
+        Thread(target=Link1, args=(query_data, from_id, langua[from_id], qualit[from_id])).start()
+def search(msg):
+    global spo
+    query_id, from_id, query_string = telepot.glance(msg, flavor='inline_query')
+    query_string = query_string.split(",")
+    try:
+       if len(query_string) == 2:
+        search = spo.search(q="track:" + query_string[0] + " artist:" + query_string[1])
+       else:
+           search = spo.search(q="track:" + query_string[0])
+    except:
+       token = generate_token()
+       spo = spotipy.Spotify(auth=token)
+       if len(query_string) == 2:
+        search = spo.search(q="track:" + query_string[0] + " artist:" + query_string[1])
+       else:
+           search = spo.search(q="track:" + query_string[0]) 
+    result = ([InlineQueryResultArticle(id=a['external_urls']['spotify'], title=a['name'] + "\n" + a['artists'][0]['name'], thumb_url=a['album']['images'][0]['url'], input_message_content=
+                                           InputTextMessageContent(message_text=a['external_urls']['spotify'])
+                                          ) for a in search['tracks']['items']
+             ])
+    try:
+       bot.answerInlineQuery(query_id, result)
+    except telepot.exception.TelegramError:
+       None
+def up(msg):
+    result_id, from_id, query_string = telepot.glance(msg, flavor='chosen_inline_result')
+    if ans != "1":
+     try:
+        if users[from_id] == 2:
+         bot.sendMessage(from_id, translate(msg['from']['language_code'], "You are downloading to much songs :)"))
+         return
+        else:
+            users[from_id] += 1
+     except KeyError:
+        users[from_id] = 1
+    try:
+       name = qualit[from_id]
+    except KeyError:
+       qualit[from_id] = "MP3_320"
+    Thread(target=Link1, args=(result_id, from_id, msg['from']['language_code'] ,qualit[from_id])).start()
 def start1(msg):
     content_type, chat_type, chat_id = telepot.glance(msg)
     try:
@@ -405,21 +423,19 @@ def start1(msg):
         name = qualit[chat_id]
      except KeyError:
         qualit[chat_id] = "MP3_320"
-     threading.Thread(target=Link1, args=(music, chat_id, msg['from']['language_code'], qualit[chat_id])).start()
+     Thread(target=Link1, args=(music, chat_id, msg['from']['language_code'], qualit[chat_id])).start()
     elif content_type == "text" and msg['text'] == "/name":
-     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Insert the artist's name"))
-     stage[chat_id] = 2
-    elif content_type == "text" and msg['text'] != "/link" and msg['text'] != "/name" and msg['text'] != "/quality" and stage[chat_id] == 2:
-     artist[chat_id] = msg['text']
-     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Insert the name song"))
-     stage[chat_id] = 3
-    elif content_type == "text" and msg['text'] != "/link" and msg['text'] != "/name" and msg['text'] != "/quality" and stage[chat_id] == 3:
-     song = msg['text']
      try:
         name = qualit[chat_id]
      except KeyError:
         qualit[chat_id] = "MP3_320"
-     threading.Thread(target=Name1, args=(artist[chat_id], song, chat_id, msg['from']['language_code'], qualit[chat_id])).start()
+     langua[chat_id] = msg['from']['language_code']
+     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Press for search songs \n P.S. Insert like this: 'song name, artist's name'"),
+                    reply_markup=InlineKeyboardMarkup(
+                                     inline_keyboard=[
+                                                [InlineKeyboardButton(text="Search", switch_inline_query_current_chat="")]
+                                     ]
+                         ))
     elif content_type == "text" and msg['text'] == "/quality":
      bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Choose the quality that you want to download the song"),
                      reply_markup=ReplyKeyboardMarkup(
@@ -428,20 +444,20 @@ def start1(msg):
                                      [KeyboardButton(text="MP3_256"), KeyboardButton(text="MP3_128")]
                                  ]
                      ))
-     stage[chat_id] = 4
-    elif content_type == "text" and (msg['text'] == "FLAC" or msg['text'] == "MP3_320" or msg['text'] == "MP3_256" or msg['text'] == "MP3_128") and stage[chat_id] == 4:
+     stage[chat_id] = 2
+    elif content_type == "text" and (msg['text'] == "FLAC" or msg['text'] == "MP3_320" or msg['text'] == "MP3_256" or msg['text'] == "MP3_128") and stage[chat_id] == 2:
      qualit[chat_id] = msg['text']
      bot.sendMessage(chat_id, translate(msg['from']['language_code'], "The songs will be downloaded with " + msg['text'] + " quality"), reply_markup=ReplyKeyboardRemove())
      if msg['text'] != "MP3_128":
       bot.sendMessage(chat_id, translate(msg['from']['language_code'], "The songs that cannot be downloaded with the quality that you choose will be downloaded in quality MP3_128"))
-     stage[chat_id] = 5
+     stage[chat_id] = 3
     elif content_type == "voice" or content_type == "audio":
      audio = msg[content_type]['file_id']
      try:
         name = qualit[chat_id]
      except KeyError:
         qualit[chat_id] = "MP3_320"
-     threading.Thread(target=Audio, args=(audio, chat_id, msg['from']['language_code'])).start()
+     Thread(target=Audio, args=(audio, chat_id, msg['from']['language_code'])).start()
 def start2(msg):
     content_type, chat_type, chat_id = telepot.glance(msg)
     try:
@@ -467,34 +483,22 @@ def start2(msg):
          bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Wait to finish and resend the " + content_type + ", did you thought that you could download how much songs did you want? :)"))
         else:
             users[chat_id] += 1
-            threading.Thread(target=Link1, args=(music, chat_id, msg['from']['language_code'], qualit[chat_id])).start()
+            Thread(target=Link1, args=(music, chat_id, msg['from']['language_code'], qualit[chat_id])).start()
      except KeyError:
         users[chat_id] = 1
-        threading.Thread(target=Link1, args=(music, chat_id, msg['from']['language_code'], qualit[chat_id])).start()
+        Thread(target=Link1, args=(music, chat_id, msg['from']['language_code'], qualit[chat_id])).start()
     elif content_type == "text" and msg['text'] == "/name":
-     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Insert the artist's name"))
-     stage[chat_id] = 2
-    elif content_type == "text" and msg['text'] != "/link" and msg['text'] != "/name" and msg['text'] != "/quality" and stage[chat_id] == 2:
-     artist[chat_id] = msg['text']
-     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Insert the name song"))
-     stage[chat_id] = 3
-    elif content_type == "text" and msg['text'] != "/link" and msg['text'] != "/name" and msg['text'] != "/quality" and stage[chat_id] == 3:
-     song = msg['text']
-     print(artist[chat_id])
-     print(msg)
      try:
         name = qualit[chat_id]
      except KeyError:
         qualit[chat_id] = "MP3_320"
-     try:
-        if users[chat_id] == 2:
-         bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Wait to finish and resend the " + content_type + ", did you thought that you could download how much songs did you want? :)"))
-        else:
-            users[chat_id] += 1
-            threading.Thread(target=Name1, args=(artist[chat_id], song, chat_id, msg['from']['language_code'], qualit[chat_id])).start()
-     except KeyError:
-        users[chat_id] = 1
-        threading.Thread(target=Name1, args=(artist[chat_id], song, chat_id, msg['from']['language_code'], qualit[chat_id])).start()
+     langua[chat_id] = msg['from']['language_code']
+     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Press for search songs \n P.S. Insert like this: 'song name, artist's name'"),
+                    reply_markup=InlineKeyboardMarkup(
+                                     inline_keyboard=[
+                                                [InlineKeyboardButton(text="Search", switch_inline_query_current_chat="")]
+                                     ]
+                         ))
     elif content_type == "text" and msg['text'] == "/quality":
      bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Choose the quality that you want to download the song"),
                      reply_markup=ReplyKeyboardMarkup(
@@ -503,20 +507,20 @@ def start2(msg):
                                      [KeyboardButton(text="MP3_256"), KeyboardButton(text="MP3_128")]
                                  ]
                      ))
-     stage[chat_id] = 4
-    elif content_type == "text" and (msg['text'] == "FLAC" or msg['text'] == "MP3_320" or msg['text'] == "MP3_256" or msg['text'] == "MP3_128") and stage[chat_id] == 4:
+     stage[chat_id] = 2
+    elif content_type == "text" and (msg['text'] == "FLAC" or msg['text'] == "MP3_320" or msg['text'] == "MP3_256" or msg['text'] == "MP3_128") and stage[chat_id] == 2:
      qualit[chat_id] = msg['text']
      bot.sendMessage(chat_id, translate(msg['from']['language_code'], "The songs will be downloaded with " + msg['text'] + " quality"), reply_markup=ReplyKeyboardRemove())
      if msg['text'] != "MP3_128":
       bot.sendMessage(chat_id, translate(msg['from']['language_code'], "The songs that cannot be downloaded with the quality that you choose will be downloaded in quality MP3_128"))
-     stage[chat_id] = 5
+     stage[chat_id] = 3
     elif content_type == "voice" or content_type == "audio":
      audio = msg[content_type]['file_id']
      try:
         name = qualit[chat_id]
      except KeyError:
         qualit[chat_id] = "MP3_320"
-     threading.Thread(target=Audio, args=(audio, chat_id, msg['from']['language_code'])).start()
+     Thread(target=Audio, args=(audio, chat_id, msg['from']['language_code'])).start()
 try:
    while True:
        print("1):Free")
@@ -526,12 +530,16 @@ try:
        if ans == "1":
         bot.message_loop({
                           "chat": start1,
-                          "callback_query": download
+                          "callback_query": download,
+                          "inline_query": search,
+                          "chosen_inline_result": up
                          })
        elif ans == "2":
         bot.message_loop({
                           "chat": start2,
-                          "callback_query": download
+                          "callback_query": download,
+                          "inline_query": search,
+                          "chosen_inline_result": up
                          })
        else:
            break
