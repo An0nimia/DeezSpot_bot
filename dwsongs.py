@@ -68,6 +68,7 @@ def delete(chat_id):
     array2.append(chat_id)
     temp = 1
 def sendAudio(chat_id, audio, lang, music, image=None):
+    bot.sendChatAction(chat_id, "upload_audio")
     conn = sqlite3.connect(local + "/dwsongs.db")
     c = conn.cursor()
     try:
@@ -323,12 +324,13 @@ def Link(music, chat_id, lang, quality):
     except deezloader.AlbumNotFound:
        bot.sendMessage(chat_id, translate(lang, "Album not found :("))
     except:
-       bot.sendMessage(chat_id, translate(lang, "An error has occured during song download, please contact @An0nimia for explain the issue, thanks :)"))
+       bot.sendMessage(chat_id, translate(lang, "An error has occurred while sending the song. For more information, please contact @An0nimia Thanks :)"))
     bot.sendMessage(chat_id, translate(lang, "FINISHED"), reply_to_message_id=msg)
     delete(chat_id)
 def Audio(audio, chat_id, lang):
     global spo
     global goes
+    bot.sendChatAction(chat_id, "upload_photo")
     goes = 1
     file = local + "/Songs/" + audio + ".ogg"
     bot.download_file(audio, file)
