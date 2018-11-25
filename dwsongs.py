@@ -294,7 +294,7 @@ def Link(music, chat_id, lang, quality):
          for a in url['contributors']:
              if a['role'] == "Main":
               artist = a['name']
-              break     
+              break
          msg = bot.sendPhoto(chat_id, imag, caption="Album:" + url['title'] + "\nArtist:" + artist + "\nDate:" + url['release_date'])['message_id']
          if len(links1) <= (url['nb_tracks'] // 2):
           z = downloa.download_albumdee(music, check=False, quality=quality, recursive=False)
@@ -320,10 +320,11 @@ def Link(music, chat_id, lang, quality):
               sendAudio(chat_id, z[a], lang, links2[a], image[a])
        except NameError:
           None
-       if not "https://i.scdn.co/image/" in music:   
-        bot.sendMessage(chat_id, translate(lang, "FINISHED"), reply_to_message_id=msg)
-    except KeyboardInterrupt:
+    except deezloader.AlbumNotFound:
+       bot.sendMessage(chat_id, translate(lang, "Album not found :("))
+    except:
        bot.sendMessage(chat_id, translate(lang, "An error has occured during song download, please contact @An0nimia for explain the issue, thanks :)"))
+    bot.sendMessage(chat_id, translate(lang, "FINISHED"), reply_to_message_id=msg)
     delete(chat_id)
 def Audio(audio, chat_id, lang):
     global spo
@@ -467,7 +468,7 @@ def up(msg):
     if ans != "1":
      try:
         if users[from_id] == 2:
-         bot.sendMessage(from_id, translate(msg['from']['language_code'], "You are downloading much songs :)"))
+         bot.sendMessage(from_id, translate(msg['from']['language_code'], "You are downloading too much songs ;)"))
          return
         else:
             users[from_id] += 1
@@ -486,9 +487,7 @@ def start1(msg):
        msg['from'] = {"language_code": "en"}   
     if content_type == "text" and msg['text'] == "/start":
      bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Welcome to @DeezloaderRMX_bot"))
-     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "This bot has been created for download songs by a Spotify or Deezer link, by a name or by an audio or voice message"))
-     bot.sendPhoto(chat_id, open("example.jpg", "rb"), caption="The bot commands can find here \nP.S. Remember first send command")
-     sleep(1)
+     bot.sendPhoto(chat_id, open("example.jpg", "rb"), caption="The bot commands can find here")
      bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Please select between"))
      try:
         qualit[chat_id]
@@ -522,7 +521,7 @@ def start1(msg):
      except KeyError:
         qualit[chat_id] = "MP3_320"
      Thread(target=Audio, args=(audio, chat_id, msg['from']['language_code'])).start()
-    elif content_type == "text":
+    elif content_type == "text" and not "https://i.scdn.co/image/" in msg['text']:
      music = msg['text']
      try:
         qualit[chat_id]
@@ -538,9 +537,7 @@ def start2(msg):
        msg['from'] = {"language_code": "en"}
     if content_type == "text" and msg['text'] == "/start":
      bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Welcome to @DeezloaderRMX_bot"))
-     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "This bot has been created for download songs by a Spotify or Deezer link, by a name or by an audio or voice message"))
-     bot.sendPhoto(chat_id, open("example.jpg", "rb"), caption=translate(msg['from']['language_code'], "The bot commands can find here \nP.S. Remember first send command"))
-     sleep(1)
+     bot.sendPhoto(chat_id, open("example.jpg", "rb"), caption=translate(msg['from']['language_code'], "The bot commands can find here"))
      bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Please select between"))
      try:
         qualit[chat_id]
@@ -574,7 +571,7 @@ def start2(msg):
      except KeyError:
         qualit[chat_id] = "MP3_320"
      Thread(target=Audio, args=(audio, chat_id, msg['from']['language_code'])).start()
-    elif content_type == "text":
+    elif content_type == "text" and not "https://i.scdn.co/image/" in msg['text']:
      music = msg['text']
      try:
         qualit[chat_id]
