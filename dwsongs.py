@@ -453,38 +453,19 @@ def search(msg):
     result = []
     for a in search1[::-1]:
         if not a['external_urls']['spotify'] in str(result):
-         result.append(InlineQueryResultArticle(id=a['external_urls']['spotify'], title=a['name'] + "\n" + a['artists'][0]['name'], thumb_url=a['album']['images'][0]['url'], input_message_content=InputTextMessageContent(message_text=a['album']['images'][0]['url'])))
+         result.append(InlineQueryResultArticle(id=a['external_urls']['spotify'], title=a['name'] + "\n" + a['artists'][0]['name'], thumb_url=a['album']['images'][0]['url'], input_message_content=InputTextMessageContent(message_text=a['external_urls']['spotify'])))
     try:
        bot.answerInlineQuery(query_id, result)
     except telepot.exception.TelegramError:
-       None 
+       None
 def up(msg):
-    print(msg)
-    result_id, from_id, query_string = telepot.glance(msg, flavor='chosen_inline_result')
-    try:
-       msg['from']['language_code'] 
-    except KeyError:
-       msg['from'] = {"language_code": "en"}
-    if ans != "1":
-     try:
-        if users[from_id] == 2:
-         bot.sendMessage(from_id, translate(msg['from']['language_code'], "You are downloading too much songs ;)"))
-         return
-        else:
-            users[from_id] += 1
-     except KeyError:
-        users[from_id] = 1
-    try:
-       qualit[from_id]
-    except KeyError:
-       qualit[from_id] = "MP3_320"
-    Thread(target=Link, args=(result_id, from_id, msg['from']['language_code'], qualit[from_id])).start()
+    None
 def start1(msg):
     content_type, chat_type, chat_id = telepot.glance(msg)
     try:
        msg['from']['language_code']
     except KeyError:
-       msg['from'] = {"language_code": "en"}   
+       msg['from'] = {"language_code": "en"}
     if content_type == "text" and msg['text'] == "/start":
      bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Welcome to @DeezloaderRMX_bot"))
      bot.sendPhoto(chat_id, open("example.jpg", "rb"), caption="The bot commands can find here")
@@ -521,7 +502,7 @@ def start1(msg):
      except KeyError:
         qualit[chat_id] = "MP3_320"
      Thread(target=Audio, args=(audio, chat_id, msg['from']['language_code'])).start()
-    elif content_type == "text" and not "https://i.scdn.co/image/" in msg['text']:
+    elif content_type == "text":
      music = msg['text']
      try:
         qualit[chat_id]
@@ -571,7 +552,7 @@ def start2(msg):
      except KeyError:
         qualit[chat_id] = "MP3_320"
      Thread(target=Audio, args=(audio, chat_id, msg['from']['language_code'])).start()
-    elif content_type == "text" and not "https://i.scdn.co/image/" in msg['text']:
+    elif content_type == "text":
      music = msg['text']
      try:
         qualit[chat_id]
