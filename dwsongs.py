@@ -313,6 +313,7 @@ def Link(music, chat_id, lang, quality, msg):
          for a in url['tracks']['data']:
              track(a['link'], chat_id, lang, quality)
        else:
+           delete(chat_id)
            return
        try:
           for a in range(len(z)):
