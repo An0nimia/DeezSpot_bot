@@ -46,8 +46,7 @@ except sqlite3.OperationalError:
    None
 conn.close() 
 def generate_token():
-    credentials = oauth2.SpotifyClientCredentials(client_id="4fe3fecfe5334023a1472516cc99d805", client_secret="0f02b7c483c04257984695007a4a8d5c")
-    token = credentials.get_access_token()
+    token = oauth2.SpotifyClientCredentials(client_id="4fe3fecfe5334023a1472516cc99d805", client_secret="0f02b7c483c04257984695007a4a8d5c").get_access_token()
     return token
 spotoken = generate_token()
 spo = spotipy.Spotify(auth=spotoken)
@@ -150,13 +149,12 @@ def track(music, chat_id, lang, quality):
            return
         conn.close()
         sendAudio(chat_id, z, lang, music, image)
-def Link(music, chat_id, lang, quality):
+def Link(music, chat_id, lang, quality, msg):
     global spo
     links1 = []
     links2 = []
     image = []
     array3.append(chat_id)
-    msg = None
     try:
        conn = sqlite3.connect(local + "/dwsongs.db")
        c = conn.cursor()
@@ -168,13 +166,13 @@ def Link(music, chat_id, lang, quality):
             url = spo.track(music)
          except Exception as a:
             if not "The access token expired" in str(a):
-             bot.sendMessage(chat_id, translate(lang, "Invalid link ;)"))
+             bot.sendMessage(chat_id, translate(lang, "Invalid link ;"), reply_to_message_id=msg)
              delete(chat_id)
              return
             token = generate_token()
             spo = spotipy.Spotify(auth=token)
             url = spo.track(music)
-         msg = bot.sendPhoto(chat_id, url['album']['images'][0]['url'], caption="Track:" + url['name'] + "\nArtist:" + url['album']['artists'][0]['name'] + "\nAlbum:" + url['album']['name'] + "\nDate:" + url['album']['release_date'])['message_id']
+         bot.sendPhoto(chat_id, url['album']['images'][0]['url'], caption="Track:" + url['name'] + "\nArtist:" + url['album']['artists'][0]['name'] + "\nAlbum:" + url['album']['name'] + "\nDate:" + url['album']['release_date'])
          track(music, chat_id, lang, quality)
         elif "album/" in music:
          if "?" in music:
@@ -183,7 +181,7 @@ def Link(music, chat_id, lang, quality):
             tracks = spo.album(music)
          except Exception as a:
             if not "The access token expired" in str(a):
-             bot.sendMessage(chat_id, translate(lang, "Invalid link ;)"))
+             bot.sendMessage(chat_id, translate(lang, "Invalid link ;"), reply_to_message_id=msg)
              delete(chat_id)
              return
             token = generate_token()
@@ -209,7 +207,7 @@ def Link(music, chat_id, lang, quality):
                     links2.append(a['external_urls']['spotify'])
                     if c.fetchone() != None:
                      links1.append(a['external_urls']['spotify'])
-         msg = bot.sendPhoto(chat_id, tracks['images'][0]['url'], caption="Album:" + tracks['name'] + "\nArtist:" + tracks['artists'][0]['name'] + "\nDate:" + tracks['release_date'])['message_id']
+         bot.sendPhoto(chat_id, tracks['images'][0]['url'], caption="Album:" + tracks['name'] + "\nArtist:" + tracks['artists'][0]['name'] + "\nDate:" + tracks['release_date'])
          if len(links1) <= (tracks['total_tracks'] // 2):
           z = downloa.download_albumspo(music, check=False, quality=quality, recursive=False)
          else:
@@ -223,7 +221,7 @@ def Link(music, chat_id, lang, quality):
             tracks = spo.user_playlist_tracks(musi[-3], playlist_id=musi[-1])
          except Exception as a:
             if not "The access token expired" in str(a):
-             bot.sendMessage(chat_id, translate(lang, "Invalid link ;)"))
+             bot.sendMessage(chat_id, translate(lang, "Invalid link ;"), reply_to_message_id=msg)
              delete(chat_id)
              return
             token = generate_token()
@@ -248,7 +246,7 @@ def Link(music, chat_id, lang, quality):
          url = json.loads(requests.get("http://api.deezer.com/track/" + music.split("/")[-1]).text)
          try:
             if "error" in str(url):
-             bot.sendMessage(chat_id, translate(lang, "Invalid link ;)"))
+             bot.sendMessage(chat_id, translate(lang, "Invalid link ;"), reply_to_message_id=msg)
              return
          except KeyError:
             None
@@ -265,7 +263,7 @@ def Link(music, chat_id, lang, quality):
              if a['role'] == "Main":
               artist = a['name']
               break
-         msg = bot.sendPhoto(chat_id, imag, caption="Track:" + url['title'] + "\nArtist:" + artist + "\nAlbum:" + url['album']['title'] + "\nDate:" + url['album']['release_date'])['message_id']
+         bot.sendPhoto(chat_id, imag, caption="Track:" + url['title'] + "\nArtist:" + artist + "\nAlbum:" + url['album']['title'] + "\nDate:" + url['album']['release_date'])
          track(music, chat_id, lang, quality)
         elif "album/" in music:
          if "?" in music:
@@ -273,7 +271,7 @@ def Link(music, chat_id, lang, quality):
          url = json.loads(requests.get("http://api.deezer.com/album/" + music.split("/")[-1]).text)
          try:
             if "error" in str(url):
-             bot.sendMessage(chat_id, translate(lang, "Invalid link ;)"))
+             bot.sendMessage(chat_id, translate(lang, "Invalid link ;"), reply_to_message_id=msg)
              delete(chat_id)
              return
          except KeyError:
@@ -296,7 +294,7 @@ def Link(music, chat_id, lang, quality):
              if a['role'] == "Main":
               artist = a['name']
               break
-         msg = bot.sendPhoto(chat_id, imag, caption="Album:" + url['title'] + "\nArtist:" + artist + "\nDate:" + url['release_date'])['message_id']
+         bot.sendPhoto(chat_id, imag, caption="Album:" + url['title'] + "\nArtist:" + artist + "\nDate:" + url['release_date'])
          if len(links1) <= (url['nb_tracks'] // 2):
           z = downloa.download_albumdee(music, check=False, quality=quality, recursive=False)
          else:
@@ -308,12 +306,12 @@ def Link(music, chat_id, lang, quality):
          url = json.loads(requests.get("https://api.deezer.com/playlist/" + music.split("/")[-1]).text)
          try:
             if "error" in str(url):
-             bot.sendMessage(chat_id, translate(lang, "Invalid link ;)"))
+             bot.sendMessage(chat_id, translate(lang, "Invalid link ;"), reply_to_message_id=msg)
              delete(chat_id)
              return
          except KeyError:
             None
-         msg = bot.sendPhoto(chat_id, url['picture_xl'], caption="Creation:" + url['creation_date'] + "\nUser:" + url['creator']['name'])['message_id']
+         bot.sendPhoto(chat_id, url['picture_xl'], caption="Creation:" + url['creation_date'] + "\nUser:" + url['creator']['name'])
          for a in url['tracks']['data']:
              track(a['link'], chat_id, lang, quality)
        try:
@@ -325,7 +323,8 @@ def Link(music, chat_id, lang, quality):
        bot.sendMessage(chat_id, translate(lang, "Album not found :("))
     except:
        bot.sendMessage(chat_id, translate(lang, "An error has occurred while sending the song. For more information, please contact @An0nimia Thanks :)"))
-    bot.sendMessage(chat_id, translate(lang, "FINISHED"), reply_to_message_id=msg)
+    if len(links2) != 0:
+     bot.sendMessage(chat_id, translate(lang, "FINISHED"), reply_to_message_id=msg)
     delete(chat_id)
 def Audio(audio, chat_id, lang):
     global spo
@@ -483,7 +482,7 @@ def start1(msg):
                                      ]
                          ))
      bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Send a Deezer or Spotify link to download"))
-     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Send an audio o vocal message to recognize the track"))
+     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Send a song o vocal message to recognize the track"))
     elif content_type == "text" and msg['text'] == "/quality":
      bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Choose the quality that you want to download the song"),
                      reply_markup=ReplyKeyboardMarkup(
@@ -498,19 +497,17 @@ def start1(msg):
      if msg['text'] != "MP3_128":
       bot.sendMessage(chat_id, translate(msg['from']['language_code'], "The songs that cannot be downloaded with the quality that you choose will be downloaded in quality MP3_128"))
     elif content_type == "voice" or content_type == "audio":
-     audio = msg[content_type]['file_id']
      try:
         qualit[chat_id]
      except KeyError:
         qualit[chat_id] = "MP3_320"
-     Thread(target=Audio, args=(audio, chat_id, msg['from']['language_code'])).start()
+     Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, msg['from']['language_code'])).start()
     elif content_type == "text":
-     music = msg['text']
      try:
         qualit[chat_id]
      except KeyError:
         qualit[chat_id] = "MP3_320"
-     Thread(target=Link, args=(music, chat_id, msg['from']['language_code'], qualit[chat_id])).start()
+     Thread(target=Link, args=(msg['text'], chat_id, msg['from']['language_code'], qualit[chat_id], msg['message_id'])).start()
 def start2(msg):
     print(msg)
     content_type, chat_type, chat_id = telepot.glance(msg)
@@ -533,7 +530,7 @@ def start2(msg):
                                      ]
                          ))
      bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Send a Deezer or Spotify link to download"))
-     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Send an audio o vocal message to recognize the track"))
+     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Send a song o vocal message to recognize the track"))
     elif content_type == "text" and msg['text'] == "/quality":
      bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Choose the quality that you want to download the song"),
                      reply_markup=ReplyKeyboardMarkup(
@@ -548,12 +545,11 @@ def start2(msg):
      if msg['text'] != "MP3_128":
       bot.sendMessage(chat_id, translate(msg['from']['language_code'], "The songs that cannot be downloaded with the quality that you choose will be downloaded in quality MP3_128"))
     elif content_type == "voice" or content_type == "audio":
-     audio = msg[content_type]['file_id']
      try:
         qualit[chat_id]
      except KeyError:
         qualit[chat_id] = "MP3_320"
-     Thread(target=Audio, args=(audio, chat_id, msg['from']['language_code'])).start()
+     Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, msg['from']['language_code'])).start()
     elif content_type == "text":
      music = msg['text']
      try:
@@ -565,10 +561,10 @@ def start2(msg):
          bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Wait to finish and resend the link, did you thought that you could download how much songs did you want? :)"))
         else:
             users[chat_id] += 1
-            Thread(target=Link, args=(music, chat_id, msg['from']['language_code'], qualit[chat_id])).start()
+            Thread(target=Link, args=(music, chat_id, msg['from']['language_code'], qualit[chat_id], msg['message_id'])).start()
      except KeyError:
         users[chat_id] = 1
-        Thread(target=Link, args=(music, chat_id, msg['from']['language_code'], qualit[chat_id])).start()
+        Thread(target=Link, args=(music, chat_id, msg['from']['language_code'], qualit[chat_id], msg['message_id'])).start()
 try:
    while True:
        print("1):Free")
