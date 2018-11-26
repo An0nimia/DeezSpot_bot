@@ -44,7 +44,7 @@ try:
    conn.commit()
 except sqlite3.OperationalError:
    None
-conn.close() 
+conn.close()
 def generate_token():
     token = oauth2.SpotifyClientCredentials(client_id="4fe3fecfe5334023a1472516cc99d805", client_secret="0f02b7c483c04257984695007a4a8d5c").get_access_token()
     return token
@@ -113,34 +113,32 @@ def track(music, chat_id, lang, quality):
     else: 
         try:
            if "spotify" in music:
-              try:
-                 url = spo.track(music)
-              except:
-                 token = generate_token()
-                 spo = spotipy.Spotify(auth=token)
-                 url = spo.track(music)
-              image = url['album']['images'][2]['url']
-              z = downloa.download_trackspo(music, check=False, quality=quality, recursive=False)
+            try:
+               url = spo.track(music)
+            except:
+               token = generate_token()
+               spo = spotipy.Spotify(auth=token)
+               url = spo.track(music)
+            image = url['album']['images'][2]['url']
+            z = downloa.download_trackspo(music, check=False, quality=quality, recursive=False)
            elif "deezer" in music:
-              url = json.loads(requests.get("http://api.deezer.com/track/" + music.split("/")[-1]).text)
-              try:
-                 image = url['album']['cover_xl'].replace("1000", "90")
-              except:
-                 URL = "http://www.deezer.com/track/" + music.split("/")[-1]
-                 try:
-                    images = requests.get(URL).text
-                 except:
-                    images = requests.get(URL).text
-                 image = BeautifulSoup(images, "html.parser").find("img", class_="img_main").get("src").replace("120", "90")
-              z = downloa.download_trackdee(music, check=False, quality=quality, recursive=False)
+            url = json.loads(requests.get("http://api.deezer.com/track/" + music.split("/")[-1]).text)
+            try:
+               image = url['album']['cover_xl'].replace("1000", "90")
+            except:
+               URL = "http://www.deezer.com/track/" + music.split("/")[-1]
+               try:
+                  images = requests.get(URL).text
+               except:
+                  images = requests.get(URL).text
+               image = BeautifulSoup(images, "html.parser").find("img", class_="img_main").get("src").replace("120", "90")
+            z = downloa.download_trackdee(music, check=False, quality=quality, recursive=False)
         except deezloader.TrackNotFound:
            try:
               if "spotify" in music:
-               if "track/" in music:
-                z = dwytsongs.download_trackspo(music, check=False)
-               elif "deezer" in music:
-                if "track/" in music:
-                 z = dwytsongs.download_trackdee(music, check=False)
+               z = dwytsongs.download_trackspo(music, check=False)
+              elif "deezer" in music:
+               z = dwytsongs.download_trackdee(music, check=False)
            except dwytsongs.TrackNotFound as error:
               bot.sendMessage(chat_id, translate(lang, str(error) + " :("))
         except:
@@ -314,6 +312,8 @@ def Link(music, chat_id, lang, quality, msg):
          bot.sendPhoto(chat_id, url['picture_xl'], caption="Creation:" + url['creation_date'] + "\nUser:" + url['creator']['name'])
          for a in url['tracks']['data']:
              track(a['link'], chat_id, lang, quality)
+       else:
+           return
        try:
           for a in range(len(z)):
               sendAudio(chat_id, z[a], lang, links2[a], image[a])
@@ -323,8 +323,7 @@ def Link(music, chat_id, lang, quality, msg):
        bot.sendMessage(chat_id, translate(lang, "Album not found :("))
     except:
        bot.sendMessage(chat_id, translate(lang, "An error has occurred while sending the song. For more information, please contact @An0nimia Thanks :)"))
-    if len(links2) != 0:
-     bot.sendMessage(chat_id, translate(lang, "FINISHED"), reply_to_message_id=msg)
+    bot.sendMessage(chat_id, translate(lang, "FINISHED"), reply_to_message_id=msg)
     delete(chat_id)
 def Audio(audio, chat_id, lang):
     global spo
@@ -428,7 +427,7 @@ def download(msg):
            qualit[from_id]
         except KeyError:
            qualit[from_id] = "MP3_320"
-        Thread(target=Link, args=(query_data, from_id, msg['from']['language_code'], qualit[from_id])).start()
+        Thread(target=Link, args=(query_data, from_id, msg['from']['language_code'], qualit[from_id], msg['message']['message_id'])).start()
 def search(msg):
     global spo
     query_id, from_id, query_string = telepot.glance(msg, flavor='inline_query')
@@ -460,7 +459,7 @@ def search(msg):
     except telepot.exception.TelegramError:
        None
 def up(msg):
-    None
+    pass
 def start1(msg):
     content_type, chat_type, chat_id = telepot.glance(msg)
     try:
