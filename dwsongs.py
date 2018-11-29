@@ -12,6 +12,7 @@ import requests
 import dwytsongs
 import deezloader
 from time import sleep
+from pprint import pprint
 from mutagen.mp3 import MP3
 from threading import Thread
 from mutagen.flac import FLAC
@@ -25,6 +26,7 @@ bot = telepot.Bot(token)
 users = {}
 artist = {}
 qualit = {}
+date = {}
 array2 = []
 array3 = []
 local = os.getcwd()
@@ -41,10 +43,10 @@ conn = sqlite3.connect(local + "/dwsongs.db")
 c = conn.cursor()
 try:
    c.execute("CREATE TABLE DWSONGS (id text, query text, quality text)")
+   c.execute("CREATE TABLE BANNED (banned int)")
    conn.commit()
 except sqlite3.OperationalError:
    None
-conn.close()
 def generate_token():
     token = oauth2.SpotifyClientCredentials(client_id="4fe3fecfe5334023a1472516cc99d805", client_secret="0f02b7c483c04257984695007a4a8d5c").get_access_token()
     return token
@@ -434,6 +436,11 @@ def search(msg):
     query_id, from_id, query_string = telepot.glance(msg, flavor='inline_query')
     if query_string == "":
      return
+    conn = sqlite3.connect(local + "/dwsongs.db")
+    c = conn.cursor()
+    c.execute("SELECT banned FROM BANNED where banned = '%d'" % from_id)
+    if c.fetchone() != None:
+     return
     try:
        search1 = spo.search(q=query_string, limit=20)['tracks']['items']
     except:
@@ -452,9 +459,12 @@ def search(msg):
         search1[len(search1) - 1]['artists'] = a['artists']
         search1[len(search1) - 1]['album'] = {"images": [a['album']['images'][0]]}
     result = []
-    for a in search1[::-1]:
-        if not a['external_urls']['spotify'] in str(result):
-         result.append(InlineQueryResultArticle(id=a['external_urls']['spotify'], title=a['name'] + "\n" + a['artists'][0]['name'], thumb_url=a['album']['images'][0]['url'], input_message_content=InputTextMessageContent(message_text=a['external_urls']['spotify'])))
+    try:
+       for a in search1[::-1]:
+           if not a['external_urls']['spotify'] in str(result):
+            result.append(InlineQueryResultArticle(id=a['external_urls']['spotify'], title=a['name'] + "\n" + a['artists'][0]['name'], thumb_url=a['album']['images'][0]['url'], input_message_content=InputTextMessageContent(message_text=a['external_urls']['spotify'])))
+    except IndexError:
+       return
     try:
        bot.answerInlineQuery(query_id, result)
     except telepot.exception.TelegramError:
@@ -463,6 +473,24 @@ def up(msg):
     pass
 def start1(msg):
     content_type, chat_type, chat_id = telepot.glance(msg)
+    conn = sqlite3.connect(local + "/dwsongs.db")
+    c = conn.cursor()
+    c.execute("SELECT banned FROM BANNED where banned = '%d'" % chat_id)
+    if c.fetchone() != None:
+     return
+    try:
+       time = msg['date'] - date[chat_id]['time']
+       date[chat_id]['time'] = msg['date']
+       if time <= 4:
+        date[chat_id]['tries'] -= 1
+        bot.sendMessage(chat_id, "It is appearing that you are trying to flood, you have to wait more that four second to send another message.\n" + str(date[chat_id]['tries']) + " possibilites :)")
+        if date[chat_id]['tries'] == 0:
+         c.execute("INSERT INTO BANNED(banned) values('%d')" % chat_id)
+         conn.commit()
+         bot.sendMessage(chat_id, "You are banned :)")
+         return
+    except KeyError:
+       date[chat_id] = {"time": msg['date'], "tries": 3}
     try:
        msg['from']['language_code']
     except KeyError:
@@ -509,12 +537,26 @@ def start1(msg):
         qualit[chat_id] = "MP3_320"
      Thread(target=Link, args=(msg['text'], chat_id, msg['from']['language_code'], qualit[chat_id], msg['message_id'])).start()
 def start2(msg):
-    print(msg)
     content_type, chat_type, chat_id = telepot.glance(msg)
+    conn = sqlite3.connect(local + "/dwsongs.db")
+    c = conn.cursor()
+    c.execute("SELECT banned FROM BANNED where banned = '%d'" % chat_id)
+    if c.fetchone() != None:
+     return
     try:
-       msg['from']['language_code']
+       time = msg['date'] - date[chat_id]['time']
+       date[chat_id]['time'] = msg['date']
+       if time <= 4:
+        date[chat_id]['tries'] -= 1
+        bot.sendMessage(chat_id, "It is appearing that you are trying to flood, you have to wait more that four second to send another message.\n" + str(date[chat_id]['tries']) + " possibilites :)")
+        if date[chat_id]['tries'] == 0:
+         c.execute("INSERT INTO BANNED(banned) values('%d')" % chat_id)
+         conn.commit()
+         bot.sendMessage(chat_id, "You are banned :)")
+         return
     except KeyError:
-       msg['from'] = {"language_code": "en"}
+       date[chat_id] = {"time": msg['date'], "tries": 3}
+    pprint(msg)
     if content_type == "text" and msg['text'] == "/start":
      bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Welcome to @DeezloaderRMX_bot"))
      bot.sendPhoto(chat_id, open("example.jpg", "rb"), caption=translate(msg['from']['language_code'], "The bot commands can find here"))
