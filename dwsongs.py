@@ -487,6 +487,7 @@ def start1(msg):
         if date[chat_id]['tries'] == 0:
          c.execute("INSERT INTO BANNED(banned) values('%d')" % chat_id)
          conn.commit()
+         del date[chat_id]
          bot.sendMessage(chat_id, "You are banned :)")
          return
     except KeyError:
@@ -552,6 +553,7 @@ def start2(msg):
         if date[chat_id]['tries'] == 0:
          c.execute("INSERT INTO BANNED(banned) values('%d')" % chat_id)
          conn.commit()
+         del date[chat_id]
          bot.sendMessage(chat_id, "You are banned :)")
          return
     except KeyError:
