@@ -504,7 +504,7 @@ def start1(msg):
     lang = msg['from']['language_code']
     if content_type == "text" and msg['text'] == "/start":
      bot.sendMessage(chat_id, translate(lang, "Welcome to @DeezloaderRMX_bot"))
-     bot.sendPhoto(chat_id, open("example.jpg", "rb"), caption="The bot commands can find here")
+     bot.sendPhoto(chat_id, open("example.jpg", "rb"), caption=translate(lang, "The bot commands can find here"))
      bot.sendMessage(chat_id, translate(lang, "Please select between"))
      try:
         qualit[chat_id]
