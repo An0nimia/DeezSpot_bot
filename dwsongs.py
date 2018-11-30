@@ -406,9 +406,10 @@ def download(msg):
        msg['from']['language_code'] 
     except KeyError:
        msg['from'] = {"language_code": "en"}
+    lang = msg['from']['language_code']   
     tags = query_data.split(">")
     if query_data == "Infos with too many bytes" or query_data == "No informations":
-     bot.answerCallbackQuery(query_id, translate(msg['from']['language_code'], query_data))
+     bot.answerCallbackQuery(query_id, translate(lang, query_data))
     elif len(tags) == 2:
      bot.answerCallbackQuery(query_id, text="Album: " + tags[0] + "\nDate: " + tags[1], show_alert=True)
     elif len(tags) == 3:
@@ -419,18 +420,18 @@ def download(msg):
         if ans != "1":
          try:
             if users[from_id] == 2:
-             bot.answerCallbackQuery(query_id, translate(msg['from']['language_code'], "Wait to finish and press download again, did you thought that you could download how much songs did you want? :)"), show_alert=True)
+             bot.answerCallbackQuery(query_id, translate(lang, "Wait to finish and press download again, did you thought that you could download how much songs did you want? :)"), show_alert=True)
              return
             else:
                 users[from_id] += 1
          except KeyError:
             users[from_id] = 1
-        bot.answerCallbackQuery(query_id, translate(msg['from']['language_code'], "Song is downloading"))
+        bot.answerCallbackQuery(query_id, translate(lang, "Song is downloading"))
         try:
            qualit[from_id]
         except KeyError:
            qualit[from_id] = "MP3_320"
-        Thread(target=Link, args=(query_data, from_id, msg['from']['language_code'], qualit[from_id], msg['message']['message_id'])).start()
+        Thread(target=Link, args=(query_data, from_id, lang, qualit[from_id], msg['message']['message_id'])).start()
 def search(msg):
     global spo
     query_id, from_id, query_string = telepot.glance(msg, flavor='inline_query')
@@ -473,6 +474,11 @@ def up(msg):
     pass
 def start1(msg):
     content_type, chat_type, chat_id = telepot.glance(msg)
+    try:
+       msg['from']['language_code']
+    except KeyError:
+       msg['from'] = {"language_code": "en"}
+    lang = msg['from']['language_code']
     conn = sqlite3.connect(local + "/dwsongs.db")
     c = conn.cursor()
     c.execute("SELECT banned FROM BANNED where banned = '%d'" % chat_id)
@@ -482,38 +488,38 @@ def start1(msg):
        time = msg['date'] - date[chat_id]['time']
        date[chat_id]['time'] = msg['date']
        if time <= 4:
-        date[chat_id]['tries'] -= 1
-        bot.sendMessage(chat_id, "It is appearing that you are trying to flood, you have to wait more that four second to send another message.\n" + str(date[chat_id]['tries']) + " possibilites :)")
-        if date[chat_id]['tries'] == 0:
-         c.execute("INSERT INTO BANNED(banned) values('%d')" % chat_id)
-         conn.commit()
-         del date[chat_id]
-         bot.sendMessage(chat_id, "You are banned :)")
-         return
+        date[chat_id]['msg'] += 1
+        if time <= 4 and date[chat_id]['msg'] > 4:
+         date[chat_id]['msg'] = 0
+         date[chat_id]['tries'] -= 1
+         bot.sendMessage(chat_id, translate(lang, "It is appearing that you are trying to flood, you have to wait more that four second to send another message.\n" + str(date[chat_id]['tries']) + " possibilites :)"))
+         if date[chat_id]['tries'] == 0:
+          c.execute("INSERT INTO BANNED(banned) values('%d')" % chat_id)
+          conn.commit()
+          del date[chat_id]
+          bot.sendMessage(chat_id, translate(lang, "You are banned :)"))
+          return
     except KeyError:
-       date[chat_id] = {"time": msg['date'], "tries": 3}
-    try:
-       msg['from']['language_code']
-    except KeyError:
-       msg['from'] = {"language_code": "en"}
+       date[chat_id] = {"time": msg['date'], "tries": 3, "msg": 0}
+    lang = msg['from']['language_code']
     if content_type == "text" and msg['text'] == "/start":
-     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Welcome to @DeezloaderRMX_bot"))
+     bot.sendMessage(chat_id, translate(lang, "Welcome to @DeezloaderRMX_bot"))
      bot.sendPhoto(chat_id, open("example.jpg", "rb"), caption="The bot commands can find here")
-     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Please select between"))
+     bot.sendMessage(chat_id, translate(lang, "Please select between"))
      try:
         qualit[chat_id]
      except KeyError:
         qualit[chat_id] = "MP3_320"
-     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Press for search songs or album\nP.S. Remember you can do this digiting @ in your keyboard and select DeezloaderRMX_bot"),
+     bot.sendMessage(chat_id, translate(lang, "Press for search songs or album\nP.S. Remember you can do this digiting @ in your keyboard and select DeezloaderRMX_bot"),
                     reply_markup=InlineKeyboardMarkup(
                                      inline_keyboard=[
                                                 [InlineKeyboardButton(text="Search", switch_inline_query_current_chat="")]
                                      ]
                          ))
-     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Send a Deezer or Spotify link to download"))
-     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Send a song o vocal message to recognize the track"))
+     bot.sendMessage(chat_id, translate(lang, "Send a Deezer or Spotify link to download"))
+     bot.sendMessage(chat_id, translate(lang, "Send a song o vocal message to recognize the track"))
     elif content_type == "text" and msg['text'] == "/quality":
-     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Choose the quality that you want to download the song"),
+     bot.sendMessage(chat_id, translate(lang, "Choose the quality that you want to download the song"),
                      reply_markup=ReplyKeyboardMarkup(
                                  keyboard=[
                                      [KeyboardButton(text="FLAC"), KeyboardButton(text="MP3_320")],
@@ -522,23 +528,30 @@ def start1(msg):
                      ))
     elif content_type == "text" and (msg['text'] == "FLAC" or msg['text'] == "MP3_320" or msg['text'] == "MP3_256" or msg['text'] == "MP3_128"):
      qualit[chat_id] = msg['text']
-     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "The songs will be downloaded with " + msg['text'] + " quality"), reply_markup=ReplyKeyboardRemove())
+     bot.sendMessage(chat_id, translate(lang, "The songs will be downloaded with " + msg['text'] + " quality"), reply_markup=ReplyKeyboardRemove())
      if msg['text'] != "MP3_128":
-      bot.sendMessage(chat_id, translate(msg['from']['language_code'], "The songs that cannot be downloaded with the quality that you choose will be downloaded in quality MP3_128"))
+      bot.sendMessage(chat_id, translate(lang, "The songs that cannot be downloaded with the quality that you choose will be downloaded in quality MP3_128"))
     elif content_type == "voice" or content_type == "audio":
      try:
         qualit[chat_id]
      except KeyError:
         qualit[chat_id] = "MP3_320"
-     Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, msg['from']['language_code'])).start()
+     Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, lang)).start()
+    elif content_type == "text" and msg['text'] == "/info":
+     bot.sendMessage(chat_id, translate(lang, "Version: 1.0\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia"))
     elif content_type == "text":
      try:
         qualit[chat_id]
      except KeyError:
         qualit[chat_id] = "MP3_320"
-     Thread(target=Link, args=(msg['text'], chat_id, msg['from']['language_code'], qualit[chat_id], msg['message_id'])).start()
+     Thread(target=Link, args=(msg['text'], chat_id, lang, qualit[chat_id], msg['message_id'])).start()
 def start2(msg):
     content_type, chat_type, chat_id = telepot.glance(msg)
+    try:
+       msg['from']['language_code']
+    except KeyError:
+       msg['from'] = {"language_code": "en"}
+    lang = msg['from']['language_code']
     conn = sqlite3.connect(local + "/dwsongs.db")
     c = conn.cursor()
     c.execute("SELECT banned FROM BANNED where banned = '%d'" % chat_id)
@@ -548,35 +561,38 @@ def start2(msg):
        time = msg['date'] - date[chat_id]['time']
        date[chat_id]['time'] = msg['date']
        if time <= 4:
-        date[chat_id]['tries'] -= 1
-        bot.sendMessage(chat_id, "It is appearing that you are trying to flood, you have to wait more that four second to send another message.\n" + str(date[chat_id]['tries']) + " possibilites :)")
-        if date[chat_id]['tries'] == 0:
-         c.execute("INSERT INTO BANNED(banned) values('%d')" % chat_id)
-         conn.commit()
-         del date[chat_id]
-         bot.sendMessage(chat_id, "You are banned :)")
-         return
+        date[chat_id]['msg'] += 1
+        if time <= 4 and date[chat_id]['msg'] > 4:
+         date[chat_id]['msg'] = 0
+         date[chat_id]['tries'] -= 1
+         bot.sendMessage(chat_id, translate(lang, "It is appearing that you are trying to flood, you have to wait more that four second to send another message.\n" + str(date[chat_id]['tries']) + " possibilites :)"))
+         if date[chat_id]['tries'] == 0:
+          c.execute("INSERT INTO BANNED(banned) values('%d')" % chat_id)
+          conn.commit()
+          del date[chat_id]
+          bot.sendMessage(chat_id, translate(lang, "You are banned :)"))
+          return
     except KeyError:
-       date[chat_id] = {"time": msg['date'], "tries": 3}
+       date[chat_id] = {"time": msg['date'], "tries": 3, "msg": 0}
     pprint(msg)
     if content_type == "text" and msg['text'] == "/start":
-     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Welcome to @DeezloaderRMX_bot"))
-     bot.sendPhoto(chat_id, open("example.jpg", "rb"), caption=translate(msg['from']['language_code'], "The bot commands can find here"))
-     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Please select between"))
+     bot.sendMessage(chat_id, translate(lang, "Welcome to @DeezloaderRMX_bot"))
+     bot.sendPhoto(chat_id, open("example.jpg", "rb"), caption=translate(lang, "The bot commands can find here"))
+     bot.sendMessage(chat_id, translate(lang, "Please select between"))
      try:
         qualit[chat_id]
      except KeyError:
         qualit[chat_id] = "MP3_320"
-     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Press for search songs \nP.S. Remember you can do this digiting @ in your keyboard and select DeezloaderRMX_bot"),
+     bot.sendMessage(chat_id, translate(lang, "Press for search songs \nP.S. Remember you can do this digiting @ in your keyboard and select DeezloaderRMX_bot"),
                     reply_markup=InlineKeyboardMarkup(
                                      inline_keyboard=[
                                                 [InlineKeyboardButton(text="Search", switch_inline_query_current_chat="")]
                                      ]
                          ))
-     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Send a Deezer or Spotify link to download"))
-     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Send a song o vocal message to recognize the track"))
+     bot.sendMessage(chat_id, translate(lang, "Send a Deezer or Spotify link to download"))
+     bot.sendMessage(chat_id, translate(lang, "Send a song o vocal message to recognize the track"))
     elif content_type == "text" and msg['text'] == "/quality":
-     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Choose the quality that you want to download the song"),
+     bot.sendMessage(chat_id, translate(lang, "Choose the quality that you want to download the song"),
                      reply_markup=ReplyKeyboardMarkup(
                                  keyboard=[
                                      [KeyboardButton(text="FLAC"), KeyboardButton(text="MP3_320")],
@@ -585,15 +601,17 @@ def start2(msg):
                      )) 
     elif content_type == "text" and (msg['text'] == "FLAC" or msg['text'] == "MP3_320" or msg['text'] == "MP3_256" or msg['text'] == "MP3_128"):
      qualit[chat_id] = msg['text']
-     bot.sendMessage(chat_id, translate(msg['from']['language_code'], "The songs will be downloaded with " + msg['text'] + " quality"), reply_markup=ReplyKeyboardRemove())
+     bot.sendMessage(chat_id, translate(lang, "The songs will be downloaded with " + msg['text'] + " quality"), reply_markup=ReplyKeyboardRemove())
      if msg['text'] != "MP3_128":
-      bot.sendMessage(chat_id, translate(msg['from']['language_code'], "The songs that cannot be downloaded with the quality that you choose will be downloaded in quality MP3_128"))
+      bot.sendMessage(chat_id, translate(lang, "The songs that cannot be downloaded with the quality that you choose will be downloaded in quality MP3_128"))
     elif content_type == "voice" or content_type == "audio":
      try:
         qualit[chat_id]
      except KeyError:
         qualit[chat_id] = "MP3_320"
-     Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, msg['from']['language_code'])).start()
+     Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, lang)).start()
+    elif content_type == "text" and msg['text'] == "/info":
+     bot.sendMessage(chat_id, translate(lang, "Version: 1.0\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia"))
     elif content_type == "text":
      music = msg['text']
      try:
@@ -602,13 +620,13 @@ def start2(msg):
         qualit[chat_id] = "MP3_320"
      try:
         if users[chat_id] == 2:
-         bot.sendMessage(chat_id, translate(msg['from']['language_code'], "Wait to finish and resend the link, did you thought that you could download how much songs did you want? :)"))
+         bot.sendMessage(chat_id, translate(lang, "Wait to finish and resend the link, did you thought that you could download how much songs did you want? :)"))
         else:
             users[chat_id] += 1
-            Thread(target=Link, args=(music, chat_id, msg['from']['language_code'], qualit[chat_id], msg['message_id'])).start()
+            Thread(target=Link, args=(music, chat_id, lang, qualit[chat_id], msg['message_id'])).start()
      except KeyError:
         users[chat_id] = 1
-        Thread(target=Link, args=(music, chat_id, msg['from']['language_code'], qualit[chat_id], msg['message_id'])).start()
+        Thread(target=Link, args=(music, chat_id, lang, qualit[chat_id], msg['message_id'])).start()
 try:
    while True:
        print("1):Free")
