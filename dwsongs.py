@@ -629,11 +629,27 @@ def start2(msg):
         if users[chat_id] == 2:
          bot.sendMessage(chat_id, translate(lang, "Wait to finish and resend the link, did you thought that you could download how much songs did you want? :)"))
         else:
-            users[chat_id] += 1
-            Thread(target=Link, args=(music, chat_id, lang, qualit[chat_id], msg['message_id'])).start()
+            try:
+               msg['entities']
+               users[chat_id] += 1
+               Thread(target=Link, args=(music, chat_id, lang, qualit[chat_id], msg['message_id'])).start()
+            except KeyError:
+               bot.sendMessage(chat_id, translate(lang, "Press"),reply_markup=InlineKeyboardMarkup(
+                                     inline_keyboard=[
+                                                [InlineKeyboardButton(text="Search", switch_inline_query_current_chat=msg['text'])]
+                                     ]
+                         ))   
      except KeyError:
-        users[chat_id] = 1
-        Thread(target=Link, args=(music, chat_id, lang, qualit[chat_id], msg['message_id'])).start()
+        try:
+           msg['entities']
+           users[chat_id] = 1
+           Thread(target=Link, args=(music, chat_id, lang, qualit[chat_id], msg['message_id'])).start()
+        except KeyError:
+           bot.sendMessage(chat_id, translate(lang, "Press"),reply_markup=InlineKeyboardMarkup(
+                                     inline_keyboard=[
+                                                [InlineKeyboardButton(text="Search", switch_inline_query_current_chat=msg['text'])]
+                                     ]
+                         ))
 try:
    while True:
        print("1):Free")
