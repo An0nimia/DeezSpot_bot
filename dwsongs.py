@@ -24,7 +24,6 @@ downloa = deezloader.Login(setting.username, setting.password)
 token = setting.token
 bot = telepot.Bot(token)
 users = {}
-artist = {}
 qualit = {}
 date = {}
 array2 = []
@@ -93,10 +92,10 @@ def sendAudio(chat_id, audio, lang, music, image=None):
                 "thumb": requests.get(image).content
         }
         request = requests.post(url, params=data, files=file)
-        audio = json.loads(request.text)['result']['audio']['file_id']
         if request.status_code == 413:
          bot.sendMessage(chat_id, translate(lang, "The song is too big to be sent"))
         else:
+            audio = json.loads(request.text)['result']['audio']['file_id']
             c.execute("INSERT INTO DWSONGS(id, query, quality) values('%s', '%s', '%s')" % (music, audio, qualit[chat_id]))
             conn.commit()
        else:
@@ -538,13 +537,21 @@ def start1(msg):
         qualit[chat_id] = "MP3_320"
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, lang)).start()
     elif content_type == "text" and msg['text'] == "/info":
-     bot.sendMessage(chat_id, "Version: 1.0\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia")
+     bot.sendMessage(chat_id, "Version: 1.1\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia")
     elif content_type == "text":
      try:
         qualit[chat_id]
      except KeyError:
         qualit[chat_id] = "MP3_320"
-     Thread(target=Link, args=(msg['text'], chat_id, lang, qualit[chat_id], msg['message_id'])).start()
+     try:
+        msg['entities']
+        Thread(target=Link, args=(msg['text'], chat_id, lang, qualit[chat_id], msg['message_id'])).start()
+     except KeyError:
+        bot.sendMessage(chat_id, translate(lang, "Press"),reply_markup=InlineKeyboardMarkup(
+                                     inline_keyboard=[
+                                                [InlineKeyboardButton(text="Search", switch_inline_query_current_chat=msg['text'])]
+                                     ]
+                         ))
 def start2(msg):
     content_type, chat_type, chat_id = telepot.glance(msg)
     try:
@@ -611,7 +618,7 @@ def start2(msg):
         qualit[chat_id] = "MP3_320"
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, lang)).start()
     elif content_type == "text" and msg['text'] == "/info":
-     bot.sendMessage(chat_id, "Version: 1.0\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia")
+     bot.sendMessage(chat_id, "Version: 1.1\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia")
     elif content_type == "text":
      music = msg['text']
      try:
