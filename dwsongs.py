@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import os
+import sys
 import json
 import shutil
 import sqlite3
@@ -128,10 +129,7 @@ def track(music, chat_id, lang, quality):
                image = url['album']['cover_xl'].replace("1000", "90")
             except:
                URL = "http://www.deezer.com/track/" + music.split("/")[-1]
-               try:
-                  images = requests.get(URL).text
-               except:
-                  images = requests.get(URL).text
+               images = requests.get(URL).text
                image = BeautifulSoup(images, "html.parser").find("img", class_="img_main").get("src").replace("120", "90")
             z = downloa.download_trackdee(music, check=False, quality=quality, recursive=False)
         except deezloader.TrackNotFound:
@@ -252,12 +250,9 @@ def Link(music, chat_id, lang, quality, msg):
             None
          try:
             imag = url['album']['cover_xl']
-         except KeyError:
+         except:
             URL = "http://www.deezer.com/track/" + music.split("/")[-1]
-            try:
-               imag = requests.get(URL).text
-            except:
-               imag = requests.get(URL).text
+            imag = requests.get(URL).text
             imag = BeautifulSoup(imag, "html.parser").find("img", class_="img_main").get("src").replace("120", "1000")
          for a in url['contributors']:
              if a['role'] == "Main":
@@ -279,10 +274,8 @@ def Link(music, chat_id, lang, quality, msg):
          try:
             imag = url['cover_xl']
          except:
-            try:
-               imag = requests.get(URL).text
-            except:
-               imag = requests.get(URL).text
+            URL = "http://www.deezer.com/album/" + music.split("/")[-1]
+            imag = requests.get(URL).text
             imag = BeautifulSoup(imag, "html.parser").find("img", class_="img_main").get("src").replace("200", "1000")
          for a in url['tracks']['data']:
              image.append(imag.replace("1000", "90"))
@@ -314,7 +307,7 @@ def Link(music, chat_id, lang, quality, msg):
          if url['duration'] == 0:
           bot.sendMessage(chat_id, translate(lang, "Invalid link ;"), reply_to_message_id=msg)
           delete(chat_id)
-          return   
+          return
          bot.sendPhoto(chat_id, url['picture_xl'], caption="Creation:" + url['creation_date'] + "\nUser:" + url['creator']['name'] + "\nTracks number:" + str(url['nb_tracks']))
          for a in url['tracks']['data']:
              track(a['link'], chat_id, lang, quality)
@@ -437,7 +430,6 @@ def download(msg):
            qualit[from_id] = "MP3_320"
         Thread(target=Link, args=(query_data, from_id, lang, qualit[from_id], msg['message']['message_id'])).start()
 def search(msg):
-    global spo
     query_id, from_id, query_string = telepot.glance(msg, flavor='inline_query')
     if query_string == "":
      return
@@ -447,33 +439,34 @@ def search(msg):
     if c.fetchone() != None:
      return
     try:
-       search1 = spo.search(q=query_string, limit=20)['tracks']['items']
+       search1 = json.loads(requests.get("https://api.deezer.com/search?q=" + query_string.replace("#", "")).text)
     except:
-       token = generate_token()
-       spo = spotipy.Spotify(auth=token)
-       search1 = spo.search(q=query_string, limit=20)['tracks']['items']
+       search1 = json.loads(requests.get("https://api.deezer.com/search?q=" + query_string.replace("#", "")).text)
     try:
-       search2 = spo.search(q="album:" + query_string, limit=20)['tracks']['items']
-    except:
-       token = generate_token()
-       spo = spotipy.Spotify(auth=token)
-       search2 = spo.search(q="album:" + query_data, limit=20)['tracks']['items']
-    for a in search2:
-        search1.append({"external_urls": {"spotify": a['album']['external_urls']['spotify']}})
-        search1[len(search1) - 1]['name'] = a['album']['name'] + " (Album)"
-        search1[len(search1) - 1]['artists'] = a['artists']
-        search1[len(search1) - 1]['album'] = {"images": [a['album']['images'][0]]}
-    result = []
-    try:
-       for a in search1:
-           if not a['external_urls']['spotify'] in str(result):
-            result.append(InlineQueryResultArticle(id=a['external_urls']['spotify'], title=a['name'] + "\n" + a['artists'][0]['name'], thumb_url=a['album']['images'][0]['url'], input_message_content=InputTextMessageContent(message_text=a['external_urls']['spotify'])))
-    except IndexError:
-       return
-    try:
-       bot.answerInlineQuery(query_id, result)
-    except telepot.exception.TelegramError:
+       if search1['error']:
+        return
+    except KeyError:
        None
+    search1 = search1['data']
+    for a in search1:
+        try:
+           if "https://www.deezer.com/album/" + str(a['album']['id']) in str(search1):
+            continue
+        except KeyError:
+           continue    
+        search1.append({"link": "https://www.deezer.com/album/" + str(a['album']['id'])})
+        search1[len(search1) - 1]['title'] = a['album']['title'] + " (Album)"
+        search1[len(search1) - 1]['artist'] = {"name": a['artist']['name']}
+        try:
+           search1[len(search1) - 1]['album'] = {"cover_xl": a['album']['cover_xl']}
+        except:
+           try:
+              url = requests.get("https://www.deezer.com/album/" + str(a['album']['id']).text)
+           except:
+              url = requests.get("https://www.deezer.com/album/" + str(a['album']['id']).text)
+           search1[len(search1) - 1]['album'] = {"cover_xl": BeautifulSoup(url, "html.parser").find("img", class_="img_main").get("src").replace("200", "1000")}
+    result = [InlineQueryResultArticle(id=a['link'], title=a['title'] + "\n" + a['artist']['name'], thumb_url=a['album']['cover_xl'], input_message_content=InputTextMessageContent(message_text=a['link'])) for a in search1]
+    bot.answerInlineQuery(query_id, result)
 def up(msg):
     pass
 def start1(msg):
@@ -556,7 +549,7 @@ def start1(msg):
                                      inline_keyboard=[
                                                 [InlineKeyboardButton(text="Search", switch_inline_query_current_chat=msg['text'])]
                                      ]
-                         ))
+                        ))
 def start2(msg):
     content_type, chat_type, chat_id = telepot.glance(msg)
     try:
@@ -643,7 +636,7 @@ def start2(msg):
                                      inline_keyboard=[
                                                 [InlineKeyboardButton(text="Search", switch_inline_query_current_chat=msg['text'])]
                                      ]
-                         ))   
+                               ))   
      except KeyError:
         try:
            msg['entities']
@@ -654,38 +647,37 @@ def start2(msg):
                                      inline_keyboard=[
                                                 [InlineKeyboardButton(text="Search", switch_inline_query_current_chat=msg['text'])]
                                      ]
-                         ))
+                           ))
 try:
+   print("1):Free")
+   print("2):Strict")
+   print("3):Exit")
+   ans = input("Choose:")
+   if ans == "1":
+    bot.message_loop({
+                      "chat": start1,
+                      "callback_query": download,
+                      "inline_query": search,
+                      "chosen_inline_result": up
+                    })
+   elif ans == "2":
+    bot.message_loop({
+                      "chat": start2,
+                      "callback_query": download,
+                      "inline_query": search,
+                     "chosen_inline_result": up
+                    })
+   else:
+       sys.exit(0)
+   print("Bot started")
    while True:
-       print("1):Free")
-       print("2):Strict")
-       print("3):Exit")
-       ans = input("Choose:")
-       if ans == "1":
-        bot.message_loop({
-                          "chat": start1,
-                          "callback_query": download,
-                          "inline_query": search,
-                          "chosen_inline_result": up
-                         })
-       elif ans == "2":
-        bot.message_loop({
-                          "chat": start2,
-                          "callback_query": download,
-                          "inline_query": search,
-                          "chosen_inline_result": up
-                         })
-       else:
-           break
-       print("Bot started")
-       while True:
-           sleep(8)
-           if temp == 1 and (goes == 0 or goes == 2):
-            if len(array2) == len(array3):
-             for a in os.listdir(local + "/Songs"):
-                 shutil.rmtree(local + "/Songs/" + a)
-             del array2[:]
-             del array3[:]
+       sleep(1)
+       if temp == 1 and (goes == 0 or goes == 2):
+        if len(array2) == len(array3):
+         for a in os.listdir(local + "/Songs"):
+             shutil.rmtree(local + "/Songs/" + a)
+         del array2[:]
+         del array3[:]
 except KeyboardInterrupt:
    os.rmdir(local + "/Songs")
    print("\nSTOPPED")
