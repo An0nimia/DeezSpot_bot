@@ -16,6 +16,7 @@ from time import sleep
 from pprint import pprint
 from mutagen.mp3 import MP3
 from threading import Thread
+from datetime import datetime
 from mutagen.flac import FLAC
 from bs4 import BeautifulSoup
 import spotipy.oauth2 as oauth2
@@ -32,14 +33,16 @@ array3 = []
 local = os.getcwd()
 temp = 0
 goes = 0
+FMT = "%H:%M:%S"
 config = {
           "key": "d8d8e2b3e982d8413bd8f3f7f3b5b51a",
           "secret": "Xy0DL8AGiG4KBInav12P2TYMKSFRQYyclZyw3cu5",
           "host": "http://identify-eu-west-1.acrcloud.com"
 }
-if not os.path.isdir(local + "/Songs"):
- os.makedirs(local + "/Songs")
-conn = sqlite3.connect(local + "/dwsongs.db")
+if not os.path.isdir("Songs"):
+ os.makedirs("Songs")
+db_file = local + "/dwsongs.db"
+conn = sqlite3.connect(db_file)
 c = conn.cursor()
 try:
    c.execute("CREATE TABLE DWSONGS (id text, query text, quality text)")
@@ -52,6 +55,32 @@ def generate_token():
     return token
 spotoken = generate_token()
 spo = spotipy.Spotify(auth=spotoken)
+def check_flood(chat_id, lang, msg):
+    conn = sqlite3.connect(db_file)
+    c = conn.cursor()
+    c.execute("SELECT banned FROM BANNED where banned = '%d'" % chat_id)
+    if c.fetchone() != None:
+     return "BANNED"
+    try:
+       time = msg['date'] - date[chat_id]['time']
+       date[chat_id]['time'] = msg['date']
+       if time <= 4:
+        date[chat_id]['msg'] += 1
+        if time <= 4 and date[chat_id]['msg'] > 4:
+         date[chat_id]['msg'] = 0
+         date[chat_id]['tries'] -= 1
+         bot.sendMessage(chat_id, translate(lang, "It is appearing that you are trying to flood, you have to wait more that four second to send another message.\n" + str(date[chat_id]['tries']) + " possibilites :)"))
+         if date[chat_id]['tries'] == 0:
+          c.execute("INSERT INTO BANNED(banned) values('%d')" % chat_id)
+          conn.commit()
+          del date[chat_id]
+          bot.sendMessage(chat_id, translate(lang, "You are banned :)"))
+          return
+    except KeyError:
+       try: 
+          date[chat_id] = {"time": msg['date'], "tries": 3, "msg": 0}
+       except KeyError:
+          None
 def translate(language, sms):
     try:
        language = language.split("-")[0]
@@ -70,8 +99,6 @@ def delete(chat_id):
     temp = 1
 def sendAudio(chat_id, audio, lang, music, image=None):
     bot.sendChatAction(chat_id, "upload_audio")
-    conn = sqlite3.connect(local + "/dwsongs.db")
-    c = conn.cursor()
     try:
        url = "https://api.telegram.org/bot" + token + "/sendAudio"
        if os.path.isfile(audio):
@@ -97,16 +124,18 @@ def sendAudio(chat_id, audio, lang, music, image=None):
          bot.sendMessage(chat_id, translate(lang, "The song is too big to be sent"))
         else:
             audio = json.loads(request.text)['result']['audio']['file_id']
+            conn = sqlite3.connect(local + "/dwsongs.db")
+            c = conn.cursor()
             c.execute("INSERT INTO DWSONGS(id, query, quality) values('%s', '%s', '%s')" % (music, audio, qualit[chat_id]))
             conn.commit()
+            conn.close()
        else:
            bot.sendAudio(chat_id, audio)
-    except:
+    except Exception as a:
        bot.sendMessage(chat_id, translate(lang, "An error has occured during sending song, please contact @An0nimia for explain the issue, thanks :)"))
-    conn.close()
 def track(music, chat_id, lang, quality):
     global spo
-    conn = sqlite3.connect(local + "/dwsongs.db")
+    conn = sqlite3.connect(db_file)
     c = conn.cursor()
     c.execute("SELECT query FROM DWSONGS WHERE id = '%s' and quality = '%s'" % (music, quality))
     z = c.fetchone()
@@ -125,12 +154,11 @@ def track(music, chat_id, lang, quality):
             z = downloa.download_trackspo(music, check=False, quality=quality, recursive=False)
            elif "deezer" in music:
             url = json.loads(requests.get("http://api.deezer.com/track/" + music.split("/")[-1]).text)
-            try:
-               image = url['album']['cover_xl'].replace("1000", "90")
-            except:
-               URL = "http://www.deezer.com/track/" + music.split("/")[-1]
-               images = requests.get(URL).text
-               image = BeautifulSoup(images, "html.parser").find("img", class_="img_main").get("src").replace("120", "90")
+            image = url['album']['cover_xl'].replace("1000", "90")
+            if image == "":
+             URL = "http://www.deezer.com/album/" + music.split("/")[-1]
+             imag = requests.get(URL).text
+             image = BeautifulSoup(imag, "html.parser").find("img", class_="img_main").get("src").replace("120", "90")
             z = downloa.download_trackdee(music, check=False, quality=quality, recursive=False)
         except deezloader.TrackNotFound:
            try:
@@ -140,7 +168,7 @@ def track(music, chat_id, lang, quality):
                z = dwytsongs.download_trackdee(music, check=False)
            except dwytsongs.TrackNotFound as error:
               bot.sendMessage(chat_id, translate(lang, str(error) + " :("))
-        except:
+        except Exception as a:
            bot.sendMessage(chat_id, translate(lang, "An error has occured during downloading song, please contact @An0nimia for explain the issue, thanks :)"))
            conn.close()
            return
@@ -152,7 +180,7 @@ def Link(music, chat_id, lang, quality, msg):
     links2 = []
     image = []
     array3.append(chat_id)
-    conn = sqlite3.connect(local + "/dwsongs.db")
+    conn = sqlite3.connect(db_file)
     c = conn.cursor()
     try:
        if "spotify" in music:
@@ -248,16 +276,12 @@ def Link(music, chat_id, lang, quality, msg):
              return
          except KeyError:
             None
-         try:
-            imag = url['album']['cover_xl']
-         except:
-            URL = "http://www.deezer.com/track/" + music.split("/")[-1]
-            imag = requests.get(URL).text
-            imag = BeautifulSoup(imag, "html.parser").find("img", class_="img_main").get("src").replace("120", "1000")
-         for a in url['contributors']:
-             if a['role'] == "Main":
-              artist = a['name']
-              break
+         imag = url['album']['cover_xl']
+         if imag == "":
+          URL = "http://www.deezer.com/album/" + music.split("/")[-1]
+          imag = requests.get(URL).text
+          imag = BeautifulSoup(imag, "html.parser").find("img", class_="img_main").get("src").replace("120", "1000")
+         artist = url['artist']['name']
          bot.sendPhoto(chat_id, imag, caption="Track:" + url['title'] + "\nArtist:" + artist + "\nAlbum:" + url['album']['title'] + "\nDate:" + url['album']['release_date'])
          track(music, chat_id, lang, quality)
         elif "album/" in music:
@@ -271,22 +295,18 @@ def Link(music, chat_id, lang, quality, msg):
              return
          except KeyError:
             None
-         try:
-            imag = url['cover_xl']
-         except:
-            URL = "http://www.deezer.com/album/" + music.split("/")[-1]
-            imag = requests.get(URL).text
-            imag = BeautifulSoup(imag, "html.parser").find("img", class_="img_main").get("src").replace("200", "1000")
+         imag = url['cover_xl']
+         if imag == "":
+          URL = "http://www.deezer.com/album/" + music.split("/")[-1]
+          imag = requests.get(URL).text
+          imag = BeautifulSoup(imag, "html.parser").find("img", class_="img_main").get("src").replace("200", "1000")
          for a in url['tracks']['data']:
              image.append(imag.replace("1000", "90"))
              c.execute("SELECT query FROM DWSONGS WHERE id = '%s' and quality = '%s'" % (a['link'], quality))
              links2.append(a['link'])
              if c.fetchone() != None:
               links1.append(a['link'])
-         for a in url['contributors']:
-             if a['role'] == "Main":
-              artist = a['name']
-              break
+         artist = url['artist']['name']
          bot.sendPhoto(chat_id, imag, caption="Album:" + url['title'] + "\nArtist:" + artist + "\nDate:" + url['release_date'] + "\nTracks number:" + str(url['nb_tracks']))
          if len(links1) <= (url['nb_tracks'] // 2):
           z = downloa.download_albumdee(music, check=False, quality=quality, recursive=False)
@@ -321,14 +341,13 @@ def Link(music, chat_id, lang, quality, msg):
           None
     except deezloader.AlbumNotFound:
        bot.sendMessage(chat_id, translate(lang, "Album not found :("))
-    except:
-       bot.sendMessage(chat_id, translate(lang, "An error has occurred while sending the song. For more information, please contact @An0nimia Thanks :)"))
+    except Exception as a:
+       bot.sendMessage(chat_id, translate(lang, "An error has occured during downloading song, please contact @An0nimia for explain the issue, thanks :)"))
     bot.sendMessage(chat_id, translate(lang, "FINISHED :)"), reply_to_message_id=msg)
     delete(chat_id)
 def Audio(audio, chat_id, lang):
     global spo
     global goes
-    bot.sendChatAction(chat_id, "upload_photo")
     goes = 1
     file = local + "/Songs/" + audio + ".ogg"
     bot.download_file(audio, file)
@@ -340,6 +359,7 @@ def Audio(audio, chat_id, lang):
     if audio['status']['msg'] != "Success":
      bot.sendMessage(chat_id, translate(lang, "Sorry cannot detect the song from audio :(, retry..."))
     else:
+        bot.sendChatAction(chat_id, "upload_photo")
         artist = audio['metadata']['music'][0]['artists'][0]['name']
         track = audio['metadata']['music'][0]['title']
         album = audio['metadata']['music'][0]['album']['name']
@@ -433,10 +453,11 @@ def search(msg):
     query_id, from_id, query_string = telepot.glance(msg, flavor='inline_query')
     if query_string == "":
      return
-    conn = sqlite3.connect(local + "/dwsongs.db")
-    c = conn.cursor()
-    c.execute("SELECT banned FROM BANNED where banned = '%d'" % from_id)
-    if c.fetchone() != None:
+    try:
+       msg['from']['language_code']
+    except KeyError:
+       msg['from'] = {"language_code": "en"}
+    if check_flood(from_id, msg['from']['language_code'], msg) == "BANNED":
      return
     try:
        search1 = json.loads(requests.get("https://api.deezer.com/search?q=" + query_string.replace("#", "")).text)
@@ -466,7 +487,10 @@ def search(msg):
               url = requests.get("https://www.deezer.com/album/" + str(a['album']['id']).text)
            search1[len(search1) - 1]['album'] = {"cover_xl": BeautifulSoup(url, "html.parser").find("img", class_="img_main").get("src").replace("200", "1000")}
     result = [InlineQueryResultArticle(id=a['link'], title=a['title'] + "\n" + a['artist']['name'], thumb_url=a['album']['cover_xl'], input_message_content=InputTextMessageContent(message_text=a['link'])) for a in search1]
-    bot.answerInlineQuery(query_id, result)
+    try:
+       bot.answerInlineQuery(query_id, result)
+    except telepot.exception.TelegramError:
+       None
 def up(msg):
     pass
 def start1(msg):
@@ -476,33 +500,10 @@ def start1(msg):
     except KeyError:
        msg['from'] = {"language_code": "en"}
     lang = msg['from']['language_code']
-    conn = sqlite3.connect(local + "/dwsongs.db")
-    c = conn.cursor()
-    c.execute("SELECT banned FROM BANNED where banned = '%d'" % chat_id)
-    if c.fetchone() != None:
+    if check_flood(chat_id, lang, msg) == "BANNED":
      return
-    try:
-       time = msg['date'] - date[chat_id]['time']
-       date[chat_id]['time'] = msg['date']
-       if time <= 4:
-        date[chat_id]['msg'] += 1
-        if time <= 4 and date[chat_id]['msg'] > 4:
-         date[chat_id]['msg'] = 0
-         date[chat_id]['tries'] -= 1
-         bot.sendMessage(chat_id, translate(lang, "It is appearing that you are trying to flood, you have to wait more that four second to send another message.\n" + str(date[chat_id]['tries']) + " possibilites :)"))
-         if date[chat_id]['tries'] == 0:
-          c.execute("INSERT INTO BANNED(banned) values('%d')" % chat_id)
-          conn.commit()
-          del date[chat_id]
-          bot.sendMessage(chat_id, translate(lang, "You are banned :)"))
-          return
-    except KeyError:
-       date[chat_id] = {"time": msg['date'], "tries": 3, "msg": 0}
-    lang = msg['from']['language_code']
     if content_type == "text" and msg['text'] == "/start":
-     bot.sendMessage(chat_id, translate(lang, "Welcome to @DeezloaderRMX_bot"))
      bot.sendPhoto(chat_id, open("example.jpg", "rb"), caption=translate(lang, "The bot commands can find here"))
-     bot.sendMessage(chat_id, translate(lang, "Please select between"))
      try:
         qualit[chat_id]
      except KeyError:
@@ -513,8 +514,7 @@ def start1(msg):
                                                 [InlineKeyboardButton(text="Search", switch_inline_query_current_chat="")]
                                      ]
                          ))
-     bot.sendMessage(chat_id, translate(lang, "Send a Deezer or Spotify link to download"))
-     bot.sendMessage(chat_id, translate(lang, "Send a song o vocal message to recognize the track"))
+     bot.sendMessage(chat_id, translate(lang, "Send a Deezer or Spotify link to download\nSend a song o vocal message to recognize the track"))
     elif content_type == "text" and msg['text'] == "/quality":
      bot.sendMessage(chat_id, translate(lang, "Choose the quality that you want to download the song"),
                      reply_markup=ReplyKeyboardMarkup(
@@ -526,8 +526,8 @@ def start1(msg):
     elif content_type == "text" and (msg['text'] == "FLAC" or msg['text'] == "MP3_320" or msg['text'] == "MP3_256" or msg['text'] == "MP3_128"):
      qualit[chat_id] = msg['text']
      bot.sendMessage(chat_id, translate(lang, "The songs will be downloaded with " + msg['text'] + " quality"), reply_markup=ReplyKeyboardRemove())
-     if msg['text'] != "MP3_128":
-      bot.sendMessage(chat_id, translate(lang, "The songs that cannot be downloaded with the quality that you choose will be downloaded in quality MP3_128"))
+     if msg['text'] != "MP3_320":
+      bot.sendMessage(chat_id, translate(lang, "The songs that cannot be downloaded with the quality that you choose will be downloaded in quality MP3_320"))
     elif content_type == "voice" or content_type == "audio":
      try:
         qualit[chat_id]
@@ -535,7 +535,7 @@ def start1(msg):
         qualit[chat_id] = "MP3_320"
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, lang)).start()
     elif content_type == "text" and msg['text'] == "/info":
-     bot.sendMessage(chat_id, "Version: 1.2\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia")
+     bot.sendMessage(chat_id, "Version: 1.3\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia")
     elif content_type == "text":
      try:
         qualit[chat_id]
@@ -557,33 +557,11 @@ def start2(msg):
     except KeyError:
        msg['from'] = {"language_code": "en"}
     lang = msg['from']['language_code']
-    conn = sqlite3.connect(local + "/dwsongs.db")
-    c = conn.cursor()
-    c.execute("SELECT banned FROM BANNED where banned = '%d'" % chat_id)
-    if c.fetchone() != None:
+    if check_flood(chat_id, lang, msg) == "BANNED":
      return
-    try:
-       time = msg['date'] - date[chat_id]['time']
-       date[chat_id]['time'] = msg['date']
-       if time <= 4:
-        date[chat_id]['msg'] += 1
-        if time <= 4 and date[chat_id]['msg'] > 4:
-         date[chat_id]['msg'] = 0
-         date[chat_id]['tries'] -= 1
-         bot.sendMessage(chat_id, translate(lang, "It is appearing that you are trying to flood, you have to wait more that four second to send another message.\n" + str(date[chat_id]['tries']) + " possibilites :)"))
-         if date[chat_id]['tries'] == 0:
-          c.execute("INSERT INTO BANNED(banned) values('%d')" % chat_id)
-          conn.commit()
-          del date[chat_id]
-          bot.sendMessage(chat_id, translate(lang, "You are banned :)"))
-          return
-    except KeyError:
-       date[chat_id] = {"time": msg['date'], "tries": 3, "msg": 0}
     pprint(msg)
     if content_type == "text" and msg['text'] == "/start":
-     bot.sendMessage(chat_id, translate(lang, "Welcome to @DeezloaderRMX_bot"))
      bot.sendPhoto(chat_id, open("example.jpg", "rb"), caption=translate(lang, "The bot commands can find here"))
-     bot.sendMessage(chat_id, translate(lang, "Please select between"))
      try:
         qualit[chat_id]
      except KeyError:
@@ -594,8 +572,7 @@ def start2(msg):
                                                 [InlineKeyboardButton(text="Search", switch_inline_query_current_chat="")]
                                      ]
                          ))
-     bot.sendMessage(chat_id, translate(lang, "Send a Deezer or Spotify link to download"))
-     bot.sendMessage(chat_id, translate(lang, "Send a song o vocal message to recognize the track"))
+     bot.sendMessage(chat_id, translate(lang, "Send a Deezer or Spotify link to download\nSend a song o vocal message to recognize the track"))
     elif content_type == "text" and msg['text'] == "/quality":
      bot.sendMessage(chat_id, translate(lang, "Choose the quality that you want to download the song"),
                      reply_markup=ReplyKeyboardMarkup(
@@ -608,7 +585,7 @@ def start2(msg):
      qualit[chat_id] = msg['text']
      bot.sendMessage(chat_id, translate(lang, "The songs will be downloaded with " + msg['text'] + " quality"), reply_markup=ReplyKeyboardRemove())
      if msg['text'] != "MP3_128":
-      bot.sendMessage(chat_id, translate(lang, "The songs that cannot be downloaded with the quality that you choose will be downloaded in quality MP3_128"))
+      bot.sendMessage(chat_id, translate(lang, "The songs that cannot be downloaded with the quality that you choose will be downloaded in quality MP3_320"))
     elif content_type == "voice" or content_type == "audio":
      try:
         qualit[chat_id]
@@ -616,7 +593,7 @@ def start2(msg):
         qualit[chat_id] = "MP3_320"
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, lang)).start()
     elif content_type == "text" and msg['text'] == "/info":
-     bot.sendMessage(chat_id, "Version: 1.2\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia")
+     bot.sendMessage(chat_id, "Version: 1.3\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia")
     elif content_type == "text":
      music = msg['text']
      try:
@@ -678,6 +655,9 @@ try:
              shutil.rmtree(local + "/Songs/" + a)
          del array2[:]
          del array3[:]
+       now = datetime.now()
+       if datetime.strptime(str(now.hour) + ":" + str(now.minute) + ":" + str(now.second), FMT) == datetime.strptime("00:00:00", FMT) or datetime.strptime(str(now.hour) + ":" + str(now.minute) + ":" + str(now.second), FMT) == datetime.strptime("12:00:00", FMT):
+        downloa = deezloader.Login(setting.username, setting.password)
 except KeyboardInterrupt:
    os.rmdir(local + "/Songs")
    print("\nSTOPPED")
