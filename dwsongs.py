@@ -265,11 +265,11 @@ def Link(music, chat_id, lang, quality, msg):
          if tracks['tracks']['total'] != 100:
             for a in range(tracks['tracks']['total'] // 100):
                 try:
-                   tracks = spo.next(tracks)
+                   tracks = spo.next(tracks['tracks'])
                 except:
                    token = generate_token()
                    spo = spotipy.Spotify(auth=token)
-                   tracks = spo.next(tracks)
+                   tracks = spo.next(tracks['tracks'])
                 for a in tracks['items']:
                     track(a['track']['external_urls']['spotify'], chat_id, lang, quality)
        elif "deezer" in music:
