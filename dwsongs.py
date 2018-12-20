@@ -158,11 +158,12 @@ def track(music, chat_id, lang, quality):
             z = downloa.download_trackspo(music, check=False, quality=quality, recursive=False)
            elif "deezer" in music:
             url = json.loads(requests.get("http://api.deezer.com/track/" + music.split("/")[-1]).text)
-            image = url['album']['cover_xl'].replace("1000", "90")
-            if image == "":
-             URL = "http://www.deezer.com/album/" + music.split("/")[-1]
-             imag = requests.get(URL).text
-             image = BeautifulSoup(imag, "html.parser").find("img", class_="img_main").get("src").replace("120", "90")
+            try:
+               image = url['album']['cover_xl'].replace("1000", "90")
+            except AttributeError:
+               URL = "http://www.deezer.com/track/" + music.split("/")[-1]
+               imag = requests.get(URL).text
+               image = BeautifulSoup(imag, "html.parser").find("img", class_="img_main").get("src").replace("120", "90")
             z = downloa.download_trackdee(music, check=False, quality=quality, recursive=False)
         except deezloader.TrackNotFound:
            try:
@@ -172,7 +173,7 @@ def track(music, chat_id, lang, quality):
                z = dwytsongs.download_trackdee(music, check=False)
            except dwytsongs.TrackNotFound as error:
               bot.sendMessage(chat_id, translate(lang, str(error) + " :("))
-        except Exception as a:
+        except KeyboardInterrupt:
            logging.info(chat_id)
            logging.warning(a)
            bot.sendMessage(chat_id, translate(lang, "An error has occured during downloading song, please contact @An0nimia for explain the issue, thanks :)"))
@@ -283,8 +284,8 @@ def Link(music, chat_id, lang, quality, msg):
          except KeyError:
             None
          imag = url['album']['cover_xl']
-         if imag == "":
-          URL = "http://www.deezer.com/album/" + music.split("/")[-1]
+         if imag == None:
+          URL = "http://www.deezer.com/track/" + music.split("/")[-1]
           imag = requests.get(URL).text
           imag = BeautifulSoup(imag, "html.parser").find("img", class_="img_main").get("src").replace("120", "1000")
          artist = url['artist']['name']
@@ -302,7 +303,7 @@ def Link(music, chat_id, lang, quality, msg):
          except KeyError:
             None
          imag = url['cover_xl']
-         if imag == "":
+         if imag == None:
           URL = "http://www.deezer.com/album/" + music.split("/")[-1]
           imag = requests.get(URL).text
           imag = BeautifulSoup(imag, "html.parser").find("img", class_="img_main").get("src").replace("200", "1000")
@@ -347,7 +348,7 @@ def Link(music, chat_id, lang, quality, msg):
           None
     except deezloader.AlbumNotFound:
        bot.sendMessage(chat_id, translate(lang, "Album not found :("))
-    except Exception as a:
+    except KeyboardInterrupt:
        logging.info(chat_id)
        logging.warning(a)
        bot.sendMessage(chat_id, translate(lang, "An error has occured during downloading song, please contact @An0nimia for explain the issue, thanks :)"))
