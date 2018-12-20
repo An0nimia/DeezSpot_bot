@@ -8,6 +8,7 @@ import spotipy
 import telepot
 import mutagen
 import setting
+import logging
 import acrcloud
 import requests
 import dwytsongs
@@ -34,6 +35,7 @@ local = os.getcwd()
 temp = 0
 goes = 0
 FMT = "%H:%M:%S"
+logging.basicConfig(filename="dwsongs.log", level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 config = {
           "key": "d8d8e2b3e982d8413bd8f3f7f3b5b51a",
           "secret": "Xy0DL8AGiG4KBInav12P2TYMKSFRQYyclZyw3cu5",
@@ -132,6 +134,8 @@ def sendAudio(chat_id, audio, lang, music, image=None):
        else:
            bot.sendAudio(chat_id, audio)
     except Exception as a:
+       logging.info(chat_id)
+       logging.warning(a)
        bot.sendMessage(chat_id, translate(lang, "An error has occured during sending song, please contact @An0nimia for explain the issue, thanks :)"))
 def track(music, chat_id, lang, quality):
     global spo
@@ -169,6 +173,8 @@ def track(music, chat_id, lang, quality):
            except dwytsongs.TrackNotFound as error:
               bot.sendMessage(chat_id, translate(lang, str(error) + " :("))
         except Exception as a:
+           logging.info(chat_id)
+           logging.warning(a)
            bot.sendMessage(chat_id, translate(lang, "An error has occured during downloading song, please contact @An0nimia for explain the issue, thanks :)"))
            conn.close()
            return
@@ -342,6 +348,8 @@ def Link(music, chat_id, lang, quality, msg):
     except deezloader.AlbumNotFound:
        bot.sendMessage(chat_id, translate(lang, "Album not found :("))
     except Exception as a:
+       logging.info(chat_id)
+       logging.warning(a)
        bot.sendMessage(chat_id, translate(lang, "An error has occured during downloading song, please contact @An0nimia for explain the issue, thanks :)"))
     bot.sendMessage(chat_id, translate(lang, "FINISHED :)"), reply_to_message_id=msg)
     delete(chat_id)
