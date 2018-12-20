@@ -173,7 +173,7 @@ def track(music, chat_id, lang, quality):
                z = dwytsongs.download_trackdee(music, check=False)
            except dwytsongs.TrackNotFound as error:
               bot.sendMessage(chat_id, translate(lang, str(error) + " :("))
-        except KeyboardInterrupt:
+        except Exception as a:
            logging.info(chat_id)
            logging.warning(a)
            bot.sendMessage(chat_id, translate(lang, "An error has occured during downloading song, please contact @An0nimia for explain the issue, thanks :)"))
@@ -250,7 +250,7 @@ def Link(music, chat_id, lang, quality, msg):
           music,a = music.split("?")
          musi = music.split("/")
          try:
-            tracks = spo.user_playlist_tracks(musi[-3], playlist_id=musi[-1])
+            tracks = spo.user_playlist(musi[-3], playlist_id=musi[-1])
          except Exception as a:
             if not "The access token expired" in str(a):
              bot.sendMessage(chat_id, translate(lang, "Invalid link ;"), reply_to_message_id=msg)
@@ -258,11 +258,12 @@ def Link(music, chat_id, lang, quality, msg):
              return
             token = generate_token()
             spo = spotipy.Spotify(auth=token)
-            tracks = spo.user_playlist_tracks(musi[-3], playlist_id=musi[-1])
-         for a in tracks['items']:
+            tracks = spo.user_playlist(musi[-3], playlist_id=musi[-1])
+         bot.sendPhoto(chat_id, tracks['images'][0]['url'], caption="Creation:" + tracks['tracks']['items'][0]['added_at'] + "\nUser:" + tracks['owner']['display_name'] + "\nTracks number:" + str(tracks['tracks']['total']))
+         for a in tracks['tracks']['items']:
              track(a['track']['external_urls']['spotify'], chat_id, lang, quality)
-         if tracks['total'] != 100:
-            for a in range(tracks['total'] // 100):
+         if tracks['tracks']['total'] != 100:
+            for a in range(tracks['tracks']['total'] // 100):
                 try:
                    tracks = spo.next(tracks)
                 except:
@@ -348,7 +349,7 @@ def Link(music, chat_id, lang, quality, msg):
           None
     except deezloader.AlbumNotFound:
        bot.sendMessage(chat_id, translate(lang, "Album not found :("))
-    except KeyboardInterrupt:
+    except Exception as a:
        logging.info(chat_id)
        logging.warning(a)
        bot.sendMessage(chat_id, translate(lang, "An error has occured during downloading song, please contact @An0nimia for explain the issue, thanks :)"))
