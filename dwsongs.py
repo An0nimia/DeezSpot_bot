@@ -538,9 +538,9 @@ def search(msg):
          search1[len(search1) - 1]['album'] = {"cover_xl": a['album']['cover_xl']}
         else:
             try:
-               url = requests.get("https://www.deezer.com/album/" + str(a['album']['id']).text)
+               url = requests.get("https://www.deezer.com/album/" + str(a['album']['id'])).text
             except:
-               url = requests.get("https://www.deezer.com/album/" + str(a['album']['id']).text)
+               url = requests.get("https://www.deezer.com/album/" + str(a['album']['id'])).text
             search1[len(search1) - 1]['album'] = {"cover_xl": BeautifulSoup(url, "html.parser").find("img", class_="img_main").get("src").replace("200", "1000")}
     result = [InlineQueryResultArticle(id=a['link'], title=a['title'] + "\n" + a['artist']['name'], thumb_url=a['album']['cover_xl'], input_message_content=InputTextMessageContent(message_text=a['link'])) for a in search1]
     try:
@@ -591,7 +591,7 @@ def start1(msg):
         qualit[chat_id] = "MP3_320"
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, lang)).start()
     elif content_type == "text" and msg['text'] == "/info":
-     bot.sendMessage(chat_id, "Version: 1.5\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot")
+     bot.sendMessage(chat_id, "Version: 1.5.1\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot")
     elif content_type == "text":
      try:
         qualit[chat_id]
@@ -649,7 +649,7 @@ def start2(msg):
         qualit[chat_id] = "MP3_320"
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, lang)).start()
     elif content_type == "text" and msg['text'] == "/info":
-     bot.sendMessage(chat_id, "Version: 1.5\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot")
+     bot.sendMessage(chat_id, "Version: 1.5.1\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot")
     elif content_type == "text":
      music = msg['text']
      try:
