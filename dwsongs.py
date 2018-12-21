@@ -39,11 +39,12 @@ logging.basicConfig(filename="dwsongs.log", level=logging.INFO, format="%(asctim
 config = {
           "key": "d8d8e2b3e982d8413bd8f3f7f3b5b51a",
           "secret": "Xy0DL8AGiG4KBInav12P2TYMKSFRQYyclZyw3cu5",
-          "host": "http://identify-eu-west-1.acrcloud.com"
+          "host": "https://identify-eu-west-1.acrcloud.com"
 }
 if not os.path.isdir("Songs"):
  os.makedirs("Songs")
 db_file = local + "/dwsongs.db"
+loc_dir = local + "/Songs/"
 conn = sqlite3.connect(db_file)
 c = conn.cursor()
 try:
@@ -55,13 +56,13 @@ except sqlite3.OperationalError:
 def generate_token():
     token = oauth2.SpotifyClientCredentials(client_id="4fe3fecfe5334023a1472516cc99d805", client_secret="0f02b7c483c04257984695007a4a8d5c").get_access_token()
     return token
-spotoken = generate_token()
-spo = spotipy.Spotify(auth=spotoken)
+spo = spotipy.Spotify(auth=generate_token())
 def check_flood(chat_id, lang, msg):
     conn = sqlite3.connect(db_file)
     c = conn.cursor()
     c.execute("SELECT banned FROM BANNED where banned = '%d'" % chat_id)
     if c.fetchone() != None:
+     conn.close()
      return "BANNED"
     try:
        time = msg['date'] - date[chat_id]['time']
@@ -75,6 +76,7 @@ def check_flood(chat_id, lang, msg):
          if date[chat_id]['tries'] == 0:
           c.execute("INSERT INTO BANNED(banned) values('%d')" % chat_id)
           conn.commit()
+          conn.close()
           del date[chat_id]
           bot.sendMessage(chat_id, translate(lang, "You are banned :)"))
           return
@@ -87,7 +89,10 @@ def translate(language, sms):
     try:
        language = language.split("-")[0]
        api = "https://translate.yandex.net/api/v1.5/tr.json/translate?key=trnsl.1.1.20181114T193428Z.ec0fb3fb93e116c0.24b2ccfe2d150324e23a5571760e9a827d953003&text=%s&lang=en-%s" % (sms, language)
-       sms = json.loads(requests.get(api).text)['text'][0]
+       try:
+          sms = json.loads(requests.get(api).text)['text'][0]
+       except:
+          sms = json.loads(requests.get(api).text)['text'][0]
     except:
        None
     return sms
@@ -121,12 +126,15 @@ def sendAudio(chat_id, audio, lang, music, image=None):
                 "audio": audio,
                 "thumb": requests.get(image).content
         }
-        request = requests.post(url, params=data, files=file)
+        try:
+           request = requests.post(url, params=data, files=file)
+        except:
+           request = requests.post(url, params=data, files=file)
         if request.status_code == 413:
          bot.sendMessage(chat_id, translate(lang, "The song is too big to be sent"))
         else:
             audio = json.loads(request.text)['result']['audio']['file_id']
-            conn = sqlite3.connect(local + "/dwsongs.db")
+            conn = sqlite3.connect(db_file)
             c = conn.cursor()
             c.execute("INSERT INTO DWSONGS(id, query, quality) values('%s', '%s', '%s')" % (music, audio, qualit[chat_id]))
             conn.commit()
@@ -143,6 +151,7 @@ def track(music, chat_id, lang, quality):
     c = conn.cursor()
     c.execute("SELECT query FROM DWSONGS WHERE id = '%s' and quality = '%s'" % (music, quality))
     z = c.fetchone()
+    conn.close()
     if z != None:
      sendAudio(chat_id, z[0], lang, music)
     else: 
@@ -157,12 +166,18 @@ def track(music, chat_id, lang, quality):
             image = url['album']['images'][2]['url']
             z = downloa.download_trackspo(music, check=False, quality=quality, recursive=False)
            elif "deezer" in music:
-            url = json.loads(requests.get("http://api.deezer.com/track/" + music.split("/")[-1]).text)
+            try:
+               url = json.loads(requests.get("https://api.deezer.com/track/" + music.split("/")[-1]).text)
+            except:
+               url = json.loads(requests.get("https://api.deezer.com/track/" + music.split("/")[-1]).text)
             try:
                image = url['album']['cover_xl'].replace("1000", "90")
             except AttributeError:
-               URL = "http://www.deezer.com/track/" + music.split("/")[-1]
-               imag = requests.get(URL).text
+               URL = "https://www.deezer.com/track/" + music.split("/")[-1]
+               try:
+                  imag = requests.get(URL).text
+               except:
+                  imag = requests.get(URL).text
                image = BeautifulSoup(imag, "html.parser").find("img", class_="img_main").get("src").replace("120", "90")
             z = downloa.download_trackdee(music, check=False, quality=quality, recursive=False)
         except deezloader.TrackNotFound:
@@ -173,22 +188,14 @@ def track(music, chat_id, lang, quality):
                z = dwytsongs.download_trackdee(music, check=False)
            except dwytsongs.TrackNotFound as error:
               bot.sendMessage(chat_id, translate(lang, str(error) + " :("))
-        except Exception as a:
-           logging.info(chat_id)
-           logging.warning(a)
-           bot.sendMessage(chat_id, translate(lang, "An error has occured during downloading song, please contact @An0nimia for explain the issue, thanks :)"))
-           conn.close()
-           return
-        conn.close()
         sendAudio(chat_id, z, lang, music, image)
 def Link(music, chat_id, lang, quality, msg):
     global spo
+    done = 0
     links1 = []
     links2 = []
     image = []
     array3.append(chat_id)
-    conn = sqlite3.connect(db_file)
-    c = conn.cursor()
     try:
        if "spotify" in music:
         if "track/" in music:
@@ -206,6 +213,7 @@ def Link(music, chat_id, lang, quality, msg):
             url = spo.track(music)
          bot.sendPhoto(chat_id, url['album']['images'][0]['url'], caption="Track:" + url['name'] + "\nArtist:" + url['album']['artists'][0]['name'] + "\nAlbum:" + url['album']['name'] + "\nDate:" + url['album']['release_date'])
          track(music, chat_id, lang, quality)
+         done = 1
         elif "album/" in music:
          if "?" in music:
           music,a = music.split("?")
@@ -221,6 +229,8 @@ def Link(music, chat_id, lang, quality, msg):
             tracks = spo.album(music)
          for a in range(tracks['total_tracks']):
              image.append(tracks['images'][2]['url'])
+         conn = sqlite3.connect(db_file)
+         c = conn.cursor()
          for a in tracks['tracks']['items']:
              c.execute("SELECT query FROM DWSONGS WHERE id = '%s' and quality = '%s'" % (a['external_urls']['spotify'], quality))
              links2.append(a['external_urls']['spotify'])
@@ -239,12 +249,14 @@ def Link(music, chat_id, lang, quality, msg):
                     links2.append(a['external_urls']['spotify'])
                     if c.fetchone() != None:
                      links1.append(a['external_urls']['spotify'])
+         conn.close()
          bot.sendPhoto(chat_id, tracks['images'][0]['url'], caption="Album:" + tracks['name'] + "\nArtist:" + tracks['artists'][0]['name'] + "\nDate:" + tracks['release_date'] + "\nTracks number:" + str(tracks['total_tracks']))
          if len(links1) <= (tracks['total_tracks'] // 2):
           z = downloa.download_albumspo(music, check=False, quality=quality, recursive=False)
          else:
              for a in links2:
                  track(a, chat_id, lang, quality)
+         done = 1
         elif "playlist/" in music:
          if "?" in music:
           music,a = music.split("?")
@@ -272,11 +284,17 @@ def Link(music, chat_id, lang, quality, msg):
                    tracks = spo.next(tracks['tracks'])
                 for a in tracks['items']:
                     track(a['track']['external_urls']['spotify'], chat_id, lang, quality)
+         done = 1
+        else:
+            bot.sendMessage(chat_id, translate(lang, "Sorry :( The bot doesn't support this link"))
        elif "deezer" in music:
         if "track/" in music:
          if "?" in music:
           music,a = music.split("?")
-         url = json.loads(requests.get("http://api.deezer.com/track/" + music.split("/")[-1]).text)
+         try:
+            url = json.loads(requests.get("https://api.deezer.com/track/" + music.split("/")[-1]).text)
+         except:
+            url = json.loads(requests.get("https://api.deezer.com/track/" + music.split("/")[-1]).text)
          try:
             if url['error']:
              bot.sendMessage(chat_id, translate(lang, "Invalid link ;"), reply_to_message_id=msg)
@@ -286,16 +304,23 @@ def Link(music, chat_id, lang, quality, msg):
             None
          imag = url['album']['cover_xl']
          if imag == None:
-          URL = "http://www.deezer.com/track/" + music.split("/")[-1]
-          imag = requests.get(URL).text
+          URL = "https://www.deezer.com/track/" + music.split("/")[-1]
+          try:
+             imag = requests.get(URL).text
+          except:
+             imag = requests.get(URL).text
           imag = BeautifulSoup(imag, "html.parser").find("img", class_="img_main").get("src").replace("120", "1000")
          artist = url['artist']['name']
          bot.sendPhoto(chat_id, imag, caption="Track:" + url['title'] + "\nArtist:" + artist + "\nAlbum:" + url['album']['title'] + "\nDate:" + url['album']['release_date'])
          track(music, chat_id, lang, quality)
+         done = 1
         elif "album/" in music:
          if "?" in music:
           music,a = music.split("?")
-         url = json.loads(requests.get("http://api.deezer.com/album/" + music.split("/")[-1]).text)
+         try:
+            url = json.loads(requests.get("https://api.deezer.com/album/" + music.split("/")[-1]).text)
+         except:
+            url = json.loads(requests.get("https://api.deezer.com/album/" + music.split("/")[-1]).text)
          try:
             if url['error']:
              bot.sendMessage(chat_id, translate(lang, "Invalid link ;"), reply_to_message_id=msg)
@@ -305,15 +330,21 @@ def Link(music, chat_id, lang, quality, msg):
             None
          imag = url['cover_xl']
          if imag == None:
-          URL = "http://www.deezer.com/album/" + music.split("/")[-1]
-          imag = requests.get(URL).text
+          URL = "https://www.deezer.com/album/" + music.split("/")[-1]
+          try:
+             imag = requests.get(URL).text
+          except:
+             imag = requests.get(URL).text
           imag = BeautifulSoup(imag, "html.parser").find("img", class_="img_main").get("src").replace("200", "1000")
+         conn = sqlite3.connect(db_file)
+         c = conn.cursor()
          for a in url['tracks']['data']:
              image.append(imag.replace("1000", "90"))
              c.execute("SELECT query FROM DWSONGS WHERE id = '%s' and quality = '%s'" % (a['link'], quality))
              links2.append(a['link'])
              if c.fetchone() != None:
               links1.append(a['link'])
+         conn.close()
          artist = url['artist']['name']
          bot.sendPhoto(chat_id, imag, caption="Album:" + url['title'] + "\nArtist:" + artist + "\nDate:" + url['release_date'] + "\nTracks number:" + str(url['nb_tracks']))
          if len(links1) <= (url['nb_tracks'] // 2):
@@ -321,10 +352,14 @@ def Link(music, chat_id, lang, quality, msg):
          else:
              for a in links2:
                  track(a, chat_id, lang, quality)
+         done = 1
         elif "playlist/" in music:
          if "?" in music:
           music,a = music.split("?")
-         url = json.loads(requests.get("https://api.deezer.com/playlist/" + music.split("/")[-1]).text)
+         try:
+            url = json.loads(requests.get("https://api.deezer.com/playlist/" + music.split("/")[-1]).text)
+         except:
+            url = json.loads(requests.get("https://api.deezer.com/playlist/" + music.split("/")[-1]).text)
          try:
             if url['error']:
              bot.sendMessage(chat_id, translate(lang, "Invalid link ;"), reply_to_message_id=msg)
@@ -339,9 +374,9 @@ def Link(music, chat_id, lang, quality, msg):
          bot.sendPhoto(chat_id, url['picture_xl'], caption="Creation:" + url['creation_date'] + "\nUser:" + url['creator']['name'] + "\nTracks number:" + str(url['nb_tracks']))
          for a in url['tracks']['data']:
              track(a['link'], chat_id, lang, quality)
-       else:
-           delete(chat_id)
-           return
+         done = 1
+        else:
+            bot.sendMessage(chat_id, translate(lang, "Sorry :( The bot doesn't support this link"))
        try:
           for a in range(len(z)):
               sendAudio(chat_id, z[a], lang, links2[a], image[a])
@@ -349,17 +384,19 @@ def Link(music, chat_id, lang, quality, msg):
           None
     except deezloader.AlbumNotFound:
        bot.sendMessage(chat_id, translate(lang, "Album not found :("))
+       bot.sendMessage(chat_id, translate(lang, "Try to search it throught inline mode or search the link on Deezer"))
     except Exception as a:
        logging.info(chat_id)
        logging.warning(a)
        bot.sendMessage(chat_id, translate(lang, "An error has occured during downloading song, please contact @An0nimia for explain the issue, thanks :)"))
-    bot.sendMessage(chat_id, translate(lang, "FINISHED :)"), reply_to_message_id=msg)
+    if done == 1:
+     bot.sendMessage(chat_id, translate(lang, "FINISHED :)"), reply_to_message_id=msg)
     delete(chat_id)
 def Audio(audio, chat_id, lang):
     global spo
     global goes
     goes = 1
-    file = local + "/Songs/" + audio + ".ogg"
+    file = loc_dir + audio + ".ogg"
     bot.download_file(audio, file)
     audio = acrcloud.recognizer(config, file)
     try:
@@ -375,24 +412,27 @@ def Audio(audio, chat_id, lang):
         album = audio['metadata']['music'][0]['album']['name']
         try:
            date = audio['metadata']['music'][0]['release_date']
-           album += ">" + date
+           album += "_" + date
         except KeyError:
            None 
         try:
            label = audio['metadata']['music'][0]['label']
-           album += ">" + label
+           album += "_" + label
         except KeyError:
            None
         try:
            genre = audio['metadata']['music'][0]['genres'][0]['name']
-           album += ">" + genre
+           album += "_" + genre
         except KeyError:
            None
         if len(album) > 64:
          album = "Infos with too many bytes"
-        elif len(album.split(">")) == 1:
+        elif len(album.split("_")) == 1:
          album = "No informations"
-        url = json.loads(requests.get("https://api.deezer.com/search/track/?q=" + track.replace("#", "") + " + " + artist.replace("#", "")).text)
+        try: 
+           url = json.loads(requests.get("https://api.deezer.com/search/track/?q=" + track.replace("#", "") + " + " + artist.replace("#", "")).text)
+        except:
+           url = json.loads(requests.get("https://api.deezer.com/search/track/?q=" + track.replace("#", "") + " + " + artist.replace("#", "")).text) 
         try:
            for a in range(url['total'] + 1):
                if url['data'][a]['title'] == track:
@@ -401,7 +441,10 @@ def Audio(audio, chat_id, lang):
                 break
         except IndexError:
            try:
-              id = "https://open.spotify.com/track/" + audio['metadata']['music'][0]['external_metadata']['spotify']['track']['id']
+              try:
+                 id = "https://open.spotify.com/track/" + audio['metadata']['music'][0]['external_metadata']['spotify']['track']['id']
+              except:
+                 id = "https://open.spotify.com/track/" + audio['metadata']['music'][0]['external_metadata']['spotify']['track']['id']
               try:
                  url = spo.track(id)
               except:
@@ -413,7 +456,10 @@ def Audio(audio, chat_id, lang):
               None
            try:
               id = "https://www.deezer.com/track/" + str(audio['metadata']['music'][0]['external_metadata']['deezer']['track']['id'])
-              url = json.loads(requests.get("http://api.deezer.com/track/" + id.split("/")[-1]).text)
+              try:
+                 url = json.loads(requests.get("https://api.deezer.com/track/" + id.split("/")[-1]).text)
+              except:
+                 url = json.loads(requests.get("https://api.deezer.com/track/" + id.split("/")[-1]).text)
               image = url['album']['cover_xl']
            except KeyError:
               None
@@ -430,11 +476,11 @@ def Audio(audio, chat_id, lang):
 def download(msg):
     query_id, from_id, query_data = telepot.glance(msg, flavor="callback_query")
     try:
-       msg['from']['language_code'] 
+       msg['from']['language_code']
     except KeyError:
        msg['from'] = {"language_code": "en"}
-    lang = msg['from']['language_code']   
-    tags = query_data.split(">")
+    lang = msg['from']['language_code']
+    tags = query_data.split("_")
     if query_data == "Infos with too many bytes" or query_data == "No informations":
      bot.answerCallbackQuery(query_id, translate(lang, query_data))
     elif len(tags) == 2:
@@ -488,14 +534,14 @@ def search(msg):
         search1.append({"link": "https://www.deezer.com/album/" + str(a['album']['id'])})
         search1[len(search1) - 1]['title'] = a['album']['title'] + " (Album)"
         search1[len(search1) - 1]['artist'] = {"name": a['artist']['name']}
-        try:
-           search1[len(search1) - 1]['album'] = {"cover_xl": a['album']['cover_xl']}
-        except:
-           try:
-              url = requests.get("https://www.deezer.com/album/" + str(a['album']['id']).text)
-           except:
-              url = requests.get("https://www.deezer.com/album/" + str(a['album']['id']).text)
-           search1[len(search1) - 1]['album'] = {"cover_xl": BeautifulSoup(url, "html.parser").find("img", class_="img_main").get("src").replace("200", "1000")}
+        if a['album']['cover_xl'] != None:
+         search1[len(search1) - 1]['album'] = {"cover_xl": a['album']['cover_xl']}
+        else:
+            try:
+               url = requests.get("https://www.deezer.com/album/" + str(a['album']['id']).text)
+            except:
+               url = requests.get("https://www.deezer.com/album/" + str(a['album']['id']).text)
+            search1[len(search1) - 1]['album'] = {"cover_xl": BeautifulSoup(url, "html.parser").find("img", class_="img_main").get("src").replace("200", "1000")}
     result = [InlineQueryResultArticle(id=a['link'], title=a['title'] + "\n" + a['artist']['name'], thumb_url=a['album']['cover_xl'], input_message_content=InputTextMessageContent(message_text=a['link'])) for a in search1]
     try:
        bot.answerInlineQuery(query_id, result)
@@ -545,7 +591,7 @@ def start1(msg):
         qualit[chat_id] = "MP3_320"
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, lang)).start()
     elif content_type == "text" and msg['text'] == "/info":
-     bot.sendMessage(chat_id, "Version: 1.4\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia")
+     bot.sendMessage(chat_id, "Version: 1.5\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot")
     elif content_type == "text":
      try:
         qualit[chat_id]
@@ -603,7 +649,7 @@ def start2(msg):
         qualit[chat_id] = "MP3_320"
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, lang)).start()
     elif content_type == "text" and msg['text'] == "/info":
-     bot.sendMessage(chat_id, "Version: 1.4\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia")
+     bot.sendMessage(chat_id, "Version: 1.5\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot")
     elif content_type == "text":
      music = msg['text']
      try:
@@ -661,13 +707,13 @@ try:
        sleep(1)
        if temp == 1 and (goes == 0 or goes == 2):
         if len(array2) == len(array3):
-         for a in os.listdir(local + "/Songs"):
-             shutil.rmtree(local + "/Songs/" + a)
+         for a in os.listdir(loc_dir):
+             shutil.rmtree(loc_dir + a)
          del array2[:]
          del array3[:]
        now = datetime.now()
        if datetime.strptime(str(now.hour) + ":" + str(now.minute) + ":" + str(now.second), FMT) == datetime.strptime("00:00:00", FMT) or datetime.strptime(str(now.hour) + ":" + str(now.minute) + ":" + str(now.second), FMT) == datetime.strptime("12:00:00", FMT):
         downloa = deezloader.Login(setting.username, setting.password)
 except KeyboardInterrupt:
-   os.rmdir(local + "/Songs")
+   os.rmdir(loc_dir)
    print("\nSTOPPED")
