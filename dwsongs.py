@@ -50,6 +50,7 @@ c = conn.cursor()
 try:
    c.execute("CREATE TABLE DWSONGS (id text, query text, quality text)")
    c.execute("CREATE TABLE BANNED (banned int)")
+   c.execute("CREATE TABLE CHAT_ID (chat_id int)")
    conn.commit()
 except sqlite3.OperationalError:
    None
@@ -57,6 +58,21 @@ def generate_token():
     token = oauth2.SpotifyClientCredentials(client_id="4fe3fecfe5334023a1472516cc99d805", client_secret="0f02b7c483c04257984695007a4a8d5c").get_access_token()
     return token
 spo = spotipy.Spotify(auth=generate_token())
+def statisc(chat_id, do):
+    conn = sqlite3.connect(db_file)
+    c = conn.cursor()
+    if do == "USERS":
+     c.execute("SELECT chat_id FROM CHAT_ID where chat_id = '%d'" % chat_id)
+     if c.fetchone() == None:
+      c.execute("INSERT INTO CHAT_ID(chat_id) values('%d')" % chat_id)
+     conn.commit()
+     c.execute("SELECT chat_id FROM CHAT_ID")
+     infos = len(c.fetchall())
+    elif do == "TRACKS":
+     c.execute("SELECT id FROM DWSONGS")
+     infos = len(c.fetchall())
+    conn.close()
+    return str(infos)
 def check_flood(chat_id, lang, msg):
     conn = sqlite3.connect(db_file)
     c = conn.cursor()
@@ -170,6 +186,12 @@ def track(music, chat_id, lang, quality):
                url = json.loads(requests.get("https://api.deezer.com/track/" + music.split("/")[-1]).text)
             except:
                url = json.loads(requests.get("https://api.deezer.com/track/" + music.split("/")[-1]).text)
+            try:
+               if url['error']:
+                bot.sendMessage(chat_id, translate(lang, "Track not found :(\nhttps://www.deezer.com/track/" + music.split("/")[-1]))
+                return
+            except KeyError:
+               None
             try:
                image = url['album']['cover_xl'].replace("1000", "90")
             except AttributeError:
@@ -297,7 +319,7 @@ def Link(music, chat_id, lang, quality, msg):
             url = json.loads(requests.get("https://api.deezer.com/track/" + music.split("/")[-1]).text)
          try:
             if url['error']:
-             bot.sendMessage(chat_id, translate(lang, "Invalid link ;"), reply_to_message_id=msg)
+             bot.sendMessage(chat_id, translate(lang, "Invalid link ;)"), reply_to_message_id=msg)
              delete(chat_id)
              return
          except KeyError:
@@ -583,7 +605,7 @@ def start1(msg):
      qualit[chat_id] = msg['text']
      bot.sendMessage(chat_id, translate(lang, "The songs will be downloaded with " + msg['text'] + " quality"), reply_markup=ReplyKeyboardRemove())
      if msg['text'] != "MP3_320":
-      bot.sendMessage(chat_id, translate(lang, "The songs that cannot be downloaded with the quality that you choose will be downloaded in quality MP3_320"))
+      bot.sendMessage(chat_id, translate(lang, "The songs that cannot be downloaded with the quality that you choose will be downloaded in quality MP3_128"))
     elif content_type == "voice" or content_type == "audio":
      try:
         qualit[chat_id]
@@ -591,7 +613,7 @@ def start1(msg):
         qualit[chat_id] = "MP3_320"
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, lang)).start()
     elif content_type == "text" and msg['text'] == "/info":
-     bot.sendMessage(chat_id, "Version: 1.5.1\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot")
+     bot.sendMessage(chat_id, "Version: 1.6\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers (since 23/12/18):" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
     elif content_type == "text":
      try:
         qualit[chat_id]
@@ -641,7 +663,7 @@ def start2(msg):
      qualit[chat_id] = msg['text']
      bot.sendMessage(chat_id, translate(lang, "The songs will be downloaded with " + msg['text'] + " quality"), reply_markup=ReplyKeyboardRemove())
      if msg['text'] != "MP3_128":
-      bot.sendMessage(chat_id, translate(lang, "The songs that cannot be downloaded with the quality that you choose will be downloaded in quality MP3_320"))
+      bot.sendMessage(chat_id, translate(lang, "The songs that cannot be downloaded with the quality that you choose will be downloaded in quality MP3_128"))
     elif content_type == "voice" or content_type == "audio":
      try:
         qualit[chat_id]
@@ -649,7 +671,7 @@ def start2(msg):
         qualit[chat_id] = "MP3_320"
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, lang)).start()
     elif content_type == "text" and msg['text'] == "/info":
-     bot.sendMessage(chat_id, "Version: 1.5.1\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot")
+     bot.sendMessage(chat_id, "Version: 1.6\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers (since 23/12/18):" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
     elif content_type == "text":
      music = msg['text']
      try:
