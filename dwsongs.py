@@ -573,6 +573,7 @@ def up(msg):
     pass
 def start1(msg):
     content_type, chat_type, chat_id = telepot.glance(msg)
+    statisc(chat_id, "USERS")
     try:
        msg['from']['language_code']
     except KeyError:
@@ -630,6 +631,7 @@ def start1(msg):
                         ))
 def start2(msg):
     content_type, chat_type, chat_id = telepot.glance(msg)
+    statisc(chat_id, "USERS")
     try:
        msg['from']['language_code']
     except KeyError:
