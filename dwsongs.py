@@ -293,7 +293,10 @@ def Link(music, chat_id, lang, quality, msg):
             token = generate_token()
             spo = spotipy.Spotify(auth=token)
             tracks = spo.user_playlist(musi[-3], playlist_id=musi[-1])
-         bot.sendPhoto(chat_id, tracks['images'][0]['url'], caption="Creation:" + tracks['tracks']['items'][0]['added_at'] + "\nUser:" + tracks['owner']['display_name'] + "\nTracks number:" + str(tracks['tracks']['total']))
+         try:
+            bot.sendPhoto(chat_id, tracks['images'][0]['url'], caption="Creation:" + tracks['tracks']['items'][0]['added_at'] + "\nUser:" + tracks['owner']['display_name'] + "\nTracks number:" + str(tracks['tracks']['total']))
+         except TypeError:
+            bot.sendPhoto(chat_id, tracks['images'][0]['url'], caption="Creation:" + tracks['tracks']['items'][0]['added_at'] + "\nTracks number:" + str(tracks['tracks']['total']))
          for a in tracks['tracks']['items']:
              track(a['track']['external_urls']['spotify'], chat_id, lang, quality)
          if tracks['tracks']['total'] != 100:
