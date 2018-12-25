@@ -623,12 +623,12 @@ def start1(msg):
      bot.sendMessage(chat_id, translate(lang, "Choose the quality that you want to download the song"),
                      reply_markup=ReplyKeyboardMarkup(
                                  keyboard=[
-                                     [KeyboardButton(text="FLAC"), KeyboardButton(text="320Kbps")],
-                                     [KeyboardButton(text="256Kbps"), KeyboardButton(text="128Kbps")]
+                                     [KeyboardButton(text="FLAC"), KeyboardButton(text="MP3_320Kbps")],
+                                     [KeyboardButton(text="MP3_256Kbps"), KeyboardButton(text="MP3_128Kbps")]
                                  ]
                      ))
-    elif content_type == "text" and (msg['text'] == "FLAC" or msg['text'] == "320Kbps" or msg['text'] == "256Kbps" or msg['text'] == "128Kbps"):
-     qualit[chat_id] = msg['text']
+    elif content_type == "text" and (msg['text'] == "FLAC" or msg['text'] == "MP3_320Kbps" or msg['text'] == "MP3_256Kbps" or msg['text'] == "MP3_128Kbps"):
+     qualit[chat_id] = msg['text']replace("Kbps", "")
      bot.sendMessage(chat_id, translate(lang, "The songs will be downloaded with " + msg['text'] + " quality"), reply_markup=ReplyKeyboardRemove())
      if msg['text'] != "128Kbps":
       bot.sendMessage(chat_id, translate(lang, "The songs that cannot be downloaded with the quality that you choose will be downloaded in quality 128Kbps"))
@@ -682,12 +682,12 @@ def start2(msg):
      bot.sendMessage(chat_id, translate(lang, "Choose the quality that you want to download the song"),
                      reply_markup=ReplyKeyboardMarkup(
                                  keyboard=[
-                                     [KeyboardButton(text="FLAC"), KeyboardButton(text="320Kbps")],
-                                     [KeyboardButton(text="256Kbps"), KeyboardButton(text="128Kbps")]
+                                     [KeyboardButton(text="FLAC"), KeyboardButton(text="MP3_320Kbps")],
+                                     [KeyboardButton(text="MP3_256Kbps"), KeyboardButton(text="MP3_128Kbps")]
                                  ]
                      )) 
-    elif content_type == "text" and (msg['text'] == "FLAC" or msg['text'] == "320Kbps" or msg['text'] == "256Kbps" or msg['text'] == "128Kbps"):
-     qualit[chat_id] = msg['text']
+    elif content_type == "text" and (msg['text'] == "FLAC" or msg['text'] == "MP3_320Kbps" or msg['text'] == "MP3_256Kbps" or msg['text'] == "MP3_128Kbps"):
+     qualit[chat_id] = msg['text'].replace("Kbps", "")
      bot.sendMessage(chat_id, translate(lang, "The songs will be downloaded with " + msg['text'] + " quality"), reply_markup=ReplyKeyboardRemove())
      if msg['text'] != "128Kbps":
       bot.sendMessage(chat_id, translate(lang, "The songs that cannot be downloaded with the quality that you choose will be downloaded in quality 128Kbps"))
