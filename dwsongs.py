@@ -64,8 +64,14 @@ def statisc(chat_id, do):
     if do == "USERS":
      c.execute("SELECT chat_id FROM CHAT_ID where chat_id = '%d'" % chat_id)
      if c.fetchone() == None:
-      c.execute("INSERT INTO CHAT_ID(chat_id) values('%d')" % chat_id)
-     conn.commit()
+      while True:
+          sleep(1)
+          try:
+             c.execute("INSERT INTO CHAT_ID(chat_id) values('%d')" % chat_id)
+             conn.commit()
+             break
+          except sqlite3.OperationalError:
+             None
      c.execute("SELECT chat_id FROM CHAT_ID")
      infos = len(c.fetchall())
     elif do == "TRACKS":
@@ -90,9 +96,15 @@ def check_flood(chat_id, lang, msg):
          date[chat_id]['tries'] -= 1
          bot.sendMessage(chat_id, translate(lang, "It is appearing that you are trying to flood, you have to wait more that four second to send another message.\n" + str(date[chat_id]['tries']) + " possibilites :)"))
          if date[chat_id]['tries'] == 0:
-          c.execute("INSERT INTO BANNED(banned) values('%d')" % chat_id)
-          conn.commit()
-          conn.close()
+          while True:
+              sleep(1)
+              try:
+                 c.execute("INSERT INTO BANNED(banned) values('%d')" % chat_id)
+                 conn.commit()
+                 conn.close()
+                 break
+              except sqlite3.OperationalError:
+                 None
           del date[chat_id]
           bot.sendMessage(chat_id, translate(lang, "You are banned :)"))
           return
@@ -152,12 +164,18 @@ def sendAudio(chat_id, audio, lang, music, image=None):
             audio = json.loads(request.text)['result']['audio']['file_id']
             conn = sqlite3.connect(db_file)
             c = conn.cursor()
-            c.execute("INSERT INTO DWSONGS(id, query, quality) values('%s', '%s', '%s')" % (music, audio, qualit[chat_id]))
-            conn.commit()
-            conn.close()
+            while True:
+                sleep(1)
+                try:
+                   c.execute("INSERT INTO DWSONGS(id, query, quality) values('%s', '%s', '%s')" % (music, audio, qualit[chat_id]))
+                   conn.commit()
+                   conn.close()
+                   break
+                except sqlite3.OperationalError:
+                   None
        else:
            bot.sendAudio(chat_id, audio)
-    except Exception as a:
+    except KeyboardInterrupt:
        logging.info(chat_id)
        logging.warning(a)
        bot.sendMessage(chat_id, translate(lang, "An error has occured during sending song, please contact @An0nimia for explain the issue, thanks :)"))
@@ -258,14 +276,16 @@ def Link(music, chat_id, lang, quality, msg):
              links2.append(a['external_urls']['spotify'])
              if c.fetchone() != None:
               links1.append(a['external_urls']['spotify'])
-         if tracks['total_tracks'] != 50:
-            for a in range(tracks['total_tracks'] // 50):
+         tot = tracks['total_tracks']
+         tracks = tracks['tracks']
+         if tot != 50:
+            for a in range(tot // 50):
                 try:
-                   tracks2 = spo.next(tracks['tracks'])
+                   tracks2 = spo.next(tracks)
                 except:
                    token = generate_token()
                    spo = spotipy.Spotify(auth=token)
-                   tracks2 = spo.next(tracks['tracks'])
+                   tracks2 = spo.next(tracks)
                 for a in tracks2['items']:
                     c.execute("SELECT query FROM DWSONGS WHERE id = '%s' and quality = '%s'" % (a['external_urls']['spotify'], quality))
                     links2.append(a['external_urls']['spotify'])
@@ -299,14 +319,16 @@ def Link(music, chat_id, lang, quality, msg):
             bot.sendPhoto(chat_id, tracks['images'][0]['url'], caption="Creation:" + tracks['tracks']['items'][0]['added_at'] + "\nTracks number:" + str(tracks['tracks']['total']))
          for a in tracks['tracks']['items']:
              track(a['track']['external_urls']['spotify'], chat_id, lang, quality)
-         if tracks['tracks']['total'] != 100:
-            for a in range(tracks['tracks']['total'] // 100):
+         tot = tracks['tracks']['total']
+         tracks = tracks['tracks']
+         if tot != 100:
+            for a in range(tot // 100):
                 try:
-                   tracks = spo.next(tracks['tracks'])
+                   tracks = spo.next(tracks)
                 except:
                    token = generate_token()
                    spo = spotipy.Spotify(auth=token)
-                   tracks = spo.next(tracks['tracks'])
+                   tracks = spo.next(tracks)
                 for a in tracks['items']:
                     track(a['track']['external_urls']['spotify'], chat_id, lang, quality)
          done = 1
@@ -410,7 +432,7 @@ def Link(music, chat_id, lang, quality, msg):
     except deezloader.AlbumNotFound:
        bot.sendMessage(chat_id, translate(lang, "Album not found :("))
        bot.sendMessage(chat_id, translate(lang, "Try to search it throught inline mode or search the link on Deezer"))
-    except Exception as a:
+    except KeyboardInterrupt:
        logging.info(chat_id)
        logging.warning(a)
        bot.sendMessage(chat_id, translate(lang, "An error has occured during downloading song, please contact @An0nimia for explain the issue, thanks :)"))
@@ -576,7 +598,6 @@ def up(msg):
     pass
 def start1(msg):
     content_type, chat_type, chat_id = telepot.glance(msg)
-    statisc(chat_id, "USERS")
     try:
        msg['from']['language_code']
     except KeyError:
@@ -584,6 +605,7 @@ def start1(msg):
     lang = msg['from']['language_code']
     if check_flood(chat_id, lang, msg) == "BANNED":
      return
+    statisc(chat_id, "USERS")
     if content_type == "text" and msg['text'] == "/start":
      bot.sendPhoto(chat_id, open("example.jpg", "rb"), caption=translate(lang, "The bot commands can find here"))
      try:
@@ -617,7 +639,7 @@ def start1(msg):
         qualit[chat_id] = "MP3_320"
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, lang)).start()
     elif content_type == "text" and msg['text'] == "/info":
-     bot.sendMessage(chat_id, "Version: 1.6\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers (since 23/12/18):" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
+     bot.sendMessage(chat_id, "Version: 1.6.1\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers (since 23/12/18):" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
     elif content_type == "text":
      try:
         qualit[chat_id]
@@ -634,7 +656,6 @@ def start1(msg):
                         ))
 def start2(msg):
     content_type, chat_type, chat_id = telepot.glance(msg)
-    statisc(chat_id, "USERS")
     try:
        msg['from']['language_code']
     except KeyError:
@@ -642,6 +663,7 @@ def start2(msg):
     lang = msg['from']['language_code']
     if check_flood(chat_id, lang, msg) == "BANNED":
      return
+    statisc(chat_id, "USERS")
     pprint(msg)
     if content_type == "text" and msg['text'] == "/start":
      bot.sendPhoto(chat_id, open("example.jpg", "rb"), caption=translate(lang, "The bot commands can find here"))
@@ -676,7 +698,7 @@ def start2(msg):
         qualit[chat_id] = "MP3_320"
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, lang)).start()
     elif content_type == "text" and msg['text'] == "/info":
-     bot.sendMessage(chat_id, "Version: 1.6\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers (since 23/12/18):" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
+     bot.sendMessage(chat_id, "Version: 1.6.1\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers (since 23/12/18):" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
     elif content_type == "text":
      music = msg['text']
      try:
