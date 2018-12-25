@@ -630,7 +630,7 @@ def start1(msg):
     elif content_type == "text" and (msg['text'] == "FLAC" or msg['text'] == "MP3_320Kbps" or msg['text'] == "MP3_256Kbps" or msg['text'] == "MP3_128Kbps"):
      qualit[chat_id] = msg['text'].replace("Kbps", "")
      bot.sendMessage(chat_id, translate(lang, "The songs will be downloaded with " + msg['text'] + " quality"), reply_markup=ReplyKeyboardRemove())
-     if msg['text'] != "128Kbps":
+     if msg['text'] != "MP3_128Kbps":
       bot.sendMessage(chat_id, translate(lang, "The songs that cannot be downloaded with the quality that you choose will be downloaded in quality 128Kbps"))
     elif content_type == "voice" or content_type == "audio":
      try:
@@ -689,7 +689,7 @@ def start2(msg):
     elif content_type == "text" and (msg['text'] == "FLAC" or msg['text'] == "MP3_320Kbps" or msg['text'] == "MP3_256Kbps" or msg['text'] == "MP3_128Kbps"):
      qualit[chat_id] = msg['text'].replace("Kbps", "")
      bot.sendMessage(chat_id, translate(lang, "The songs will be downloaded with " + msg['text'] + " quality"), reply_markup=ReplyKeyboardRemove())
-     if msg['text'] != "128Kbps":
+     if msg['text'] != "MP3_128Kbps":
       bot.sendMessage(chat_id, translate(lang, "The songs that cannot be downloaded with the quality that you choose will be downloaded in quality 128Kbps"))
     elif content_type == "voice" or content_type == "audio":
      try:
@@ -706,7 +706,7 @@ def start2(msg):
      except KeyError:
         qualit[chat_id] = "MP3_320"
      try:
-        if users[chat_id] == 2:
+        if users[chat_id] == 3:
          bot.sendMessage(chat_id, translate(lang, "Wait to finish and resend the link, did you thought that you could download how much songs did you want? :)"))
         else:
             try:
