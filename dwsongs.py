@@ -175,7 +175,7 @@ def sendAudio(chat_id, audio, lang, music, image=None):
                    None
        else:
            bot.sendAudio(chat_id, audio)
-    except KeyboardInterrupt:
+    except Exception as a:
        logging.info(chat_id)
        logging.warning(a)
        bot.sendMessage(chat_id, translate(lang, "An error has occured during sending song, please contact @An0nimia for explain the issue, thanks :)"))
@@ -276,6 +276,7 @@ def Link(music, chat_id, lang, quality, msg):
              links2.append(a['external_urls']['spotify'])
              if c.fetchone() != None:
               links1.append(a['external_urls']['spotify'])
+         bot.sendPhoto(chat_id, tracks['images'][0]['url'], caption="Album:" + tracks['name'] + "\nArtist:" + tracks['artists'][0]['name'] + "\nDate:" + tracks['release_date'] + "\nTracks number:" + str(tracks['total_tracks']))
          tot = tracks['total_tracks']
          tracks = tracks['tracks']
          if tot != 50:
@@ -292,8 +293,7 @@ def Link(music, chat_id, lang, quality, msg):
                     if c.fetchone() != None:
                      links1.append(a['external_urls']['spotify'])
          conn.close()
-         bot.sendPhoto(chat_id, tracks['images'][0]['url'], caption="Album:" + tracks['name'] + "\nArtist:" + tracks['artists'][0]['name'] + "\nDate:" + tracks['release_date'] + "\nTracks number:" + str(tracks['total_tracks']))
-         if len(links1) <= (tracks['total_tracks'] // 2):
+         if len(links1) <= (tot // 2):
           z = downloa.download_albumspo(music, check=False, quality=quality, recursive=False)
          else:
              for a in links2:
@@ -432,7 +432,7 @@ def Link(music, chat_id, lang, quality, msg):
     except deezloader.AlbumNotFound:
        bot.sendMessage(chat_id, translate(lang, "Album not found :("))
        bot.sendMessage(chat_id, translate(lang, "Try to search it throught inline mode or search the link on Deezer"))
-    except KeyboardInterrupt:
+    except Exception as a:
        logging.info(chat_id)
        logging.warning(a)
        bot.sendMessage(chat_id, translate(lang, "An error has occured during downloading song, please contact @An0nimia for explain the issue, thanks :)"))
@@ -623,15 +623,15 @@ def start1(msg):
      bot.sendMessage(chat_id, translate(lang, "Choose the quality that you want to download the song"),
                      reply_markup=ReplyKeyboardMarkup(
                                  keyboard=[
-                                     [KeyboardButton(text="FLAC"), KeyboardButton(text="MP3_320")],
-                                     [KeyboardButton(text="MP3_256"), KeyboardButton(text="MP3_128")]
+                                     [KeyboardButton(text="FLAC"), KeyboardButton(text="320Kbps")],
+                                     [KeyboardButton(text="256Kbps"), KeyboardButton(text="128Kbps")]
                                  ]
                      ))
-    elif content_type == "text" and (msg['text'] == "FLAC" or msg['text'] == "MP3_320" or msg['text'] == "MP3_256" or msg['text'] == "MP3_128"):
+    elif content_type == "text" and (msg['text'] == "FLAC" or msg['text'] == "320Kbps" or msg['text'] == "256Kbps" or msg['text'] == "128Kbps"):
      qualit[chat_id] = msg['text']
      bot.sendMessage(chat_id, translate(lang, "The songs will be downloaded with " + msg['text'] + " quality"), reply_markup=ReplyKeyboardRemove())
-     if msg['text'] != "MP3_320":
-      bot.sendMessage(chat_id, translate(lang, "The songs that cannot be downloaded with the quality that you choose will be downloaded in quality MP3_128"))
+     if msg['text'] != "128Kbps":
+      bot.sendMessage(chat_id, translate(lang, "The songs that cannot be downloaded with the quality that you choose will be downloaded in quality 128Kbps"))
     elif content_type == "voice" or content_type == "audio":
      try:
         qualit[chat_id]
@@ -682,15 +682,15 @@ def start2(msg):
      bot.sendMessage(chat_id, translate(lang, "Choose the quality that you want to download the song"),
                      reply_markup=ReplyKeyboardMarkup(
                                  keyboard=[
-                                     [KeyboardButton(text="FLAC"), KeyboardButton(text="MP3_320")],
-                                     [KeyboardButton(text="MP3_256"), KeyboardButton(text="MP3_128")]
+                                     [KeyboardButton(text="FLAC"), KeyboardButton(text="320Kbps")],
+                                     [KeyboardButton(text="256Kbps"), KeyboardButton(text="128Kbps")]
                                  ]
                      )) 
-    elif content_type == "text" and (msg['text'] == "FLAC" or msg['text'] == "MP3_320" or msg['text'] == "MP3_256" or msg['text'] == "MP3_128"):
+    elif content_type == "text" and (msg['text'] == "FLAC" or msg['text'] == "320Kbps" or msg['text'] == "256Kbps" or msg['text'] == "128Kbps"):
      qualit[chat_id] = msg['text']
      bot.sendMessage(chat_id, translate(lang, "The songs will be downloaded with " + msg['text'] + " quality"), reply_markup=ReplyKeyboardRemove())
-     if msg['text'] != "MP3_128":
-      bot.sendMessage(chat_id, translate(lang, "The songs that cannot be downloaded with the quality that you choose will be downloaded in quality MP3_128"))
+     if msg['text'] != "128Kbps":
+      bot.sendMessage(chat_id, translate(lang, "The songs that cannot be downloaded with the quality that you choose will be downloaded in quality 128Kbps"))
     elif content_type == "voice" or content_type == "audio":
      try:
         qualit[chat_id]
