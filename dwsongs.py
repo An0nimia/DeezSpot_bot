@@ -228,7 +228,8 @@ def track(music, chat_id, lang, quality):
                z = dwytsongs.download_trackdee(music, check=False)
            except dwytsongs.TrackNotFound as error:
               bot.sendMessage(chat_id, translate(lang, str(error) + " :("))
-        except Exception as a:
+              return
+        except KeyboardInterrupt:
            logging.info(chat_id)
            logging.warning(a)
            bot.sendMessage(chat_id, translate(lang, "An error has occured during downloading song, please contact @An0nimia for explain the issue, thanks :)"))
@@ -437,7 +438,7 @@ def Link(music, chat_id, lang, quality, msg):
     except deezloader.AlbumNotFound:
        bot.sendMessage(chat_id, translate(lang, "Album not found :("))
        bot.sendMessage(chat_id, translate(lang, "Try to search it throught inline mode or search the link on Deezer"))
-    except Exception as a:
+    except KeyboardInterrupt:
        logging.info(chat_id)
        logging.warning(a)
        bot.sendMessage(chat_id, translate(lang, "An error has occured during downloading song, please contact @An0nimia for explain the issue, thanks :)"))
@@ -449,7 +450,11 @@ def Audio(audio, chat_id, lang):
     global goes
     goes = 1
     file = loc_dir + audio + ".ogg"
-    bot.download_file(audio, file)
+    try:
+       bot.download_file(audio, file)
+    except telepot.exception.TelegramError:
+       bot.sendMessage(chat_id, translate(lang, "File sent too big, please send a file max 20 MB size"))
+       return
     audio = acrcloud.recognizer(config, file)
     try:
        os.remove(file)
@@ -644,7 +649,7 @@ def start1(msg):
         qualit[chat_id] = "MP3_320"
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, lang)).start()
     elif content_type == "text" and msg['text'] == "/info":
-     bot.sendMessage(chat_id, "Version: 1.6.2\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers (since 23/12/18):" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
+     bot.sendMessage(chat_id, "Version: 1.7\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers (since 23/12/18):" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
     elif content_type == "text":
      try:
         qualit[chat_id]
@@ -703,7 +708,7 @@ def start2(msg):
         qualit[chat_id] = "MP3_320"
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, lang)).start()
     elif content_type == "text" and msg['text'] == "/info":
-     bot.sendMessage(chat_id, "Version: 1.6.2\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers (since 23/12/18):" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
+     bot.sendMessage(chat_id, "Version: 1.7\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers (since 23/12/18):" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
     elif content_type == "text":
      music = msg['text']
      try:
