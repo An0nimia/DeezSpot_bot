@@ -229,7 +229,7 @@ def track(music, chat_id, lang, quality):
            except dwytsongs.TrackNotFound as error:
               bot.sendMessage(chat_id, translate(lang, str(error) + " :("))
               return
-        except KeyboardInterrupt:
+        except Exception as a:
            logging.info(chat_id)
            logging.warning(a)
            bot.sendMessage(chat_id, translate(lang, "An error has occured during downloading song, please contact @An0nimia for explain the issue, thanks :)"))
@@ -438,7 +438,7 @@ def Link(music, chat_id, lang, quality, msg):
     except deezloader.AlbumNotFound:
        bot.sendMessage(chat_id, translate(lang, "Album not found :("))
        bot.sendMessage(chat_id, translate(lang, "Try to search it throught inline mode or search the link on Deezer"))
-    except KeyboardInterrupt:
+    except Exception as a:
        logging.info(chat_id)
        logging.warning(a)
        bot.sendMessage(chat_id, translate(lang, "An error has occured during downloading song, please contact @An0nimia for explain the issue, thanks :)"))
