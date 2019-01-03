@@ -232,6 +232,7 @@ def track(music, chat_id, lang, quality):
         except Exception as a:
            logging.info(chat_id)
            logging.warning(a)
+           logging.warning(music)
            bot.sendMessage(chat_id, translate(lang, "An error has occured during downloading song, please contact @An0nimia for explain the issue, thanks :)"))
            return
         sendAudio(chat_id, z, lang, music, image)
@@ -441,6 +442,7 @@ def Link(music, chat_id, lang, quality, msg):
     except Exception as a:
        logging.info(chat_id)
        logging.warning(a)
+       logging.warning(music)
        bot.sendMessage(chat_id, translate(lang, "An error has occured during downloading song, please contact @An0nimia for explain the issue, thanks :)"))
     if done == 1:
      bot.sendMessage(chat_id, translate(lang, "FINISHED :)"), reply_to_message_id=msg)
@@ -649,7 +651,7 @@ def start1(msg):
         qualit[chat_id] = "MP3_320"
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, lang)).start()
     elif content_type == "text" and msg['text'] == "/info":
-     bot.sendMessage(chat_id, "Version: 1.7\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers (since 23/12/18):" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
+     bot.sendMessage(chat_id, "Version: 1.7\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
     elif content_type == "text":
      try:
         qualit[chat_id]
@@ -708,7 +710,7 @@ def start2(msg):
         qualit[chat_id] = "MP3_320"
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, lang)).start()
     elif content_type == "text" and msg['text'] == "/info":
-     bot.sendMessage(chat_id, "Version: 1.7\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers (since 23/12/18):" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
+     bot.sendMessage(chat_id, "Version: 1.7\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
     elif content_type == "text":
      music = msg['text']
      try:
