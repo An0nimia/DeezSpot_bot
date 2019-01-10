@@ -91,7 +91,7 @@ def check_flood(chat_id, lang, msg):
        date[chat_id]['time'] = msg['date']
        if time <= 4:
         date[chat_id]['msg'] += 1
-        if time <= 4 and date[chat_id]['msg'] > 4:
+        if time <= 4 and date[chat_id]['msg'] > 7:
          date[chat_id]['msg'] = 0
          date[chat_id]['tries'] -= 1
          bot.sendMessage(chat_id, translate(lang, "It is appearing that you are trying to flood, you have to wait more that four second to send another message.\n" + str(date[chat_id]['tries']) + " possibilites :)"))
@@ -107,7 +107,6 @@ def check_flood(chat_id, lang, msg):
                  None
           del date[chat_id]
           bot.sendMessage(chat_id, translate(lang, "You are banned :)"))
-          return
     except KeyError:
        try: 
           date[chat_id] = {"time": msg['date'], "tries": 3, "msg": 0}
@@ -332,7 +331,10 @@ def Link(music, chat_id, lang, quality, msg):
             image = "https://e-cdns-images.dzcdn.net/images/cover//1000x1000-000000-80-0-0.jpg"
          bot.sendPhoto(chat_id, image, caption="Creation:" + tracks['tracks']['items'][0]['added_at'] + "\nUser:" + str(tracks['owner']['display_name']) + "\nTracks number:" + str(tracks['tracks']['total']))
          for a in tracks['tracks']['items']:
-             track(a['track']['external_urls']['spotify'], chat_id, lang, quality, msg)
+             try:
+                track(a['track']['external_urls']['spotify'], chat_id, lang, quality, msg)
+             except KeyError:
+                bot.sendMessage(chat_id, a['track']['name'] + " Not found :(")
          tot = tracks['tracks']['total']
          tracks = tracks['tracks']
          if tot != 100:
@@ -344,7 +346,10 @@ def Link(music, chat_id, lang, quality, msg):
                    spo = spotipy.Spotify(auth=token)
                    tracks = spo.next(tracks)
                 for a in tracks['items']:
-                    track(a['track']['external_urls']['spotify'], chat_id, lang, quality, msg)
+                    try:
+                       track(a['track']['external_urls']['spotify'], chat_id, lang, quality, msg)
+                    except KeyError:
+                       bot.sendMessage(chat_id, a['track']['name'] + " Not found :(")
          done = 1
         else:
             bot.sendMessage(chat_id, translate(lang, "Sorry :( The bot doesn't support this link"))
@@ -454,8 +459,11 @@ def Link(music, chat_id, lang, quality, msg):
        logging.warning(a)
        logging.warning(music)
        bot.sendMessage(chat_id, translate(lang, "An error has occured during downloading song, please contact @An0nimia for explain the issue, thanks :)"))
-    if done == 1:
-     bot.sendMessage(chat_id, translate(lang, "FINISHED :)"), reply_to_message_id=msg['message_id'])
+    try:
+       if done == 1:
+        bot.sendMessage(chat_id, translate(lang, "FINISHED :)"), reply_to_message_id=msg['message_id'])
+    except:
+       None
     delete(chat_id)
 def Audio(audio, chat_id, lang):
     global spo
@@ -661,7 +669,7 @@ def start1(msg):
         qualit[chat_id] = "MP3_320"
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, lang)).start()
     elif content_type == "text" and msg['text'] == "/info":
-     bot.sendMessage(chat_id, "Version: 1.8\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
+     bot.sendMessage(chat_id, "Version: 1.8.1\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
     elif content_type == "text":
      try:
         qualit[chat_id]
@@ -669,7 +677,7 @@ def start1(msg):
         qualit[chat_id] = "MP3_320"
      try:
         msg['entities']
-        Thread(target=Link, args=(msg['text'], chat_id, lang, qualit[chat_id], msg)).start()
+        Thread(target=Link, args=(msg['text'].replace("'", ""), chat_id, lang, qualit[chat_id], msg)).start()
      except KeyError:
         bot.sendMessage(chat_id, translate(lang, "Press"),reply_markup=InlineKeyboardMarkup(
                                      inline_keyboard=[
@@ -720,9 +728,9 @@ def start2(msg):
         qualit[chat_id] = "MP3_320"
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, lang)).start()
     elif content_type == "text" and msg['text'] == "/info":
-     bot.sendMessage(chat_id, "Version: 1.8\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
+     bot.sendMessage(chat_id, "Version: 1.8.1\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
     elif content_type == "text":
-     music = msg['text']
+     music = msg['text'].replace("'", "")
      try:
         qualit[chat_id]
      except KeyError:
