@@ -330,7 +330,7 @@ def Link(music, chat_id, lang, quality, msg):
          for a in tracks['tracks']['items']:
              try:
                 track(a['track']['external_urls']['spotify'], chat_id, lang, quality, msg)
-             except KeyError:
+             except:
                 bot.sendMessage(chat_id, a['track']['name'] + " Not found :(")
          tot = tracks['tracks']['total']
          tracks = tracks['tracks']
@@ -345,7 +345,7 @@ def Link(music, chat_id, lang, quality, msg):
                 for a in tracks['items']:
                     try:
                        track(a['track']['external_urls']['spotify'], chat_id, lang, quality, msg)
-                    except KeyError:
+                    except:
                        bot.sendMessage(chat_id, a['track']['name'] + " Not found :(")
          done = 1
         else:
