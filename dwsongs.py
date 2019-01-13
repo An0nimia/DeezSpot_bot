@@ -34,8 +34,6 @@ date = {}
 array2 = []
 array3 = []
 local = os.getcwd()
-temp = 0
-goes = 0
 FMT = "%H:%M:%S"
 logging.basicConfig(filename="dwsongs.log", level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 config = {
@@ -131,13 +129,11 @@ def translate(language, sms):
        None
     return sms
 def delete(chat_id):
-    global temp
     try:
        users[chat_id] -= 1
     except KeyError:
        None
     array2.append(chat_id)
-    temp = 1
 def sendAudio(chat_id, audio, lang, music, msg, image=None):
     bot.sendChatAction(chat_id, "upload_audio")
     try:
@@ -187,7 +183,7 @@ def sendAudio(chat_id, audio, lang, music, msg, image=None):
        except KeyError:
           None
        logging.warning(a)
-       bot.sendMessage(chat_id, translate(lang, "An error has occured during sending song, please contact @An0nimia for explain the issue, thanks :)"))
+       bot.sendMessage(chat_id, str(a))
 def track(music, chat_id, lang, quality, msg):
     global spo
     conn = sqlite3.connect(db_file)
@@ -239,7 +235,7 @@ def track(music, chat_id, lang, quality, msg):
                  None
               logging.warning(a)
               logging.warning(music)
-              bot.sendMessage(chat_id, translate(lang, "An error has occured during downloading song, please contact @An0nimia for explain the issue, thanks :)"))
+              bot.sendMessage(chat_id, str(a))
               return
         sendAudio(chat_id, z, lang, music, msg, image)
 def Link(music, chat_id, lang, quality, msg):
@@ -375,7 +371,7 @@ def Link(music, chat_id, lang, quality, msg):
          if len(ima) == 13:
           imag = "https://e-cdns-images.dzcdn.net/images/cover/1000x1000-000000-80-0-0.jpg"
          artist = url['artist']['name']
-         bot.sendPhoto(chat_id, imag, caption="Track:" + url['title'] + "\nArtist:" + artist + "\nAlbum:" + url['album']['title'] + "\nDate:" + url['album']['release_date'])
+         bot.sendPhoto(chat_id, imag.replace("1000", "900"), caption="Track:" + url['title'] + "\nArtist:" + artist + "\nAlbum:" + url['album']['title'] + "\nDate:" + url['album']['release_date'])
          track(music, chat_id, lang, quality, msg)
          done = 1
         elif "album/" in music:
@@ -404,7 +400,7 @@ def Link(music, chat_id, lang, quality, msg):
               links1.append(a['link'])
          conn.close()
          artist = url['artist']['name']
-         bot.sendPhoto(chat_id, imag, caption="Album:" + url['title'] + "\nArtist:" + artist + "\nDate:" + url['release_date'] + "\nTracks number:" + str(url['nb_tracks']))
+         bot.sendPhoto(chat_id, imag.replace("1000", "900"), caption="Album:" + url['title'] + "\nArtist:" + artist + "\nDate:" + url['release_date'] + "\nTracks number:" + str(url['nb_tracks']))
          if len(links1) <= (url['nb_tracks'] // 2):
           z = downloa.download_albumdee(music, check=False, quality=quality, recursive=False)
          else:
@@ -422,11 +418,7 @@ def Link(music, chat_id, lang, quality, msg):
              return
          except KeyError:
             None
-         if url['duration'] == 0:
-          bot.sendMessage(chat_id, translate(lang, "Invalid link ;"), reply_to_message_id=msg['message_id'])
-          delete(chat_id)
-          return
-         bot.sendPhoto(chat_id, url['picture_xl'], caption="Creation:" + url['creation_date'] + "\nUser:" + url['creator']['name'] + "\nTracks number:" + str(url['nb_tracks']))
+         bot.sendPhoto(chat_id, url['picture_xl'].replace("1000", "900"), caption="Creation:" + url['creation_date'] + "\nUser:" + url['creator']['name'] + "\nTracks number:" + str(url['nb_tracks']))
          for a in url['tracks']['data']:
              track(a['link'], chat_id, lang, quality, msg)
          done = 1
@@ -447,17 +439,12 @@ def Link(music, chat_id, lang, quality, msg):
           None
        logging.warning(a)
        logging.warning(music)
-       bot.sendMessage(chat_id, translate(lang, "An error has occured during downloading song, please contact @An0nimia for explain the issue, thanks :)"))
-    try:
-       if done == 1:
-        bot.sendMessage(chat_id, translate(lang, "FINISHED :)"), reply_to_message_id=msg['message_id'])
-    except:
-       None
+       bot.sendMessage(chat_id, str(a))
+    if done == 1:
+     bot.sendMessage(chat_id, translate(lang, "FINISHED :)"), reply_to_message_id=msg['message_id'])
     delete(chat_id)
 def Audio(audio, chat_id, lang):
     global spo
-    global goes
-    goes = 1
     file = loc_dir + audio + ".ogg"
     try:
        bot.download_file(audio, file)
@@ -517,7 +504,7 @@ def Audio(audio, chat_id, lang):
            try:
               id = "https://www.deezer.com/track/" + str(audio['metadata']['music'][0]['external_metadata']['deezer']['track']['id'])
               url = request("https://api.deezer.com/track/" + id.split("/")[-1]).json()
-              image = url['album']['cover_xl']
+              image = url['album']['cover_xl'].replace("1000", "900")
            except KeyError:
               None
         try:
@@ -529,7 +516,6 @@ def Audio(audio, chat_id, lang):
                          ))
         except:
            bot.sendMessage(chat_id, translate(lang, "Error :("))
-    goes = 2
 def download(msg):
     query_id, from_id, query_data = telepot.glance(msg, flavor="callback_query")
     try:
@@ -561,7 +547,7 @@ def download(msg):
            qualit[from_id]
         except KeyError:
            qualit[from_id] = "MP3_320"
-        Thread(target=Link, args=(query_data, from_id, lang, qualit[from_id], msg['message']['message_id'])).start()
+        Thread(target=Link, args=(query_data, from_id, lang, qualit[from_id], msg['message'])).start()
 def search(msg):
     query_id, from_id, query_string = telepot.glance(msg, flavor='inline_query')
     if query_string == "":
@@ -643,7 +629,7 @@ def start1(msg):
         qualit[chat_id] = "MP3_320"
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, lang)).start()
     elif content_type == "text" and msg['text'] == "/info":
-     bot.sendMessage(chat_id, "Version: 1.8.2\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
+     bot.sendMessage(chat_id, "Version: 1.8.3\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
     elif content_type == "text":
      try:
         qualit[chat_id]
@@ -702,7 +688,7 @@ def start2(msg):
         qualit[chat_id] = "MP3_320"
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, lang)).start()
     elif content_type == "text" and msg['text'] == "/info":
-     bot.sendMessage(chat_id, "Version: 1.8.2\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
+     bot.sendMessage(chat_id, "Version: 1.8.3\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
     elif content_type == "text":
      music = msg['text'].replace("'", "")
      try:
@@ -758,12 +744,14 @@ try:
    print("Bot started")
    while True:
        sleep(1)
-       if temp == 1 and (goes == 0 or goes == 2):
-        if len(array2) == len(array3):
-         for a in os.listdir(loc_dir):
-             shutil.rmtree(loc_dir + a)
-         del array2[:]
-         del array3[:]
+       if len(array2) == len(array3):
+        for a in os.listdir(loc_dir):
+            try:
+               shutil.rmtree(loc_dir + a)
+            except NotADirectoryError:
+               None
+        del array2[:]
+        del array3[:]
        now = datetime.now()
        if datetime.strptime(str(now.hour) + ":" + str(now.minute) + ":" + str(now.second), FMT) == datetime.strptime("00:00:00", FMT) or datetime.strptime(str(now.hour) + ":" + str(now.minute) + ":" + str(now.second), FMT) == datetime.strptime("12:00:00", FMT):
         downloa = deezloader.Login(setting.username, setting.password)
