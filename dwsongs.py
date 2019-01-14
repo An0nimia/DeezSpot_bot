@@ -213,7 +213,7 @@ def track(music, chat_id, lang, quality, msg):
             except KeyError:
                None
             try:
-               image = url['album']['cover_xl'].replace("1000", "90")
+               image = url['album']['cover_big'].replace("500", "90")
             except AttributeError:
                URL = "https://www.deezer.com/track/" + music.split("/")[-1]
                image = request(URL).text
@@ -368,16 +368,16 @@ def Link(music, chat_id, lang, quality, msg):
              return
          except KeyError:
             None
-         imag = url['album']['cover_xl']
+         imag = url['album']['cover_big']
          if imag == None:
           URL = "https://www.deezer.com/track/" + music.split("/")[-1]
           imag = request(URL).text
-          imag = BeautifulSoup(imag, "html.parser").find("img", class_="img_main").get("src").replace("120", "1000")
+          imag = BeautifulSoup(imag, "html.parser").find("img", class_="img_main").get("src").replace("120", "500")
          ima = request(imag).content
          if len(ima) == 13:
           imag = "https://e-cdns-images.dzcdn.net/images/cover/1000x1000-000000-80-0-0.jpg"
          artist = url['artist']['name']
-         bot.sendPhoto(chat_id, imag.replace("1000", "640"), caption="Track:" + url['title'] + "\nArtist:" + artist + "\nAlbum:" + url['album']['title'] + "\nDate:" + url['album']['release_date'])
+         bot.sendPhoto(chat_id, imag, caption="Track:" + url['title'] + "\nArtist:" + artist + "\nAlbum:" + url['album']['title'] + "\nDate:" + url['album']['release_date'])
          track(music, chat_id, lang, quality, msg)
          done = 1
         elif "album/" in music:
@@ -391,22 +391,22 @@ def Link(music, chat_id, lang, quality, msg):
              return
          except KeyError:
             None
-         imag = url['cover_xl']
+         imag = url['cover_big']
          if imag == None:
           URL = "https://www.deezer.com/album/" + music.split("/")[-1]
           imag = request(URL).text
-          imag = BeautifulSoup(imag, "html.parser").find("img", class_="img_main").get("src").replace("200", "1000")
+          imag = BeautifulSoup(imag, "html.parser").find("img", class_="img_main").get("src").replace("200", "500")
          conn = sqlite3.connect(db_file)
          c = conn.cursor()
          for a in url['tracks']['data']:
-             image.append(imag.replace("1000", "90"))
+             image.append(imag.replace("500", "90"))
              c.execute("SELECT query FROM DWSONGS WHERE id = '%s' and quality = '%s'" % (a['link'], quality))
              links2.append(a['link'])
              if c.fetchone() != None:
               links1.append(a['link'])
          conn.close()
          artist = url['artist']['name']
-         bot.sendPhoto(chat_id, imag.replace("1000", "640"), caption="Album:" + url['title'] + "\nArtist:" + artist + "\nDate:" + url['release_date'] + "\nTracks number:" + str(url['nb_tracks']))
+         bot.sendPhoto(chat_id, imag, caption="Album:" + url['title'] + "\nArtist:" + artist + "\nDate:" + url['release_date'] + "\nTracks number:" + str(url['nb_tracks']))
          if len(links1) <= (url['nb_tracks'] // 2):
           z = downloa.download_albumdee(music, check=False, quality=quality, recursive=False)
          else:
@@ -424,7 +424,7 @@ def Link(music, chat_id, lang, quality, msg):
              return
          except KeyError:
             None
-         bot.sendPhoto(chat_id, url['picture_xl'].replace("1000", "640"), caption="Creation:" + url['creation_date'] + "\nUser:" + url['creator']['name'] + "\nTracks number:" + str(url['nb_tracks']))
+         bot.sendPhoto(chat_id, url['picture_big'], caption="Creation:" + url['creation_date'] + "\nUser:" + url['creator']['name'] + "\nTracks number:" + str(url['nb_tracks']))
          for a in url['tracks']['data']:
              track(a['link'], chat_id, lang, quality, msg)
          done = 1
@@ -493,7 +493,7 @@ def Audio(audio, chat_id, lang):
            for a in range(url['total'] + 1):
                if url['data'][a]['title'] == track:
                 id = url['data'][a]['link']
-                image = url['data'][a]['album']['cover_xl']
+                image = url['data'][a]['album']['cover_big']
                 break
         except IndexError:
            try:
@@ -510,7 +510,7 @@ def Audio(audio, chat_id, lang):
            try:
               id = "https://www.deezer.com/track/" + str(audio['metadata']['music'][0]['external_metadata']['deezer']['track']['id'])
               url = request("https://api.deezer.com/track/" + id.split("/")[-1]).json()
-              image = url['album']['cover_xl'].replace("1000", "640")
+              image = url['album']['cover_big']
            except KeyError:
               None
         try:
@@ -580,12 +580,12 @@ def search(msg):
         search1.append({"link": "https://www.deezer.com/album/" + str(a['album']['id'])})
         search1[len(search1) - 1]['title'] = a['album']['title'] + " (Album)"
         search1[len(search1) - 1]['artist'] = {"name": a['artist']['name']}
-        if a['album']['cover_xl'] != None:
-         search1[len(search1) - 1]['album'] = {"cover_xl": a['album']['cover_xl']}
+        if a['album']['cover_big'] != None:
+         search1[len(search1) - 1]['album'] = {"cover_big": a['album']['cover_big']}
         else:
             url = request("https://www.deezer.com/album/" + str(a['album']['id'])).text
-            search1[len(search1) - 1]['album'] = {"cover_xl": BeautifulSoup(url, "html.parser").find("img", class_="img_main").get("src").replace("200", "1000")}
-    result = [InlineQueryResultArticle(id=a['link'], title=a['title'] + "\n" + a['artist']['name'], thumb_url=a['album']['cover_xl'], input_message_content=InputTextMessageContent(message_text=a['link'])) for a in search1]
+            search1[len(search1) - 1]['album'] = {"cover_big": BeautifulSoup(url, "html.parser").find("img", class_="img_main").get("src").replace("200", "500")}
+    result = [InlineQueryResultArticle(id=a['link'], title=a['title'] + "\n" + a['artist']['name'], thumb_url=a['album']['cover_big'], input_message_content=InputTextMessageContent(message_text=a['link'])) for a in search1]
     try:
        bot.answerInlineQuery(query_id, result)
     except telepot.exception.TelegramError:
