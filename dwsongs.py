@@ -183,7 +183,7 @@ def sendAudio(chat_id, audio, lang, music, msg, image=None):
        except KeyError:
           None
        logging.warning(a)
-       bot.sendMessage(chat_id, translate(lang, "OPS :( Something went wrong please contacts @An0nimia to explain the issue"))
+       bot.sendMessage(chat_id, translate(lang, "OPS :( Something went wrong please contact @An0nimia to explain the issue"))
 def track(music, chat_id, lang, quality, msg):
     global spo
     conn = sqlite3.connect(db_file)
@@ -238,7 +238,7 @@ def track(music, chat_id, lang, quality, msg):
                  None
               logging.warning(a)
               logging.warning(music)
-              bot.sendMessage(chat_id, translate(lang, "OPS :( Something went wrong please contacts @An0nimia to explain the issue"))
+              bot.sendMessage(chat_id, translate(lang, "OPS :( Something went wrong please contact @An0nimia to explain the issue"))
               return
         sendAudio(chat_id, z, lang, music, msg, image)
 def Link(music, chat_id, lang, quality, msg):
@@ -461,7 +461,7 @@ def Link(music, chat_id, lang, quality, msg):
           None
        logging.warning(a)
        logging.warning(music)
-       bot.sendMessage(chat_id, translate(lang, "OPS :( Something went wrong please contacts @An0nimia to explain the issue"))
+       bot.sendMessage(chat_id, translate(lang, "OPS :( Something went wrong please contact @An0nimia to explain the issue"))
     if done == 1:
      bot.sendMessage(chat_id, translate(lang, "FINISHED :)"), reply_to_message_id=msg['message_id'])
     delete(chat_id)
@@ -624,13 +624,12 @@ def start1(msg):
         qualit[chat_id]
      except KeyError:
         qualit[chat_id] = "MP3_320"
-     bot.sendMessage(chat_id, translate(lang, "Press for search songs or album\nP.S. Remember you can do this digiting @ in your keyboard and select DeezloaderRMX_bot"),
+     bot.sendMessage(chat_id, translate(lang, "Press for search songs or album\nP.S. Remember you can do this digiting @ in your keyboard and select DeezloaderRMX_bot\nSend a Deezer or Spotify link to download\nSend a song o vocal message to recognize the track"),
                     reply_markup=InlineKeyboardMarkup(
                                      inline_keyboard=[
                                                 [InlineKeyboardButton(text="Search", switch_inline_query_current_chat="")]
                                      ]
                          ))
-     bot.sendMessage(chat_id, translate(lang, "Send a Deezer or Spotify link to download\nSend a song o vocal message to recognize the track"))
     elif content_type == "text" and msg['text'] == "/quality":
      bot.sendMessage(chat_id, translate(lang, "Choose the quality that you want to download the song"),
                      reply_markup=ReplyKeyboardMarkup(
@@ -651,7 +650,7 @@ def start1(msg):
         qualit[chat_id] = "MP3_320"
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, lang)).start()
     elif content_type == "text" and msg['text'] == "/info":
-     bot.sendMessage(chat_id, "Version: 1.9.1\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
+     bot.sendMessage(chat_id, "Version: 2.0\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
     elif content_type == "text":
      try:
         qualit[chat_id]
@@ -683,13 +682,12 @@ def start2(msg):
         qualit[chat_id]
      except KeyError:
         qualit[chat_id] = "MP3_320"
-     bot.sendMessage(chat_id, translate(lang, "Press for search songs \nP.S. Remember you can do this digiting @ in your keyboard and select DeezloaderRMX_bot"),
+     bot.sendMessage(chat_id, translate(lang, "Press for search songs \nP.S. Remember you can do this digiting @ in your keyboard and select DeezloaderRMX_bot\nSend a Deezer or Spotify link to download\nSend a song o vocal message to recognize the track"),
                     reply_markup=InlineKeyboardMarkup(
                                      inline_keyboard=[
                                                 [InlineKeyboardButton(text="Search", switch_inline_query_current_chat="")]
                                      ]
                          ))
-     bot.sendMessage(chat_id, translate(lang, "Send a Deezer or Spotify link to download\nSend a song o vocal message to recognize the track"))
     elif content_type == "text" and msg['text'] == "/quality":
      bot.sendMessage(chat_id, translate(lang, "Choose the quality that you want to download the song"),
                      reply_markup=ReplyKeyboardMarkup(
@@ -710,7 +708,7 @@ def start2(msg):
         qualit[chat_id] = "MP3_320"
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, lang)).start()
     elif content_type == "text" and msg['text'] == "/info":
-     bot.sendMessage(chat_id, "Version: 1.9.1\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
+     bot.sendMessage(chat_id, "Version: 2.0\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
     elif content_type == "text":
      music = msg['text'].replace("'", "")
      try:
