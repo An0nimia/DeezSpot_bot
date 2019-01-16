@@ -202,7 +202,10 @@ def track(music, chat_id, lang, quality, msg):
                token = generate_token()
                spo = spotipy.Spotify(auth=token)
                url = spo.track(music)
-            image = url['album']['images'][2]['url']
+            try:
+               image = url['album']['images'][2]['url']
+            except IndexError:
+               image = "https://e-cdns-images.dzcdn.net/images/cover/90x90-000000-80-0-0.jpg"
             z = downloa.download_trackspo(music, check=False, quality=quality, recursive=False)
            elif "deezer" in music:
             url = request("https://api.deezer.com/track/" + music.split("/")[-1]).json()
@@ -260,7 +263,11 @@ def Link(music, chat_id, lang, quality, msg):
             token = generate_token()
             spo = spotipy.Spotify(auth=token)
             url = spo.track(music)
-         bot.sendPhoto(chat_id, url['album']['images'][0]['url'], caption="Track:" + url['name'] + "\nArtist:" + url['album']['artists'][0]['name'] + "\nAlbum:" + url['album']['name'] + "\nDate:" + url['album']['release_date'])
+         try:
+            ima = url['album']['images'][0]['url']
+         except IndexError:
+            ima = "https://e-cdns-images.dzcdn.net/images/cover/1000x1000-000000-80-0-0.jpg"
+         bot.sendPhoto(chat_id, ima, caption="Track:" + url['name'] + "\nArtist:" + url['album']['artists'][0]['name'] + "\nAlbum:" + url['album']['name'] + "\nDate:" + url['album']['release_date'])
          track(music, chat_id, lang, quality, msg)
          done = 1
         elif "album/" in music:
@@ -276,8 +283,14 @@ def Link(music, chat_id, lang, quality, msg):
             token = generate_token()
             spo = spotipy.Spotify(auth=token)
             tracks = spo.album(music)
+         try:
+            ima1 = tracks['images'][2]['url']
+            ima2 = tracks['images'][0]['url']
+         except IndexError:
+            ima1 = "https://e-cdns-images.dzcdn.net/images/cover/90x90-000000-80-0-0.jpg"
+            ima2 = "https://e-cdns-images.dzcdn.net/images/cover/1000x1000-000000-80-0-0.jpg"
          for a in range(tracks['total_tracks']):
-             image.append(tracks['images'][2]['url'])
+             image.append(ima1)
          conn = sqlite3.connect(db_file)
          c = conn.cursor()
          for a in tracks['tracks']['items']:
@@ -285,7 +298,7 @@ def Link(music, chat_id, lang, quality, msg):
              links2.append(a['external_urls']['spotify'])
              if c.fetchone() != None:
               links1.append(a['external_urls']['spotify'])
-         bot.sendPhoto(chat_id, tracks['images'][0]['url'], caption="Album:" + tracks['name'] + "\nArtist:" + tracks['artists'][0]['name'] + "\nDate:" + tracks['release_date'] + "\nTracks number:" + str(tracks['total_tracks']))
+         bot.sendPhoto(chat_id, ima2, caption="Album:" + tracks['name'] + "\nArtist:" + tracks['artists'][0]['name'] + "\nDate:" + tracks['release_date'] + "\nTracks number:" + str(tracks['total_tracks']))
          tot = tracks['total_tracks']
          tracks = tracks['tracks']
          if tot != 50:
@@ -396,10 +409,13 @@ def Link(music, chat_id, lang, quality, msg):
           URL = "https://www.deezer.com/album/" + music.split("/")[-1]
           imag = request(URL).text
           imag = BeautifulSoup(imag, "html.parser").find("img", class_="img_main").get("src").replace("200", "500")
+          ima = request(imag).content
+          if len(ima) == 13:
+           imag = "https://e-cdns-images.dzcdn.net/images/cover/1000x1000-000000-80-0-0.jpg"
          conn = sqlite3.connect(db_file)
          c = conn.cursor()
          for a in url['tracks']['data']:
-             image.append(imag.replace("500", "90"))
+             image.append(imag.replace("500", "90").replace("1000", "90"))
              c.execute("SELECT query FROM DWSONGS WHERE id = '%s' and quality = '%s'" % (a['link'], quality))
              links2.append(a['link'])
              if c.fetchone() != None:
@@ -635,7 +651,7 @@ def start1(msg):
         qualit[chat_id] = "MP3_320"
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, lang)).start()
     elif content_type == "text" and msg['text'] == "/info":
-     bot.sendMessage(chat_id, "Version: 1.9\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
+     bot.sendMessage(chat_id, "Version: 1.9.1\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
     elif content_type == "text":
      try:
         qualit[chat_id]
@@ -694,7 +710,7 @@ def start2(msg):
         qualit[chat_id] = "MP3_320"
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, lang)).start()
     elif content_type == "text" and msg['text'] == "/info":
-     bot.sendMessage(chat_id, "Version: 1.9\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
+     bot.sendMessage(chat_id, "Version: 1.9.1\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
     elif content_type == "text":
      music = msg['text'].replace("'", "")
      try:
