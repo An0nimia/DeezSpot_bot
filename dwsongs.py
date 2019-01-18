@@ -34,7 +34,6 @@ date = {}
 array2 = []
 array3 = []
 local = os.getcwd()
-FMT = "%H:%M:%S"
 logging.basicConfig(filename="dwsongs.log", level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 config = {
           "key": "d8d8e2b3e982d8413bd8f3f7f3b5b51a",
@@ -462,8 +461,11 @@ def Link(music, chat_id, lang, quality, msg):
        logging.warning(a)
        logging.warning(music)
        bot.sendMessage(chat_id, translate(lang, "OPS :( Something went wrong please contact @An0nimia to explain the issue"))
-    if done == 1:
-     bot.sendMessage(chat_id, translate(lang, "FINISHED :)"), reply_to_message_id=msg['message_id'])
+    try:
+       if done == 1:
+        bot.sendMessage(chat_id, translate(lang, "FINISHED :)"), reply_to_message_id=msg['message_id'])
+    except:
+       pass
     delete(chat_id)
 def Audio(audio, chat_id, lang):
     global spo
@@ -773,7 +775,7 @@ try:
         del array2[:]
         del array3[:]
        now = datetime.now()
-       if datetime.strptime(str(now.hour) + ":" + str(now.minute) + ":" + str(now.second), FMT) == datetime.strptime("00:00:00", FMT) or datetime.strptime(str(now.hour) + ":" + str(now.minute) + ":" + str(now.second), FMT) == datetime.strptime("12:00:00", FMT):
+       if now.hour % 3 == 0:
         downloa = deezloader.Login(setting.username, setting.password)
 except KeyboardInterrupt:
    os.rmdir(loc_dir)
