@@ -775,7 +775,7 @@ try:
         del array2[:]
         del array3[:]
        now = datetime.now()
-       if now.hour % 3 == 0:
+       if now.hour % 3 == 0 and now.minute == 0 and now.second == 0:
         downloa = deezloader.Login(setting.username, setting.password)
 except KeyboardInterrupt:
    os.rmdir(loc_dir)
