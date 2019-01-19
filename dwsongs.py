@@ -133,7 +133,7 @@ def delete(chat_id):
     except KeyError:
        None
     array2.append(chat_id)
-def sendAudio(chat_id, audio, lang, music, msg, image=None):
+def sendAudio(chat_id, audio, lang, music, msg, image=None, youtube=False):
     bot.sendChatAction(chat_id, "upload_audio")
     try:
        url = "https://api.telegram.org/bot" + token + "/sendAudio"
@@ -162,18 +162,19 @@ def sendAudio(chat_id, audio, lang, music, msg, image=None):
         if request.status_code == 413:
          bot.sendMessage(chat_id, translate(lang, "The song is too big to be sent"))
         else:
-            audio = request.json()['result']['audio']['file_id']
-            conn = sqlite3.connect(db_file)
-            c = conn.cursor()
-            while True:
-                sleep(1)
-                try:
-                   c.execute("INSERT INTO DWSONGS(id, query, quality) values('%s', '%s', '%s')" % (music, audio, qualit[chat_id]))
-                   conn.commit()
-                   conn.close()
-                   break
-                except sqlite3.OperationalError:
-                   None
+            if youtube != True:
+             audio = request.json()['result']['audio']['file_id']
+             conn = sqlite3.connect(db_file)
+             c = conn.cursor()
+             while True:
+                 sleep(1)
+                 try:
+                    c.execute("INSERT INTO DWSONGS(id, query, quality) values('%s', '%s', '%s')" % (music, audio, qualit[chat_id]))
+                    conn.commit()
+                    conn.close()
+                    break
+                 except sqlite3.OperationalError:
+                    None
        else:
            bot.sendAudio(chat_id, audio)
     except Exception as a:
@@ -192,8 +193,9 @@ def track(music, chat_id, lang, quality, msg):
     conn.close()
     if z != None:
      sendAudio(chat_id, z[0], lang, music, msg)
-    else: 
+    else:
         try:
+           youtube = False
            if "spotify" in music:
             try:
                url = spo.track(music)
@@ -230,6 +232,7 @@ def track(music, chat_id, lang, quality, msg):
                z = dwytsongs.download_trackspo(music, check=False)
               elif "deezer" in music:
                z = dwytsongs.download_trackdee(music, check=False)
+              youtube = True
            except Exception as a:
               try:
                  logging.info(msg['from']['username'])
@@ -239,7 +242,7 @@ def track(music, chat_id, lang, quality, msg):
               logging.warning(music)
               bot.sendMessage(chat_id, translate(lang, "OPS :( Something went wrong please contact @An0nimia to explain the issue"))
               return
-        sendAudio(chat_id, z, lang, music, msg, image)
+        sendAudio(chat_id, z, lang, music, msg, image, youtube)
 def Link(music, chat_id, lang, quality, msg):
     global spo
     done = 0
@@ -652,7 +655,7 @@ def start1(msg):
         qualit[chat_id] = "MP3_320"
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, lang)).start()
     elif content_type == "text" and msg['text'] == "/info":
-     bot.sendMessage(chat_id, "Version: 2.0\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
+     bot.sendMessage(chat_id, "Version: 2.1\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
     elif content_type == "text":
      try:
         qualit[chat_id]
@@ -710,7 +713,7 @@ def start2(msg):
         qualit[chat_id] = "MP3_320"
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, lang)).start()
     elif content_type == "text" and msg['text'] == "/info":
-     bot.sendMessage(chat_id, "Version: 2.0\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
+     bot.sendMessage(chat_id, "Version: 2.1\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
     elif content_type == "text":
      music = msg['text'].replace("'", "")
      try:
