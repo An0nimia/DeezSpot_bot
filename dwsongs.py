@@ -162,7 +162,7 @@ def sendAudio(chat_id, audio, lang, music, msg, image=None, youtube=False):
         if request.status_code == 413:
          bot.sendMessage(chat_id, translate(lang, "The song is too big to be sent"))
         else:
-            if youtube != True:
+            if youtube == False:
              audio = request.json()['result']['audio']['file_id']
              conn = sqlite3.connect(db_file)
              c = conn.cursor()
@@ -228,6 +228,7 @@ def track(music, chat_id, lang, quality, msg):
             z = downloa.download_trackdee(music, check=False, quality=quality, recursive=False)
         except:
            try:
+              bot.sendMessage(chat_id, translate(lang, "Track doesn't exist on Deezer, it'll be downloaded from YouTube..."))
               if "spotify" in music:
                z = dwytsongs.download_trackspo(music, check=False)
               elif "deezer" in music:
