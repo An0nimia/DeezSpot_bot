@@ -766,6 +766,7 @@ try:
                     })
    else:
        sys.exit(0)
+   downloa = deezloader.Login(setting.username, setting.password)
    print("Bot started")
    while True:
        sleep(1)
