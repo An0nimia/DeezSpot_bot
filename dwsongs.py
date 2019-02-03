@@ -25,7 +25,6 @@ from telepot.namedtuple import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboar
 header = {
           "Accept-Language": "en-US,en;q=0.5"
 }
-downloa = deezloader.Login(setting.username, setting.password)
 token = setting.token
 bot = telepot.Bot(token)
 users = {}
@@ -779,7 +778,7 @@ try:
         del array2[:]
         del array3[:]
        now = datetime.now()
-       if now.hour % 3 == 0 and now.minute == 0 and now.second == 0:
+       if now.hour % 1 == 0 and now.minute == 0 and now.second == 0:
         downloa = deezloader.Login(setting.username, setting.password)
 except KeyboardInterrupt:
    os.rmdir(loc_dir)
