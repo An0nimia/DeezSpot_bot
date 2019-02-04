@@ -134,6 +134,7 @@ def delete(chat_id):
        None
     array2.append(chat_id)
 def sendAudio(chat_id, audio, lang, music, msg, image=None, youtube=False):
+    global times
     bot.sendChatAction(chat_id, "upload_audio")
     try:
        url = "https://api.telegram.org/bot" + token + "/sendAudio"
@@ -187,6 +188,7 @@ def sendAudio(chat_id, audio, lang, music, msg, image=None, youtube=False):
        bot.sendMessage(chat_id, translate(lang, "OPS :( Something went wrong please contact @An0nimia to explain the issue"))
 def track(music, chat_id, lang, quality, msg):
     global spo
+    global times
     conn = sqlite3.connect(db_file)
     c = conn.cursor()
     c.execute("SELECT query FROM DWSONGS WHERE id = '%s' and quality = '%s'" % (music, quality))
@@ -249,6 +251,7 @@ def track(music, chat_id, lang, quality, msg):
         sendAudio(chat_id, z, lang, music, msg, image, youtube)
 def Link(music, chat_id, lang, quality, msg):
     global spo
+    global times
     done = 0
     links1 = []
     links2 = []
