@@ -32,6 +32,7 @@ qualit = {}
 date = {}
 array2 = []
 array3 = []
+times = 0
 local = os.getcwd()
 logging.basicConfig(filename="dwsongs.log", level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 config = {
@@ -177,6 +178,7 @@ def sendAudio(chat_id, audio, lang, music, msg, image=None, youtube=False):
        else:
            bot.sendAudio(chat_id, audio)
     except Exception as a:
+       times += 1 
        try:
           logging.info(msg['from']['username'])
        except KeyError:
@@ -226,6 +228,7 @@ def track(music, chat_id, lang, quality, msg):
              image = "https://e-cdns-images.dzcdn.net/images/cover/90x90-000000-80-0-0.jpg"
             z = downloa.download_trackdee(music, check=False, quality=quality, recursive=False)
         except:
+           times += 1
            try:
               bot.sendMessage(chat_id, translate(lang, "Track doesn't exist on Deezer, it'll be downloaded from YouTube..."))
               if "spotify" in music:
@@ -234,6 +237,7 @@ def track(music, chat_id, lang, quality, msg):
                z = dwytsongs.download_trackdee(music, check=False)
               youtube = True
            except Exception as a:
+              times += 1
               try:
                  logging.info(msg['from']['username'])
               except KeyError:
@@ -457,6 +461,7 @@ def Link(music, chat_id, lang, quality, msg):
        bot.sendMessage(chat_id, translate(lang, "Album not found :("))
        bot.sendMessage(chat_id, translate(lang, "Try to search it throught inline mode or search the link on Deezer"))
     except Exception as a:
+       times += 1
        try:
           logging.info(msg['from']['username'])
        except KeyError:
@@ -779,8 +784,9 @@ try:
         del array2[:]
         del array3[:]
        now = datetime.now()
-       if now.hour % 1 == 0 and now.minute == 0 and now.second == 0:
+       if now.hour % 1 == 0 and now.minute == 0 and now.second == 0 or times == 4:
         downloa = deezloader.Login(setting.username, setting.password)
+        times = 0
 except KeyboardInterrupt:
    os.rmdir(loc_dir)
    print("\nSTOPPED")
