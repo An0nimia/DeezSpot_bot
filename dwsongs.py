@@ -330,7 +330,12 @@ def Link(music, chat_id, lang, quality, msg):
             image = tracks['images'][0]['url']
          except IndexError:
             image = "https://e-cdns-images.dzcdn.net/images/cover/500x500-000000-80-0-0.jpg"
-         bot.sendPhoto(chat_id, image, caption="Creation:" + tracks['tracks']['items'][0]['added_at'] + "\nUser:" + str(tracks['owner']['display_name']) + "\nTracks number:" + str(tracks['tracks']['total']))
+         nums = tracks['tracks']['total']
+         if nums > 1000:
+          bot.sendMessage(chat_id, translate(lang, "Fuck you"))
+          delete(chat_id)
+          return
+         bot.sendPhoto(chat_id, image, caption="Creation:" + tracks['tracks']['items'][0]['added_at'] + "\nUser:" + str(tracks['owner']['display_name']) + "\nTracks number:" + str(nums))
          for a in tracks['tracks']['items']:
              try:
                 track(a['track']['external_urls']['spotify'], chat_id, lang, quality)
@@ -419,7 +424,12 @@ def Link(music, chat_id, lang, quality, msg):
             url = request("https://api.deezer.com/playlist/" + music.split("/")[-1], lang, chat_id, True).json()
          except AttributeError:
             return
-         bot.sendPhoto(chat_id, url['picture_big'], caption="Creation:" + url['creation_date'] + "\nUser:" + url['creator']['name'] + "\nTracks number:" + str(url['nb_tracks']))
+         nums = url['nb_tracks']
+         if nums > 1000:
+          bot.sendMessage(chat_id, translate(lang, "Fuck you"))
+          delete(chat_id)
+          return
+         bot.sendPhoto(chat_id, url['picture_big'], caption="Creation:" + url['creation_date'] + "\nUser:" + url['creator']['name'] + "\nTracks number:" + str(nums))
          for a in url['tracks']['data']:
              track(a['link'], chat_id, lang, quality)
          done = 1
@@ -588,7 +598,7 @@ def search(msg):
     try:
        bot.answerInlineQuery(query_id, result)
     except telepot.exception.TelegramError:
-       None
+       pass
 def up(msg):
     pass
 def start1(msg):
@@ -633,7 +643,7 @@ def start1(msg):
         qualit[chat_id] = "MP3_320"
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, lang)).start()
     elif content_type == "text" and msg['text'] == "/info":
-     bot.sendMessage(chat_id, "Version: 2.1\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
+     bot.sendMessage(chat_id, "Version: 2.2\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
     elif content_type == "text":
      try:
         qualit[chat_id]
@@ -691,7 +701,7 @@ def start2(msg):
         qualit[chat_id] = "MP3_320"
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, lang)).start()
     elif content_type == "text" and msg['text'] == "/info":
-     bot.sendMessage(chat_id, "Version: 2.1\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
+     bot.sendMessage(chat_id, "Version: 2.2\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
     elif content_type == "text":
      music = msg['text'].replace("'", "")
      try:
@@ -711,7 +721,7 @@ def start2(msg):
                                      inline_keyboard=[
                                                 [InlineKeyboardButton(text="Search", switch_inline_query_current_chat=msg['text'])]
                                      ]
-                               ))   
+                               ))
      except KeyError:
         try:
            msg['entities']
@@ -740,7 +750,7 @@ try:
                       "chat": start2,
                       "callback_query": download,
                       "inline_query": search,
-                     "chosen_inline_result": up
+                      "chosen_inline_result": up
                     })
    else:
        sys.exit(0)
