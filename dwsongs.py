@@ -7,6 +7,7 @@ import spotipy
 import telepot
 import mutagen
 import setting
+import logging
 import acrcloud
 import requests
 import dwytsongs
@@ -36,6 +37,7 @@ config = {
           "secret": "Xy0DL8AGiG4KBInav12P2TYMKSFRQYyclZyw3cu5",
           "host": "https://identify-eu-west-1.acrcloud.com"
 }
+logging.basicConfig(filename="dwsongs.log",format="%(asctime)s - %(levelname)s - %(message)s")
 if not os.path.isdir("Songs"):
  os.makedirs("Songs")
 db_file = local + "/dwsongs.db"
@@ -48,7 +50,7 @@ try:
    c.execute("CREATE TABLE CHAT_ID (chat_id int)")
    conn.commit()
 except sqlite3.OperationalError:
-   None
+   pass
 def generate_token():
     token = oauth2.SpotifyClientCredentials(client_id="4fe3fecfe5334023a1472516cc99d805", client_secret="0f02b7c483c04257984695007a4a8d5c").get_access_token()
     return token
@@ -78,13 +80,13 @@ def translate(language, sms):
        api = "https://translate.yandex.net/api/v1.5/tr.json/translate?key=trnsl.1.1.20181114T193428Z.ec0fb3fb93e116c0.24b2ccfe2d150324e23a5571760e9a827d953003&text=%s&lang=en-%s" % (sms, language)
        sms = request(api).json()['text'][0]
     except:
-       None
+       pass
     return sms
 def delete(chat_id):
     try:
        users[chat_id] -= 1
     except KeyError:
-       None
+       pass
     array2.append(chat_id)
 def write_db(execution):
     conn = sqlite3.connect(db_file)
@@ -138,7 +140,7 @@ def check_flood(chat_id, lang, msg):
        try: 
           date[chat_id] = {"time": msg['date'], "tries": 3, "msg": 0}
        except KeyError:
-          None
+          pass
 def sendAudio(chat_id, audio, lang, music, image=None, youtube=False):
     global times
     bot.sendChatAction(chat_id, "upload_audio")
@@ -206,7 +208,7 @@ def track(music, chat_id, lang, quality):
             try:
                url = request("https://api.deezer.com/track/" + music.split("/")[-1], lang, chat_id, True).json()
             except AttributeError:
-               return 
+               return
             try:
                image = url['album']['cover_big'].replace("500x500", "90x90")
             except AttributeError:
@@ -219,17 +221,12 @@ def track(music, chat_id, lang, quality):
             z = downloa.download_trackdee(music, check=False, quality=quality, recursive=False)
         except:
            times += 1
-           try:
-              bot.sendMessage(chat_id, translate(lang, "Track doesn't exist on Deezer, it'll be downloaded from YouTube..."))
-              if "spotify" in music:
-               z = dwytsongs.download_trackspo(music, check=False)
-              elif "deezer" in music:
-               z = dwytsongs.download_trackdee(music, check=False)
-              youtube = True
-           except:
-              times += 1
-              bot.sendMessage(chat_id, translate(lang, "OPS :( Something went wrong please contact @An0nimia to explain the issue"))
-              return
+           bot.sendMessage(chat_id, translate(lang, "Track doesn't exist on Deezer, it'll be downloaded from YouTube..."))
+           if "spotify" in music:
+            z = dwytsongs.download_trackspo(music, check=False)
+           elif "deezer" in music:
+            z = dwytsongs.download_trackdee(music, check=False)
+           youtube = True
         sendAudio(chat_id, z, lang, music, image, youtube)
 def Link(music, chat_id, lang, quality, msg):
     global spo
@@ -260,7 +257,6 @@ def Link(music, chat_id, lang, quality, msg):
             ima = "https://e-cdns-images.dzcdn.net/images/cover/500x500-000000-80-0-0.jpg"
          bot.sendPhoto(chat_id, ima, caption="Track:" + url['name'] + "\nArtist:" + url['album']['artists'][0]['name'] + "\nAlbum:" + url['album']['name'] + "\nDate:" + url['album']['release_date'])
          track(music, chat_id, lang, quality)
-         done = 1
         elif "album/" in music:
          if "?" in music:
           music,a = music.split("?")
@@ -384,7 +380,6 @@ def Link(music, chat_id, lang, quality, msg):
          artist = url['artist']['name']
          bot.sendPhoto(chat_id, imag, caption="Track:" + url['title'] + "\nArtist:" + artist + "\nAlbum:" + url['album']['title'] + "\nDate:" + url['album']['release_date'])
          track(music, chat_id, lang, quality)
-         done = 1
         elif "album/" in music:
          if "?" in music:
           music,a = music.split("?")
@@ -439,11 +434,12 @@ def Link(music, chat_id, lang, quality, msg):
           for a in range(len(z)):
               sendAudio(chat_id, z[a], lang, links2[a], image[a])
        except NameError:
-          None
+          pass
     except deezloader.AlbumNotFound:
        bot.sendMessage(chat_id, translate(lang, "Album not found :("))
        bot.sendMessage(chat_id, translate(lang, "Try to search it throught inline mode or search the link on Deezer"))
-    except:
+    except Exception as a:
+       logging.warning(a)
        times += 1
        bot.sendMessage(chat_id, translate(lang, "OPS :( Something went wrong please contact @An0nimia to explain the issue"))
     try:
@@ -464,7 +460,7 @@ def Audio(audio, chat_id, lang):
     try:
        os.remove(file)
     except FileNotFoundError:
-       None
+       pass
     if audio['status']['msg'] != "Success":
      bot.sendMessage(chat_id, translate(lang, "Sorry cannot detect the song from audio :(, retry..."))
     else:
@@ -476,17 +472,17 @@ def Audio(audio, chat_id, lang):
            date = audio['metadata']['music'][0]['release_date']
            album += "_" + date
         except KeyError:
-           None 
+           pass
         try:
            label = audio['metadata']['music'][0]['label']
            album += "_" + label
         except KeyError:
-           None
+           pass
         try:
            genre = audio['metadata']['music'][0]['genres'][0]['name']
            album += "_" + genre
         except KeyError:
-           None
+           pass
         if len(album) > 64:
          album = "Infos with too many bytes"
         elif len(album.split("_")) == 1:
@@ -512,7 +508,7 @@ def Audio(audio, chat_id, lang):
                  url = spo.track(id)
               image = url['album']['images'][0]['url']
            except KeyError:
-              None
+              pass
            try:
               id = "https://www.deezer.com/track/" + str(audio['metadata']['music'][0]['external_metadata']['deezer']['track']['id'])
               try:
@@ -521,7 +517,7 @@ def Audio(audio, chat_id, lang):
                  return
               image = url['album']['cover_big']
            except KeyError:
-              None
+              pass
         try:
            bot.sendPhoto(chat_id, image, caption=track + " - " + artist,
                          reply_markup=InlineKeyboardMarkup(
@@ -578,7 +574,7 @@ def search(msg):
        if search1['error']:
         return
     except KeyError:
-       None
+       pass
     search1 = search1['data']
     for a in search1:
         try:
@@ -763,7 +759,7 @@ try:
             try:
                shutil.rmtree(loc_dir + a)
             except NotADirectoryError:
-               None
+               pass
         del array2[:]
         del array3[:]
        now = datetime.now()
