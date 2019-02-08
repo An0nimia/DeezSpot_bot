@@ -7,7 +7,6 @@ import spotipy
 import telepot
 import mutagen
 import setting
-import logging
 import acrcloud
 import requests
 import dwytsongs
@@ -37,7 +36,6 @@ config = {
           "secret": "Xy0DL8AGiG4KBInav12P2TYMKSFRQYyclZyw3cu5",
           "host": "https://identify-eu-west-1.acrcloud.com"
 }
-logging.basicConfig(filename="dwsongs.log",format="%(asctime)s - %(levelname)s - %(message)s")
 if not os.path.isdir("Songs"):
  os.makedirs("Songs")
 db_file = local + "/dwsongs.db"
@@ -176,6 +174,8 @@ def sendAudio(chat_id, audio, lang, music, image=None, youtube=False):
              write_db("INSERT INTO DWSONGS(id, query, quality) values('%s', '%s', '%s')" % (music, audio, qualit[chat_id]))
        else:
            bot.sendAudio(chat_id, audio)
+    except telepot.exception.TelegramError:
+       bot.sendMessage(chat_id, translate(lang, "Sorry the track seems not to be readble on Deezer :(")) 
     except:
        times += 1
        bot.sendMessage(chat_id, translate(lang, "OPS :( Something went wrong please contact @An0nimia, sending the song link, to explain the issue"))
@@ -438,8 +438,7 @@ def Link(music, chat_id, lang, quality, msg):
     except deezloader.AlbumNotFound:
        bot.sendMessage(chat_id, translate(lang, "Album not found :("))
        bot.sendMessage(chat_id, translate(lang, "Try to search it throught inline mode or search the link on Deezer"))
-    except Exception as a:
-       logging.warning(a)
+    except:
        times += 1
        bot.sendMessage(chat_id, translate(lang, "OPS :( Something went wrong please contact @An0nimia to explain the issue"))
     try:
