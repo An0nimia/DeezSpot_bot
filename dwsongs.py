@@ -167,7 +167,7 @@ def sendAudio(chat_id, audio, lang, music, image=None, youtube=False):
         }
         file = {
                 "audio": audio,
-                "thumb": request(image).content
+                "thumb": requests.get(image).content
         }
         try:
            request = requests.post(url, params=data, files=file)
