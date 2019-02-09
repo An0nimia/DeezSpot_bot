@@ -7,6 +7,7 @@ import spotipy
 import telepot
 import mutagen
 import setting
+import logging
 import acrcloud
 import requests
 import dwytsongs
@@ -36,6 +37,7 @@ config = {
           "secret": "Xy0DL8AGiG4KBInav12P2TYMKSFRQYyclZyw3cu5",
           "host": "https://identify-eu-west-1.acrcloud.com"
 }
+logging.basicConfig(filename="dwsongs.log", level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 if not os.path.isdir("Songs"):
  os.makedirs("Songs")
 db_file = local + "/dwsongs.db"
@@ -60,14 +62,14 @@ def request(url, lang="en", chat_id=0, control=False):
        thing = requests.get(url, headers=header)
     if control == True:
      try:
-        if thing.json()['error']:
-         bot.sendMessage(chat_id, translate(lang, "Track not found :(\n" + url))
+        if thing.json()['error']['message'] == "Quota limit exceeded":
+         bot.sendAudio(chat_id, translate(lang, "Please resend the link :("))
          return
      except KeyError:
         pass
      try:
-        if thing.json()['error']['message'] == "Quota limit exceeded":
-         bot.sendAudio(chat_id, translate(lang, "Please resend the link :("))
+        if thing.json()['error']:
+         bot.sendMessage(chat_id, translate(lang, "Track not found :(\n" + url))
          return
      except KeyError:
         pass
@@ -139,6 +141,11 @@ def check_flood(chat_id, lang, msg):
           date[chat_id] = {"time": msg['date'], "tries": 3, "msg": 0}
        except KeyError:
           pass
+def sendPhoto(chat_id, photo, caption="", reply_markup=""):
+    try:
+       bot.sendPhoto(chat_id, photo, caption=caption, reply_markup=reply_markup)
+    except telepot.exception.TelegramError:
+       pass      
 def sendAudio(chat_id, audio, lang, music, image=None, youtube=False):
     global times
     bot.sendChatAction(chat_id, "upload_audio")
@@ -160,7 +167,7 @@ def sendAudio(chat_id, audio, lang, music, image=None, youtube=False):
         }
         file = {
                 "audio": audio,
-                "thumb": requests.get(image).content
+                "thumb": request(image).content
         }
         try:
            request = requests.post(url, params=data, files=file)
@@ -219,7 +226,7 @@ def track(music, chat_id, lang, quality):
             if len(ima) == 13:
              image = "https://e-cdns-images.dzcdn.net/images/cover/90x90-000000-80-0-0.jpg"
             z = downloa.download_trackdee(music, check=False, quality=quality, recursive=False)
-        except:
+        except deezloader.TrackNotFound:
            times += 1
            bot.sendMessage(chat_id, translate(lang, "Track doesn't exist on Deezer, it'll be downloaded from YouTube..."))
            if "spotify" in music:
@@ -255,7 +262,7 @@ def Link(music, chat_id, lang, quality, msg):
             ima = url['album']['images'][0]['url']
          except IndexError:
             ima = "https://e-cdns-images.dzcdn.net/images/cover/500x500-000000-80-0-0.jpg"
-         bot.sendPhoto(chat_id, ima, caption="Track:" + url['name'] + "\nArtist:" + url['album']['artists'][0]['name'] + "\nAlbum:" + url['album']['name'] + "\nDate:" + url['album']['release_date'])
+         sendPhoto(chat_id, ima, caption="Track:" + url['name'] + "\nArtist:" + url['album']['artists'][0]['name'] + "\nAlbum:" + url['album']['name'] + "\nDate:" + url['album']['release_date'])
          track(music, chat_id, lang, quality)
         elif "album/" in music:
          if "?" in music:
@@ -286,7 +293,7 @@ def Link(music, chat_id, lang, quality, msg):
              links2.append(a['external_urls']['spotify'])
              if c.fetchone() != None:
               links1.append(a['external_urls']['spotify'])
-         bot.sendPhoto(chat_id, ima2, caption="Album:" + tracks['name'] + "\nArtist:" + tracks['artists'][0]['name'] + "\nDate:" + tracks['release_date'] + "\nTracks number:" + str(tracks['total_tracks']))
+         sendPhoto(chat_id, ima2, caption="Album:" + tracks['name'] + "\nArtist:" + tracks['artists'][0]['name'] + "\nDate:" + tracks['release_date'] + "\nTracks number:" + str(tracks['total_tracks']))
          tracks = tracks['tracks']
          if tot != 50:
             for a in range(tot // 50):
@@ -331,7 +338,7 @@ def Link(music, chat_id, lang, quality, msg):
           bot.sendMessage(chat_id, translate(lang, "Fuck you"))
           delete(chat_id)
           return
-         bot.sendPhoto(chat_id, image, caption="Creation:" + tracks['tracks']['items'][0]['added_at'] + "\nUser:" + str(tracks['owner']['display_name']) + "\nTracks number:" + str(nums))
+         sendPhoto(chat_id, image, caption="Creation:" + tracks['tracks']['items'][0]['added_at'] + "\nUser:" + str(tracks['owner']['display_name']) + "\nTracks number:" + str(nums))
          for a in tracks['tracks']['items']:
              try:
                 track(a['track']['external_urls']['spotify'], chat_id, lang, quality)
@@ -378,7 +385,7 @@ def Link(music, chat_id, lang, quality, msg):
          if len(ima) == 13:
           imag = "https://e-cdns-images.dzcdn.net/images/cover/500x500-000000-80-0-0.jpg"
          artist = url['artist']['name']
-         bot.sendPhoto(chat_id, imag, caption="Track:" + url['title'] + "\nArtist:" + artist + "\nAlbum:" + url['album']['title'] + "\nDate:" + url['album']['release_date'])
+         sendPhoto(chat_id, imag, caption="Track:" + url['title'] + "\nArtist:" + artist + "\nAlbum:" + url['album']['title'] + "\nDate:" + url['album']['release_date'])
          track(music, chat_id, lang, quality)
         elif "album/" in music:
          if "?" in music:
@@ -405,7 +412,7 @@ def Link(music, chat_id, lang, quality, msg):
               links1.append(a['link'])
          conn.close()
          artist = url['artist']['name']
-         bot.sendPhoto(chat_id, imag, caption="Album:" + url['title'] + "\nArtist:" + artist + "\nDate:" + url['release_date'] + "\nTracks number:" + str(url['nb_tracks']))
+         sendPhoto(chat_id, imag, caption="Album:" + url['title'] + "\nArtist:" + artist + "\nDate:" + url['release_date'] + "\nTracks number:" + str(url['nb_tracks']))
          if len(links1) <= (url['nb_tracks'] // 2):
           z = downloa.download_albumdee(music, check=False, quality=quality, recursive=False)
          else:
@@ -424,7 +431,7 @@ def Link(music, chat_id, lang, quality, msg):
           bot.sendMessage(chat_id, translate(lang, "Fuck you"))
           delete(chat_id)
           return
-         bot.sendPhoto(chat_id, url['picture_big'], caption="Creation:" + url['creation_date'] + "\nUser:" + url['creator']['name'] + "\nTracks number:" + str(nums))
+         sendPhoto(chat_id, url['picture_big'], caption="Creation:" + url['creation_date'] + "\nUser:" + url['creator']['name'] + "\nTracks number:" + str(nums))
          for a in url['tracks']['data']:
              track(a['link'], chat_id, lang, quality)
          done = 1
@@ -438,7 +445,9 @@ def Link(music, chat_id, lang, quality, msg):
     except deezloader.AlbumNotFound:
        bot.sendMessage(chat_id, translate(lang, "Album not found :("))
        bot.sendMessage(chat_id, translate(lang, "Try to search it throught inline mode or search the link on Deezer"))
-    except:
+    except Exception as a:
+       logging.info(music)
+       logging.warning(a)
        times += 1
        bot.sendMessage(chat_id, translate(lang, "OPS :( Something went wrong please contact @An0nimia to explain the issue"))
     try:
@@ -518,7 +527,7 @@ def Audio(audio, chat_id, lang):
            except KeyError:
               pass
         try:
-           bot.sendPhoto(chat_id, image, caption=track + " - " + artist,
+           sendPhoto(chat_id, image, caption=track + " - " + artist,
                          reply_markup=InlineKeyboardMarkup(
                                      inline_keyboard=[
                                                 [InlineKeyboardButton(text="Download", callback_data=id), InlineKeyboardButton(text="Info", callback_data=album)]
@@ -607,7 +616,7 @@ def start1(msg):
      return
     statisc(chat_id, "USERS")
     if content_type == "text" and msg['text'] == "/start":
-     bot.sendPhoto(chat_id, open("example.jpg", "rb"), caption=translate(lang, "The bot commands can find here"))
+     sendPhoto(chat_id, open("example.jpg", "rb"), caption=translate(lang, "The bot commands can find here"))
      try:
         qualit[chat_id]
      except KeyError:
@@ -638,7 +647,7 @@ def start1(msg):
         qualit[chat_id] = "MP3_320"
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, lang)).start()
     elif content_type == "text" and msg['text'] == "/info":
-     bot.sendMessage(chat_id, "Version: 2.2\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
+     bot.sendMessage(chat_id, "Version: 2.3\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
     elif content_type == "text":
      try:
         qualit[chat_id]
@@ -665,7 +674,7 @@ def start2(msg):
     statisc(chat_id, "USERS")
     pprint(msg)
     if content_type == "text" and msg['text'] == "/start":
-     bot.sendPhoto(chat_id, open("example.jpg", "rb"), caption=translate(lang, "The bot commands can find here"))
+     sendPhoto(chat_id, open("example.jpg", "rb"), caption=translate(lang, "The bot commands can find here"))
      try:
         qualit[chat_id]
      except KeyError:
@@ -696,7 +705,7 @@ def start2(msg):
         qualit[chat_id] = "MP3_320"
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, lang)).start()
     elif content_type == "text" and msg['text'] == "/info":
-     bot.sendMessage(chat_id, "Version: 2.2\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
+     bot.sendMessage(chat_id, "Version: 2.3\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
     elif content_type == "text":
      music = msg['text'].replace("'", "")
      try:
