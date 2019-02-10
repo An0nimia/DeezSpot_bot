@@ -63,7 +63,7 @@ def request(url, lang="en", chat_id=0, control=False):
     if control == True:
      try:
         if thing.json()['error']['message'] == "Quota limit exceeded":
-         bot.sendAudio(chat_id, translate(lang, "Please resend the link :("))
+         bot.sendMessage(chat_id, translate(lang, "Please resend the link :("))
          return
      except KeyError:
         pass
@@ -375,6 +375,7 @@ def Link(music, chat_id, lang, quality, msg):
          try: 
             url = request("https://api.deezer.com/track/" + music.split("/")[-1], lang, chat_id, True).json()
          except AttributeError:
+            delete(chat_id)
             return
          imag = url['album']['cover_big']
          if imag == None:
@@ -393,6 +394,7 @@ def Link(music, chat_id, lang, quality, msg):
          try: 
             url = request("https://api.deezer.com/album/" + music.split("/")[-1], lang, chat_id, True).json()
          except AttributeError:
+            delete(chat_id)
             return
          imag = url['cover_big']
          if imag == None:
@@ -425,6 +427,7 @@ def Link(music, chat_id, lang, quality, msg):
          try: 
             url = request("https://api.deezer.com/playlist/" + music.split("/")[-1], lang, chat_id, True).json()
          except AttributeError:
+            delete(chat_id)
             return
          nums = url['nb_tracks']
          if nums > 1000:
@@ -437,6 +440,8 @@ def Link(music, chat_id, lang, quality, msg):
          done = 1
         else:
             bot.sendMessage(chat_id, translate(lang, "Sorry :( The bot doesn't support this link"))
+       else:
+            bot.sendMessage(chat_id, translate(lang, "Sorry :( The bot doesn't support this link")) 
        try:
           for a in range(len(z)):
               sendAudio(chat_id, z[a], lang, links2[a], image[a])
