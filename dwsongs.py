@@ -334,7 +334,7 @@ def Link(music, chat_id, lang, quality, msg):
          except IndexError:
             image = "https://e-cdns-images.dzcdn.net/images/cover/500x500-000000-80-0-0.jpg"
          nums = tracks['tracks']['total']
-         if nums > 1000:
+         if nums > 400:
           bot.sendMessage(chat_id, translate(lang, "Fuck you"))
           delete(chat_id)
           return
@@ -430,7 +430,7 @@ def Link(music, chat_id, lang, quality, msg):
             delete(chat_id)
             return
          nums = url['nb_tracks']
-         if nums > 1000:
+         if nums > 400:
           bot.sendMessage(chat_id, translate(lang, "Fuck you"))
           delete(chat_id)
           return
