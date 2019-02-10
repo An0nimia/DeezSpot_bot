@@ -69,7 +69,7 @@ def request(url, lang="en", chat_id=0, control=False):
         pass
      try:
         if thing.json()['error']:
-         bot.sendMessage(chat_id, translate(lang, "Track not found :(\n" + url))
+         bot.sendMessage(chat_id, translate(lang, "Nothing found"))
          return
      except KeyError:
         pass
@@ -424,7 +424,7 @@ def Link(music, chat_id, lang, quality, msg):
         elif "playlist/" in music:
          if "?" in music:
           music,a = music.split("?")
-         try: 
+         try:
             url = request("https://api.deezer.com/playlist/" + music.split("/")[-1], lang, chat_id, True).json()
          except AttributeError:
             delete(chat_id)
@@ -438,6 +438,22 @@ def Link(music, chat_id, lang, quality, msg):
          for a in url['tracks']['data']:
              track(a['link'], chat_id, lang, quality)
          done = 1
+        elif "artist/" in music:
+         if "?" in music:
+          music,a = music.split("?")
+         music = "https://api.deezer.com/artist/" + music.split("/")[-1]
+         try:
+            url = request(music, lang, chat_id, True).json()
+         except AttributeError:
+            delete(chat_id)
+            return
+         sendPhoto(chat_id, url['picture_big'], caption="Artist:" + url['name'] + "\nAlbum numbers:" + str(url['nb_album']) + "\nFans on Deezer:" + str(url['nb_fan']),
+                         reply_markup=InlineKeyboardMarkup(
+                                     inline_keyboard=[
+                                                [InlineKeyboardButton(text="TOP 30", callback_data=music + "/top?limit=30"), InlineKeyboardButton(text="ALBUMS", callback_data=music + "/albums")],
+                                                [InlineKeyboardButton(text="RADIO", callback_data=music + "/radio")]
+                                     ]
+                         ))      
         else:
             bot.sendMessage(chat_id, translate(lang, "Sorry :( The bot doesn't support this link"))
        else:
@@ -547,31 +563,71 @@ def download(msg):
     except KeyError:
        msg['from'] = {"language_code": "en"}
     lang = msg['from']['language_code']
-    tags = query_data.split("_")
-    if query_data == "Infos with too many bytes" or query_data == "No informations":
-     bot.answerCallbackQuery(query_id, translate(lang, query_data))
-    elif len(tags) == 2:
-     bot.answerCallbackQuery(query_id, text="Album: " + tags[0] + "\nDate: " + tags[1], show_alert=True)
-    elif len(tags) == 3:
-     bot.answerCallbackQuery(query_id, text="Album: " + tags[0] + "\nDate: " + tags[1] + "\nLabel: " + tags[2], show_alert=True)
-    elif len(tags) == 4:
-     bot.answerCallbackQuery(query_id, text="Album: " + tags[0] + "\nDate: " + tags[1] + "\nLabel: " + tags[2] + "\nGenre: " + tags[3], show_alert=True)
-    else:
-        if ans != "1":
+    if "artist" in query_data:
+     message_id = msg['message']['message_id']
+     if "top" in query_data or "album" in query_data:
+      try:
+         url = request(query_data, lang, from_id, True).json()
+      except AttributeError:
+         return
+      url['data'].append({"title": "BACK", "link": query_data.split("/")[-2] + "/" + "artist"})
+      bot.editMessageReplyMarkup(((from_id, message_id)),
+                                 reply_markup=InlineKeyboardMarkup(
+                                             inline_keyboard=[
+                                                        [InlineKeyboardButton(text=a['title'], callback_data=a['link'])] for a in url['data']
+                                             ]
+                                 ))
+     elif "radio" in query_data:
+      try:
+         url = request(query_data, lang, from_id, True).json()
+      except AttributeError:
+         return
+      url['data'].append({"title": "BACK", "id": query_data.split("/")[-2] + "/" + "artist"})
+      bot.editMessageReplyMarkup(((from_id, message_id)),
+                                 reply_markup=InlineKeyboardMarkup(
+                                             inline_keyboard=[
+                                                        [InlineKeyboardButton(text=a['title'], callback_data="https://www.deezer.com/track/" + str(a['id']))] for a in url['data']
+                                             ]
+                                 ))
+     else:
+         music = "https://api.deezer.com/artist/" + query_data.split("/")[-2]
          try:
-            if users[from_id] == 2:
-             bot.answerCallbackQuery(query_id, translate(lang, "Wait to finish and press download again, did you thought that you could download how much songs did you want? :)"), show_alert=True)
-             return
-            else:
-                users[from_id] += 1
-         except KeyError:
-            users[from_id] = 1
-        bot.answerCallbackQuery(query_id, translate(lang, "Song is downloading"))
-        try:
-           qualit[from_id]
-        except KeyError:
-           qualit[from_id] = "MP3_320"
-        Thread(target=Link, args=(query_data, from_id, lang, qualit[from_id], msg['message'])).start()
+            url = request(music, lang, from_id, True).json()
+         except AttributeError:
+            return
+         bot.editMessageReplyMarkup(((from_id, message_id)),
+                                 reply_markup=InlineKeyboardMarkup(
+                                             inline_keyboard=[
+                                                        [InlineKeyboardButton(text="TOP 30", callback_data=music + "/top?limit=30"), InlineKeyboardButton(text="ALBUMS", callback_data=music + "/albums")],
+                                                        [InlineKeyboardButton(text="RADIO", callback_data=music + "/radio")]
+                                             ]
+                                 ))    
+    else:
+        tags = query_data.split("_")
+        if query_data == "Infos with too many bytes" or query_data == "No informations":
+         bot.answerCallbackQuery(query_id, translate(lang, query_data))
+        elif len(tags) == 2:
+         bot.answerCallbackQuery(query_id, text="Album: " + tags[0] + "\nDate: " + tags[1], show_alert=True)
+        elif len(tags) == 3:
+         bot.answerCallbackQuery(query_id, text="Album: " + tags[0] + "\nDate: " + tags[1] + "\nLabel: " + tags[2], show_alert=True)
+        elif len(tags) == 4:
+         bot.answerCallbackQuery(query_id, text="Album: " + tags[0] + "\nDate: " + tags[1] + "\nLabel: " + tags[2] + "\nGenre: " + tags[3], show_alert=True)
+        else:
+            if ans != "1":
+             try:
+                if users[from_id] == 2:
+                 bot.answerCallbackQuery(query_id, translate(lang, "Wait to finish and press download again, did you thought that you could download how much songs did you want? :)"), show_alert=True)
+                 return
+                else:
+                    users[from_id] += 1
+             except KeyError:
+                users[from_id] = 1
+            bot.answerCallbackQuery(query_id, translate(lang, "Song is downloading"))
+            try:
+               qualit[from_id]
+            except KeyError:
+               qualit[from_id] = "MP3_320"
+            Thread(target=Link, args=(query_data, from_id, lang, qualit[from_id], msg['message'])).start()
 def search(msg):
     query_id, from_id, query_string = telepot.glance(msg, flavor='inline_query')
     if query_string == "":
@@ -652,7 +708,7 @@ def start1(msg):
         qualit[chat_id] = "MP3_320"
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, lang)).start()
     elif content_type == "text" and msg['text'] == "/info":
-     bot.sendMessage(chat_id, "Version: 2.3\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
+     bot.sendMessage(chat_id, "Version: 2.4\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
     elif content_type == "text":
      try:
         qualit[chat_id]
@@ -710,7 +766,7 @@ def start2(msg):
         qualit[chat_id] = "MP3_320"
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, lang)).start()
     elif content_type == "text" and msg['text'] == "/info":
-     bot.sendMessage(chat_id, "Version: 2.3\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
+     bot.sendMessage(chat_id, "Version: 2.4\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
     elif content_type == "text":
      music = msg['text'].replace("'", "")
      try:
