@@ -227,7 +227,6 @@ def track(music, chat_id, lang, quality):
              image = "https://e-cdns-images.dzcdn.net/images/cover/90x90-000000-80-0-0.jpg"
             z = downloa.download_trackdee(music, check=False, quality=quality, recursive=False)
         except deezloader.TrackNotFound:
-           times += 1
            bot.sendMessage(chat_id, translate(lang, "Track doesn't exist on Deezer, it'll be downloaded from YouTube..."))
            if "spotify" in music:
             z = dwytsongs.download_trackspo(music, check=False)
@@ -558,6 +557,7 @@ def Audio(audio, chat_id, lang):
            bot.sendMessage(chat_id, translate(lang, "Error :("))
 def download(msg):
     query_id, from_id, query_data = telepot.glance(msg, flavor="callback_query")
+    pprint(msg)
     try:
        msg['from']['language_code']
     except KeyError:
@@ -565,7 +565,7 @@ def download(msg):
     lang = msg['from']['language_code']
     if "artist" in query_data:
      message_id = msg['message']['message_id']
-     if "top" in query_data or "album" in query_data:
+     if "album" in query_data:
       try:
          url = request(query_data, lang, from_id, True).json()
       except AttributeError:
@@ -577,22 +577,31 @@ def download(msg):
                                                         [InlineKeyboardButton(text=a['title'], callback_data=a['link'])] for a in url['data']
                                              ]
                                  ))
-     elif "radio" in query_data:
+     elif "down" in query_data:
+      print("https://api.deezer.com/artist/" + query_data.split("/")[-4] + "/" + query_data.split("/")[-1])
+      try:
+         url = request("https://api.deezer.com/artist/" + query_data.split("/")[-4] + "/" + query_data.split("/")[-1], lang, from_id, True).json()
+      except AttributeError:
+         return
+      for a in url['data']:
+          Link("https://www.deezer.com/track/" + str(a['id']), from_id, lang, qualit[from_id], msg)
+     elif "radio" in query_data or "top" in query_data:
       try:
          url = request(query_data, lang, from_id, True).json()
       except AttributeError:
          return
-      url['data'].append({"title": "BACK", "id": query_data.split("/")[-2] + "/" + "artist"})
+      url['data'].append({"title": "ALL", "id": query_data.split("/")[-2] + "/" + "artist/down/" + query_data.split("/")[-1], "artist": {"name": "GET"}})
+      url['data'].append({"title": "BACK", "id": query_data.split("/")[-2] + "/" + "artist", "artist": {"name": "GO"}})
       bot.editMessageReplyMarkup(((from_id, message_id)),
                                  reply_markup=InlineKeyboardMarkup(
                                              inline_keyboard=[
-                                                        [InlineKeyboardButton(text=a['title'], callback_data="https://www.deezer.com/track/" + str(a['id']))] for a in url['data']
+                                                        [InlineKeyboardButton(text=a['artist']['name'] + " - " + a['title'], callback_data="https://www.deezer.com/track/" + str(a['id']))] for a in url['data']
                                              ]
                                  ))
      else:
          music = "https://api.deezer.com/artist/" + query_data.split("/")[-2]
          try:
-            url = request(music, lang, from_id, True).json()
+            url = request("https://api.deezer.com/artist/" + query_data.split("/")[-2], lang, from_id, True).json()
          except AttributeError:
             return
          bot.editMessageReplyMarkup(((from_id, message_id)),
