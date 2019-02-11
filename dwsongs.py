@@ -570,7 +570,7 @@ def inline(msg, from_id, query_data, lang, query_id):
                                                         [InlineKeyboardButton(text=a['title'], callback_data=a['link'])] for a in url['data']
                                              ]
                                  ))
-     elif "down" in query_data:  
+     elif "down" in query_data:
       if ans != "1":
        try:
           if users[from_id] == 3:
@@ -686,6 +686,7 @@ def search(msg):
 def up(msg):
     pass
 def start1(msg):
+    pprint(msg)
     content_type, chat_type, chat_id = telepot.glance(msg)
     try:
        msg['from']['language_code']
@@ -696,7 +697,7 @@ def start1(msg):
      return
     statisc(chat_id, "USERS")
     if content_type == "text" and msg['text'] == "/start":
-     try:   
+     try:
         sendPhoto(chat_id, open("example.jpg", "rb"), caption=translate(lang, "The bot commands can find here"))
      except FileNotFoundError:
         pass
