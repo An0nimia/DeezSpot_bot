@@ -563,11 +563,11 @@ def inline(msg, from_id, query_data, lang, query_id):
          url = request(query_data, lang, from_id, True).json()
       except AttributeError:
          return
-      url['data'].append({"title": "BACK", "link": query_data.split("/")[-2] + "/" + "artist"})
+      url['data'].append({"release_date": "BACK 🔙", "link": query_data.split("/")[-2] + "/" + "artist", "title": "GO"})
       bot.editMessageReplyMarkup(((from_id, message_id)),
                                  reply_markup=InlineKeyboardMarkup(
                                              inline_keyboard=[
-                                                        [InlineKeyboardButton(text=a['title'], callback_data=a['link'])] for a in url['data']
+                                                        [InlineKeyboardButton(text=a['title'] + " - " + a['release_date'].replace("-", "/"), callback_data=a['link'])] for a in url['data']
                                              ]
                                  ))
      elif "down" in query_data:
@@ -592,8 +592,8 @@ def inline(msg, from_id, query_data, lang, query_id):
          url = request(query_data, lang, from_id, True).json()
       except AttributeError:
          return
-      url['data'].append({"title": "ALL", "id": query_data.split("/")[-2] + "/" + "artist/down/" + query_data.split("/")[-1], "artist": {"name": "GET"}})
-      url['data'].append({"title": "BACK", "id": query_data.split("/")[-2] + "/" + "artist", "artist": {"name": "GO"}})
+      url['data'].append({"title": "ALL ⬇️", "id": query_data.split("/")[-2] + "/" + "artist/down/" + query_data.split("/")[-1], "artist": {"name": "GET"}})
+      url['data'].append({"title": "BACK 🔙", "id": query_data.split("/")[-2] + "/" + "artist", "artist": {"name": "GO"}})
       bot.editMessageReplyMarkup(((from_id, message_id)),
                                  reply_markup=InlineKeyboardMarkup(
                                              inline_keyboard=[
