@@ -21,6 +21,7 @@ from mutagen.flac import FLAC
 from bs4 import BeautifulSoup
 import spotipy.oauth2 as oauth2
 from mutagen.easyid3 import EasyID3
+from telepot.loop import MessageLoop
 from telepot.namedtuple import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove, InlineKeyboardMarkup, InlineKeyboardButton, InlineQueryResultArticle, InputTextMessageContent
 header = {"Accept-Language": "en-US,en;q=0.5"}
 token = setting.token
@@ -785,12 +786,12 @@ try:
    print("3):Exit")
    ans = input("Choose:")
    if ans == "1" or ans == "2":
-    bot.message_loop({
+    MessageLoop(bot, {
                       "chat": start1,
                       "callback_query": download,
                       "inline_query": search,
                       "chosen_inline_result": up
-                    })
+                     })
    else:
        sys.exit(0)
    downloa = deezloader.Login(setting.username, setting.password)
