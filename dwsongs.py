@@ -664,7 +664,7 @@ def search(msg):
          return
      except KeyError:
         pass
-     result = [InlineQueryResultArticle(id=a['link'], title=a['title'] + "\n" + a['artist']['name'], thumb_url=a['cover_big'], input_message_content=InputTextMessageContent(message_text=a['link'])) for a in search1['data']]
+     result = [InlineQueryResultArticle(id=a['link'], title=a['title'], description=a['artist']['name'], thumb_url=a['cover_big'], input_message_content=InputTextMessageContent(message_text=a['link'])) for a in search1['data']]
     elif "artist:" in query_string:
      search1 = request("https://api.deezer.com/search/artist/?q=" + query_string.split("artist:")[1].replace("#", "")).json()
      try:
@@ -672,7 +672,7 @@ def search(msg):
          return
      except KeyError:
         pass
-     result = [InlineQueryResultArticle(id=a['link'], title=a['name'], thumb_url=a['picture_big'], input_message_content=InputTextMessageContent(message_text=a['link'])) for a in search1['data']] 
+     result = [InlineQueryResultArticle(id=a['link'], title=a['name'], thumb_url=a['picture_big'], input_message_content=InputTextMessageContent(message_text=a['link'])) for a in search1['data']]
     else:
         search1 = request("https://api.deezer.com/search?q=" + query_string.replace("#", "")).json()
         try:
@@ -691,7 +691,7 @@ def search(msg):
             search1[len(search1) - 1]['title'] = a['album']['title'] + " (Album)"
             search1[len(search1) - 1]['artist'] = {"name": a['artist']['name']}
             search1[len(search1) - 1]['album'] = {"cover_big": a['album']['cover_big']}
-        result = [InlineQueryResultArticle(id=a['link'], title=a['title'] + "\n" + a['artist']['name'], thumb_url=a['album']['cover_big'], input_message_content=InputTextMessageContent(message_text=a['link'])) for a in search1]
+        result = [InlineQueryResultArticle(id=a['link'], title=a['title'], description=a['artist']['name'], thumb_url=a['album']['cover_big'], input_message_content=InputTextMessageContent(message_text=a['link'])) for a in search1]
     try:
        bot.answerInlineQuery(query_id, result)
     except telepot.exception.TelegramError:
