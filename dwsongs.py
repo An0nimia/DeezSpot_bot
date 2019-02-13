@@ -791,7 +791,7 @@ try:
                       "callback_query": download,
                       "inline_query": search,
                       "chosen_inline_result": up
-                     })
+                     }).run_as_thread()
    else:
        sys.exit(0)
    downloa = deezloader.Login(setting.username, setting.password)
