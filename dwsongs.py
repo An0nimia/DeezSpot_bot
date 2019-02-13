@@ -777,7 +777,8 @@ def start1(msg):
         except KeyError:
            bot.sendMessage(chat_id, translate(lang, "Press"),reply_markup=InlineKeyboardMarkup(
                                      inline_keyboard=[
-                                                [InlineKeyboardButton(text="Search", switch_inline_query_current_chat=msg['text'])]
+                                                [InlineKeyboardButton(text="Search artist", switch_inline_query_current_chat="artist:" + msg['text']), InlineKeyboardButton(text="Search album", switch_inline_query_current_chat="album:" + msg['text'])],
+                                                [InlineKeyboardButton(text="Search global", switch_inline_query_current_chat=msg['text'])]
                                      ]
                            ))
 try:
