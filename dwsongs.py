@@ -649,36 +649,49 @@ def download(msg):
     Thread(target=inline, args=(msg, from_id, query_data, lang, query_id)).start()
 def search(msg):
     query_id, from_id, query_string = telepot.glance(msg, flavor="inline_query")
-    if query_string == "":
+    if query_string == "" or query_string == "album:" or query_string == "artist:":
      return
     try:
        msg['from']['language_code']
     except KeyError:
        msg['from'] = {"language_code": "en"}
     if check_flood(from_id, msg['from']['language_code'], msg) == "BANNED":
-     return 
-    search1 = request("https://api.deezer.com/search?q=" + query_string.replace("#", "")).json()
-    try:
-       if search1['error']:
-        return
-    except KeyError:
-       pass
-    search1 = search1['data']
-    for a in search1:
+     return
+    if "album:" in query_string:
+     search1 = request("https://api.deezer.com/search/album/?q=" + query_string.split("album:")[1].replace("#", "")).json()
+     try:
+        if search1['error']:
+         return
+     except KeyError:
+        pass
+     result = [InlineQueryResultArticle(id=a['link'], title=a['title'] + "\n" + a['artist']['name'], thumb_url=a['cover_big'], input_message_content=InputTextMessageContent(message_text=a['link'])) for a in search1['data']]
+    elif "artist:" in query_string:
+     search1 = request("https://api.deezer.com/search/artist/?q=" + query_string.split("artist:")[1].replace("#", "")).json()
+     try:
+        if search1['error']:
+         return
+     except KeyError:
+        pass
+     result = [InlineQueryResultArticle(id=a['link'], title=a['name'], thumb_url=a['picture_big'], input_message_content=InputTextMessageContent(message_text=a['link'])) for a in search1['data']] 
+    else:
+        search1 = request("https://api.deezer.com/search?q=" + query_string.replace("#", "")).json()
         try:
-           if "https://www.deezer.com/album/" + str(a['album']['id']) in str(search1):
-            continue
+           if search1['error']:
+            return
         except KeyError:
-           continue    
-        search1.append({"link": "https://www.deezer.com/album/" + str(a['album']['id'])})
-        search1[len(search1) - 1]['title'] = a['album']['title'] + " (Album)"
-        search1[len(search1) - 1]['artist'] = {"name": a['artist']['name']}
-        if a['album']['cover_big'] != None:
-         search1[len(search1) - 1]['album'] = {"cover_big": a['album']['cover_big']}
-        else:
-            url = request("https://www.deezer.com/album/" + str(a['album']['id'])).text
-            search1[len(search1) - 1]['album'] = {"cover_big": BeautifulSoup(url, "html.parser").find("img", class_="img_main").get("src").replace("200x200", "500x500")}
-    result = [InlineQueryResultArticle(id=a['link'], title=a['title'] + "\n" + a['artist']['name'], thumb_url=a['album']['cover_big'], input_message_content=InputTextMessageContent(message_text=a['link'])) for a in search1]
+           pass
+        search1 = search1['data']
+        for a in search1:
+            try:
+               if "https://www.deezer.com/album/" + str(a['album']['id']) in str(search1):
+                continue
+            except KeyError:
+               continue    
+            search1.append({"link": "https://www.deezer.com/album/" + str(a['album']['id'])})
+            search1[len(search1) - 1]['title'] = a['album']['title'] + " (Album)"
+            search1[len(search1) - 1]['artist'] = {"name": a['artist']['name']}
+            search1[len(search1) - 1]['album'] = {"cover_big": a['album']['cover_big']}
+        result = [InlineQueryResultArticle(id=a['link'], title=a['title'] + "\n" + a['artist']['name'], thumb_url=a['album']['cover_big'], input_message_content=InputTextMessageContent(message_text=a['link'])) for a in search1]
     try:
        bot.answerInlineQuery(query_id, result)
     except telepot.exception.TelegramError:
@@ -707,8 +720,9 @@ def start1(msg):
         qualit[chat_id] = "MP3_320"
      bot.sendMessage(chat_id, translate(lang, "Press for search songs or album\nP.S. Remember you can do this digiting @ in your keyboard and select DeezloaderRMX_bot\nSend a Deezer or Spotify link to download\nSend a song o vocal message to recognize the track"),
                     reply_markup=InlineKeyboardMarkup(
-                                     inline_keyboard=[
-                                                [InlineKeyboardButton(text="Search", switch_inline_query_current_chat="")]
+                                     inline_keyboard=[     
+                                                [InlineKeyboardButton(text="Search artist", switch_inline_query_current_chat="artist:"), InlineKeyboardButton(text="Search album", switch_inline_query_current_chat="album:")],
+                                                [InlineKeyboardButton(text="Search global", switch_inline_query_current_chat="")]
                                      ]
                          ))
     elif content_type == "text" and msg['text'] == "/quality":
@@ -731,7 +745,7 @@ def start1(msg):
         qualit[chat_id] = "MP3_320"
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, lang)).start()
     elif content_type == "text" and msg['text'] == "/info":
-     bot.sendMessage(chat_id, "Version: 2.5\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
+     bot.sendMessage(chat_id, "Version: 2.6\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
     elif content_type == "text":
      try:
         qualit[chat_id]
@@ -749,7 +763,8 @@ def start1(msg):
             except KeyError:
                bot.sendMessage(chat_id, translate(lang, "Press"),reply_markup=InlineKeyboardMarkup(
                                      inline_keyboard=[
-                                                [InlineKeyboardButton(text="Search", switch_inline_query_current_chat=msg['text'])]
+                                                [InlineKeyboardButton(text="Search artist", switch_inline_query_current_chat="artist:" + msg['text']), InlineKeyboardButton(text="Search album", switch_inline_query_current_chat="album:" + msg['text'])],
+                                                [InlineKeyboardButton(text="Search global", switch_inline_query_current_chat=msg['text'])]
                                      ]
                                ))
      except KeyError:
