@@ -566,7 +566,7 @@ def inline(msg, from_id, query_data, lang, query_id):
                                              ]
                                  ))
      elif "down" in query_data:
-      if ans != "1":
+      if ans == "2":
        try:
           if users[from_id] == 3:
            bot.answerCallbackQuery(query_id, translate(lang, "Wait to finish and press download again, did you thought that you could download how much songs did you want? :)"), show_alert=True)
@@ -581,7 +581,8 @@ def inline(msg, from_id, query_data, lang, query_id):
       except AttributeError:
          return
       for a in url['data']:
-          Link("https://www.deezer.com/track/" + str(a['id']), from_id, lang, qualit[from_id], msg['message'])      
+          Link("https://www.deezer.com/track/" + str(a['id']), from_id, lang, qualit[from_id], msg['message'])
+          users[from_id] += 1
      elif "radio" in query_data or "top" in query_data:
       try:
          url = request(query_data, lang, from_id, True).json()
@@ -619,7 +620,7 @@ def inline(msg, from_id, query_data, lang, query_id):
         elif len(tags) == 4:
          bot.answerCallbackQuery(query_id, text="Album: " + tags[0] + "\nDate: " + tags[1] + "\nLabel: " + tags[2] + "\nGenre: " + tags[3], show_alert=True)
         else:
-            if ans != "1":
+            if ans == "2":
              try:
                 if users[from_id] == 3:
                  bot.answerCallbackQuery(query_id, translate(lang, "Wait to finish and press download again, did you thought that you could download how much songs did you want? :)"), show_alert=True)
@@ -681,7 +682,7 @@ def search(msg):
                if "https://www.deezer.com/album/" + str(a['album']['id']) in str(search1):
                 continue
             except KeyError:
-               continue    
+               continue
             search1.append({"link": "https://www.deezer.com/album/" + str(a['album']['id'])})
             search1[len(search1) - 1]['title'] = a['album']['title'] + " (Album)"
             search1[len(search1) - 1]['artist'] = {"name": a['artist']['name']}
@@ -747,12 +748,12 @@ def start(msg):
      except KeyError:
         qualit[chat_id] = "MP3_320"
      try:
-        if ans != "1" and users[chat_id] == 3:
+        if ans == "2" and users[chat_id] == 3:
          bot.sendMessage(chat_id, translate(lang, "Wait to finish and resend the link, did you thought that you could download how much songs did you want? :)"))
         else:
             try:
                msg['entities']
-               if ans != "1":
+               if ans == "2":
                 users[chat_id] += 1
                Thread(target=Link, args=(msg['text'].replace("'", ""), chat_id, lang, qualit[chat_id], msg)).start()
             except KeyError:
@@ -765,7 +766,7 @@ def start(msg):
      except KeyError:
         try:
            msg['entities']
-           if ans != "1":
+           if ans == "2":
             users[chat_id] = 1
            Thread(target=Link, args=(msg['text'].replace("'", ""), chat_id, lang, qualit[chat_id], msg)).start()
         except KeyError:
