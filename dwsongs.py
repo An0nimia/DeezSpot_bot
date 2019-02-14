@@ -693,7 +693,7 @@ def search(msg):
        pass
 def up(msg):
     pass
-def start1(msg):
+def start(msg):
     pprint(msg)
     content_type, chat_type, chat_id = telepot.glance(msg)
     try:
@@ -713,7 +713,7 @@ def start1(msg):
         qualit[chat_id]
      except KeyError:
         qualit[chat_id] = "MP3_320"
-     bot.sendMessage(chat_id, translate(lang, "Press for search songs or album\nP.S. Remember you can do this digiting @ in your keyboard and select DeezloaderRMX_bot\nSend a Deezer or Spotify link to download\nSend a song o vocal message to recognize the track"),
+     bot.sendMessage(chat_id, translate(lang, "Press for search songs or albums or artists\nP.S. Remember you can do this digiting @ in your keyboard and select DeezloaderRMX_bot\nSend a Deezer or Spotify link to download\nSend a song o vocal message to recognize the track"),
                     reply_markup=InlineKeyboardMarkup(
                                      inline_keyboard=[     
                                                 [InlineKeyboardButton(text="Search artist", switch_inline_query_current_chat="artist:"), InlineKeyboardButton(text="Search album", switch_inline_query_current_chat="album:")],
@@ -740,7 +740,7 @@ def start1(msg):
         qualit[chat_id] = "MP3_320"
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, lang)).start()
     elif content_type == "text" and msg['text'] == "/info":
-     bot.sendMessage(chat_id, "Version: 2.6\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMXbot\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
+     bot.sendMessage(chat_id, "Version: 2.6\nName:@DeeSpoDW_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeeSpoDW\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
     elif content_type == "text":
      try:
         qualit[chat_id]
@@ -782,7 +782,7 @@ try:
    ans = input("Choose:")
    if ans == "1" or ans == "2":
     bot.message_loop({
-                      "chat": start1,
+                      "chat": start,
                       "callback_query": download,
                       "inline_query": search,
                       "chosen_inline_result": up
