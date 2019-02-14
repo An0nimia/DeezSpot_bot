@@ -749,19 +749,19 @@ def start(msg):
         if ans == "2":
          if users[chat_id] == 3:
           bot.sendMessage(chat_id, translate(lang, "Wait to finish and resend the link, did you thought that you could download how much songs did you want? :)"))
-        else:
-            try:
-               msg['entities']
-               if ans == "2":
-                users[chat_id] += 1
-               Thread(target=Link, args=(msg['text'].replace("'", ""), chat_id, lang, qualit[chat_id], msg)).start()
-            except KeyError:
-               bot.sendMessage(chat_id, translate(lang, "Press"),reply_markup=InlineKeyboardMarkup(
-                                     inline_keyboard=[
-                                                [InlineKeyboardButton(text="Search artist", switch_inline_query_current_chat="artist:" + msg['text']), InlineKeyboardButton(text="Search album", switch_inline_query_current_chat="album:" + msg['text'])],
-                                                [InlineKeyboardButton(text="Search global", switch_inline_query_current_chat=msg['text'])]
-                                     ]
-                               ))
+          return
+        try:
+           msg['entities']
+           if ans == "2":
+            users[chat_id] += 1
+            Thread(target=Link, args=(msg['text'].replace("'", ""), chat_id, lang, qualit[chat_id], msg)).start()
+        except KeyError:
+           bot.sendMessage(chat_id, translate(lang, "Press"),reply_markup=InlineKeyboardMarkup(
+                                    inline_keyboard=[
+                                              [InlineKeyboardButton(text="Search artist", switch_inline_query_current_chat="artist:" + msg['text']), InlineKeyboardButton(text="Search album", switch_inline_query_current_chat="album:" + msg['text'])],
+                                              [InlineKeyboardButton(text="Search global", switch_inline_query_current_chat=msg['text'])]
+                                    ]
+                          ))
      except KeyError:
         try:
            msg['entities']
