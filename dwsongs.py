@@ -585,6 +585,7 @@ def inline(msg, from_id, query_data, lang, query_id):
       for a in url['data']:
           Link("https://www.deezer.com/track/" + str(a['id']), from_id, lang, qualit[from_id], msg['message'])
           users[from_id] += 1
+      users[from_id] -= 1
      elif "radio" in query_data or "top" in query_data:
       try:
          url = request(query_data, lang, from_id, True).json()
