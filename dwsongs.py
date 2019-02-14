@@ -712,13 +712,9 @@ def start(msg):
         sendPhoto(chat_id, open("example.jpg", "rb"), caption=translate(lang, "The bot commands can find here"))
      except FileNotFoundError:
         pass
-     try:
-        qualit[chat_id]
-     except KeyError:
-        qualit[chat_id] = "MP3_320"
      bot.sendMessage(chat_id, translate(lang, "Press for search songs or albums or artists\nP.S. Remember you can do this digiting @ in your keyboard and select DeezloaderRMX_bot\nSend a Deezer or Spotify link to download\nSend a song o vocal message to recognize the track"),
                     reply_markup=InlineKeyboardMarkup(
-                                     inline_keyboard=[     
+                                     inline_keyboard=[
                                                 [InlineKeyboardButton(text="Search artist", switch_inline_query_current_chat="artist:"), InlineKeyboardButton(text="Search album", switch_inline_query_current_chat="album:")],
                                                 [InlineKeyboardButton(text="Search global", switch_inline_query_current_chat="")]
                                      ]
@@ -743,7 +739,7 @@ def start(msg):
         qualit[chat_id] = "MP3_320"
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, lang)).start()
     elif content_type == "text" and msg['text'] == "/info":
-     bot.sendMessage(chat_id, "Version: 2.6\nName:@DeeSpoDW_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeeSpoDW\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
+     bot.sendMessage(chat_id, "Version: 2.6\nName:@DeeSpoDWbot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeeSpoDW\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
     elif content_type == "text":
      try:
         qualit[chat_id]
