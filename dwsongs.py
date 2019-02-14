@@ -457,6 +457,8 @@ def Link(music, chat_id, lang, quality, msg):
               sendAudio(chat_id, z[a], lang, links2[a], image[a])
        except NameError:
           pass
+    except deezloader.QuotaExceeded:
+       bot.sendMessage(chat_id, translate(lang, "Please resend the link :("))
     except deezloader.AlbumNotFound:
        bot.sendMessage(chat_id, translate(lang, "Album not found :("))
        bot.sendMessage(chat_id, translate(lang, "Try to search it throught inline mode or search the link on Deezer"))
@@ -748,8 +750,9 @@ def start(msg):
      except KeyError:
         qualit[chat_id] = "MP3_320"
      try:
-        if ans == "2" and users[chat_id] == 3:
-         bot.sendMessage(chat_id, translate(lang, "Wait to finish and resend the link, did you thought that you could download how much songs did you want? :)"))
+        if ans == "2":
+         if users[chat_id] == 3:
+          bot.sendMessage(chat_id, translate(lang, "Wait to finish and resend the link, did you thought that you could download how much songs did you want? :)"))
         else:
             try:
                msg['entities']
