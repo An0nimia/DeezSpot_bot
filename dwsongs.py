@@ -21,7 +21,6 @@ from mutagen.flac import FLAC
 from bs4 import BeautifulSoup
 import spotipy.oauth2 as oauth2
 from mutagen.easyid3 import EasyID3
-from telepot.loop import MessageLoop
 from telepot.namedtuple import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove, InlineKeyboardMarkup, InlineKeyboardButton, InlineQueryResultArticle, InputTextMessageContent
 header = {"Accept-Language": "en-US,en;q=0.5"}
 token = setting.token
@@ -183,10 +182,7 @@ def sendAudio(chat_id, audio, lang, music, image=None, youtube=False):
        else:
            bot.sendAudio(chat_id, audio)
     except telepot.exception.TelegramError:
-       bot.sendMessage(chat_id, translate(lang, "Sorry the track seems not to be readble on Deezer :(")) 
-    except:
-       times += 1
-       bot.sendMessage(chat_id, translate(lang, "OPS :( Something went wrong please contact @An0nimia, sending the song link, to explain the issue"))
+       bot.sendMessage(chat_id, translate(lang, "Sorry the track doesn't seems readable on Deezer :("))
 def track(music, chat_id, lang, quality):
     global spo
     global times
@@ -787,12 +783,12 @@ try:
    print("3):Exit")
    ans = input("Choose:")
    if ans == "1" or ans == "2":
-    MessageLoop(bot, {
+    bot.message_loop({
                       "chat": start1,
                       "callback_query": download,
                       "inline_query": search,
                       "chosen_inline_result": up
-                     }).run_as_thread()
+                     })
    else:
        sys.exit(0)
    downloa = deezloader.Login(setting.username, setting.password)
