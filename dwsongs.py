@@ -147,7 +147,6 @@ def sendPhoto(chat_id, photo, caption="", reply_markup=""):
     except telepot.exception.TelegramError:
        pass      
 def sendAudio(chat_id, audio, lang, music, image=None, youtube=False):
-    global times
     bot.sendChatAction(chat_id, "upload_audio")
     try:
        url = "https://api.telegram.org/bot" + token + "/sendAudio"
@@ -185,7 +184,6 @@ def sendAudio(chat_id, audio, lang, music, image=None, youtube=False):
        bot.sendMessage(chat_id, translate(lang, "Sorry the track doesn't seems readable on Deezer :("))
 def track(music, chat_id, lang, quality):
     global spo
-    global times
     conn = sqlite3.connect(db_file)
     c = conn.cursor()
     c.execute("SELECT query FROM DWSONGS WHERE id = '%s' and quality = '%s'" % (music, quality))
@@ -535,9 +533,9 @@ def Audio(audio, chat_id, lang):
            except KeyError:
               pass
            try:
-              id = "https://www.deezer.com/track/" + str(audio['metadata']['music'][0]['external_metadata']['deezer']['track']['id'])
+              id = "https://api.deezer.com/track/" + str(audio['metadata']['music'][0]['external_metadata']['deezer']['track']['id'])
               try:
-                 url = request("https://api.deezer.com/track/" + id.split("/")[-1], lang, chat_id, True).json()
+                 url = request(id, lang, chat_id, True).json()
               except AttributeError:
                  return
               image = url['album']['cover_big']
