@@ -52,8 +52,7 @@ try:
 except sqlite3.OperationalError:
    pass
 def generate_token():
-    token = oauth2.SpotifyClientCredentials(client_id="4fe3fecfe5334023a1472516cc99d805", client_secret="0f02b7c483c04257984695007a4a8d5c").get_access_token()
-    return token
+    return oauth2.SpotifyClientCredentials(client_id="4fe3fecfe5334023a1472516cc99d805", client_secret="0f02b7c483c04257984695007a4a8d5c").get_access_token()
 spo = spotipy.Spotify(auth=generate_token())
 def request(url, lang="en", chat_id=0, control=False):
     try:
@@ -181,7 +180,7 @@ def sendAudio(chat_id, audio, lang, music, image=None, youtube=False):
        else:
            bot.sendAudio(chat_id, audio)
     except telepot.exception.TelegramError:
-       bot.sendMessage(chat_id, translate(lang, "Sorry the track doesn't seems readable on Deezer :("))
+       bot.sendMessage(chat_id, translate(lang, "Sorry the track doesn't seem readable on Deezer :("))
 def track(music, chat_id, lang, quality):
     global spo
     conn = sqlite3.connect(db_file)
@@ -198,8 +197,7 @@ def track(music, chat_id, lang, quality):
             try:
                url = spo.track(music)
             except:
-               token = generate_token()
-               spo = spotipy.Spotify(auth=token)
+               spo = spotipy.Spotify(auth=generate_token())
                url = spo.track(music)
             try:
                image = url['album']['images'][2]['url']
@@ -249,8 +247,7 @@ def Link(music, chat_id, lang, quality, msg):
              bot.sendMessage(chat_id, translate(lang, "Invalid link ;"), reply_to_message_id=msg['message_id'])
              delete(chat_id)
              return
-            token = generate_token()
-            spo = spotipy.Spotify(auth=token)
+            spo = spotipy.Spotify(auth=generate_token())
             url = spo.track(music)
          try:
             ima = url['album']['images'][0]['url']
@@ -268,8 +265,7 @@ def Link(music, chat_id, lang, quality, msg):
              bot.sendMessage(chat_id, translate(lang, "Invalid link ;"), reply_to_message_id=msg['message_id'])
              delete(chat_id)
              return
-            token = generate_token()
-            spo = spotipy.Spotify(auth=token)
+            spo = spotipy.Spotify(auth=generate_token())
             tracks = spo.album(music)
          try:
             ima1 = tracks['images'][2]['url']
@@ -294,8 +290,7 @@ def Link(music, chat_id, lang, quality, msg):
                 try:
                    tracks2 = spo.next(tracks)
                 except:
-                   token = generate_token()
-                   spo = spotipy.Spotify(auth=token)
+                   spo = spotipy.Spotify(auth=generate_token())
                    tracks2 = spo.next(tracks)
                 for a in tracks2['items']:
                     c.execute("SELECT query FROM DWSONGS WHERE id = '%s' and quality = '%s'" % (a['external_urls']['spotify'], quality))
@@ -320,8 +315,7 @@ def Link(music, chat_id, lang, quality, msg):
              bot.sendMessage(chat_id, translate(lang, "Invalid link ;"), reply_to_message_id=msg['message_id'])
              delete(chat_id)
              return
-            token = generate_token()
-            spo = spotipy.Spotify(auth=token)
+            spo = spotipy.Spotify(auth=generate_token())
             tracks = spo.user_playlist(musi[-3], playlist_id=musi[-1])
          try:
             image = tracks['images'][0]['url']
@@ -348,8 +342,7 @@ def Link(music, chat_id, lang, quality, msg):
                 try:
                    tracks = spo.next(tracks)
                 except:
-                   token = generate_token()
-                   spo = spotipy.Spotify(auth=token)
+                   spo = spotipy.Spotify(auth=generate_token())
                    tracks = spo.next(tracks)
                 for a in tracks['items']:
                     try:
@@ -466,7 +459,7 @@ def Link(music, chat_id, lang, quality, msg):
        logging.info(music)
        logging.warning(a)
        times += 1
-       bot.sendMessage(chat_id, translate(lang, "OPS :( Something went wrong please contact @An0nimia to explain the issue"))
+       bot.sendMessage(chat_id, translate(lang, "OPS :( Something went wrong please contact @An0nimia to explain the issue"), reply_to_message_id=msg['message_id'])
     try:
        if done == 1:
         bot.sendMessage(chat_id, translate(lang, "FINISHED :)"), reply_to_message_id=msg['message_id'])
@@ -528,8 +521,7 @@ def Audio(audio, chat_id, lang):
               try:
                  url = spo.track(id)
               except:
-                 token = generate_token()
-                 spo = spotipy.Spotify(auth=token)
+                 spo = spotipy.Spotify(auth=generate_token())
                  url = spo.track(id)
               image = url['album']['images'][0]['url']
            except KeyError:
@@ -708,6 +700,10 @@ def start(msg):
     if check_flood(chat_id, lang, msg) == "BANNED":
      return
     statisc(chat_id, "USERS")
+    try:
+       qualit[chat_id]
+    except KeyError:
+       qualit[chat_id] = "MP3_320"
     if content_type == "text" and msg['text'] == "/start":
      try:
         sendPhoto(chat_id, open("example.jpg", "rb"), caption=translate(lang, "The bot commands can find here"))
@@ -742,10 +738,6 @@ def start(msg):
     elif content_type == "text" and msg['text'] == "/info":
      bot.sendMessage(chat_id, "Version: 3.0\nName:@DWsongs_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DWsongs\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
     elif content_type == "text":
-     try:
-        qualit[chat_id]
-     except KeyError:
-        qualit[chat_id] = "MP3_320"
      try:
         if ans == "2":
          if users[chat_id] == 3:
