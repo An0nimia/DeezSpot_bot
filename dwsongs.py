@@ -145,7 +145,7 @@ def sendPhoto(chat_id, photo, caption="", reply_markup=""):
     try:
        bot.sendPhoto(chat_id, photo, caption=caption, reply_markup=reply_markup)
     except telepot.exception.TelegramError:
-       pass      
+       pass
 def sendAudio(chat_id, audio, lang, music, image=None, youtube=False):
     bot.sendChatAction(chat_id, "upload_audio")
     try:
@@ -447,11 +447,11 @@ def Link(music, chat_id, lang, quality, msg):
                                                 [InlineKeyboardButton(text="TOP 30", callback_data=music + "/top?limit=30"), InlineKeyboardButton(text="ALBUMS", callback_data=music + "/albums")],
                                                 [InlineKeyboardButton(text="RADIO", callback_data=music + "/radio")]
                                      ]
-                         ))      
+                         ))
         else:
             bot.sendMessage(chat_id, translate(lang, "Sorry :( The bot doesn't support this link"))
        else:
-            bot.sendMessage(chat_id, translate(lang, "Sorry :( The bot doesn't support this link")) 
+            bot.sendMessage(chat_id, translate(lang, "Sorry :( The bot doesn't support this link"))
        try:
           for a in range(len(z)):
               sendAudio(chat_id, z[a], lang, links2[a], image[a])
@@ -755,7 +755,7 @@ def start(msg):
            msg['entities']
            if ans == "2":
             users[chat_id] += 1
-            Thread(target=Link, args=(msg['text'].replace("'", ""), chat_id, lang, qualit[chat_id], msg)).start()
+           Thread(target=Link, args=(msg['text'].replace("'", ""), chat_id, lang, qualit[chat_id], msg)).start()
         except KeyError:
            bot.sendMessage(chat_id, translate(lang, "Press"),reply_markup=InlineKeyboardMarkup(
                                     inline_keyboard=[
