@@ -451,7 +451,9 @@ def Link(music, chat_id, lang, quality, msg):
        except NameError:
           pass
     except IOError:
+       delete(chat_id)
        Link(music, chat_id, lang, quality, msg)
+       return
     except deezloader.QuotaExceeded:
        bot.sendMessage(chat_id, translate(lang, "Please resend the link :("))
     except deezloader.AlbumNotFound:
