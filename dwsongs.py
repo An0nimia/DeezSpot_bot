@@ -220,12 +220,16 @@ def track(music, chat_id, lang, quality):
              image = "https://e-cdns-images.dzcdn.net/images/cover/90x90-000000-80-0-0.jpg"
             z = downloa.download_trackdee(music, check=False, quality=quality, recursive=False)
         except deezloader.TrackNotFound:
-           bot.sendMessage(chat_id, translate(lang, "Track doesn't exist on Deezer, it'll be downloaded from YouTube..."))
-           if "spotify" in music:
-            z = dwytsongs.download_trackspo(music, check=False)
-           elif "deezer" in music:
-            z = dwytsongs.download_trackdee(music, check=False)
-           youtube = True
+           bot.sendMessage(chat_id, translate(lang, "Track doesn't exist on Deezer or maybe it isn't readable, it'll be downloaded from YouTube..."))
+           try:
+              if "spotify" in music:
+               z = dwytsongs.download_trackspo(music, check=False)
+              elif "deezer" in music:
+               z = dwytsongs.download_trackdee(music, check=False)
+              youtube = True
+           except dwytsongs.TrackNotFound:
+              bot.sendMessage(chat_id, translate(lang, "Sorry I cannot download this song :("))
+              return
         sendAudio(chat_id, z, lang, music, image, youtube)
 def Link(music, chat_id, lang, quality, msg):
     global spo
@@ -444,7 +448,7 @@ def Link(music, chat_id, lang, quality, msg):
         else:
             bot.sendMessage(chat_id, translate(lang, "Sorry :( The bot doesn't support this link"))
        else:
-            bot.sendMessage(chat_id, translate(lang, "Sorry :( The bot doesn't support this link"))
+           bot.sendMessage(chat_id, translate(lang, "Sorry :( The bot doesn't support this link"))
        try:
           for a in range(len(z)):
               sendAudio(chat_id, z[a], lang, links2[a], image[a])
@@ -459,7 +463,7 @@ def Link(music, chat_id, lang, quality, msg):
        logging.info(music)
        logging.warning(a)
        times += 1
-       bot.sendMessage(chat_id, translate(lang, "OPS :( Something went wrong please contact @An0nimia to explain the issue"), reply_to_message_id=msg['message_id'])
+       bot.sendMessage(chat_id, translate(lang, "OPS :( Something went wrong please contact @An0nimia to explain the issue, if this happens again"), reply_to_message_id=msg['message_id'])
     try:
        if done == 1:
         bot.sendMessage(chat_id, translate(lang, "FINISHED :)"), reply_to_message_id=msg['message_id'])
