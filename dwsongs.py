@@ -52,7 +52,7 @@ try:
 except sqlite3.OperationalError:
    pass
 def generate_token():
-    return oauth2.SpotifyClientCredentials(client_id="4fe3fecfe5334023a1472516cc99d805", client_secret="0f02b7c483c04257984695007a4a8d5c").get_access_token()
+    return oauth2.SpotifyClientCredentials(client_id="c6b23f1e91f84b6a9361de16aba0ae17", client_secret="237e355acaa24636abc79f1a089e6204").get_access_token()
 spo = spotipy.Spotify(auth=generate_token())
 def request(url, lang="en", chat_id=0, control=False):
     try:
