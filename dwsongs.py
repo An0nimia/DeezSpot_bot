@@ -7,7 +7,7 @@ import spotipy
 import telepot
 import mutagen
 import setting
-import logging
+#import logging
 import acrcloud
 import requests
 import dwytsongs
@@ -30,14 +30,13 @@ qualit = {}
 date = {}
 array2 = []
 array3 = []
-times = 0
 local = os.getcwd()
 config = {
           "key": "d8d8e2b3e982d8413bd8f3f7f3b5b51a",
           "secret": "Xy0DL8AGiG4KBInav12P2TYMKSFRQYyclZyw3cu5",
           "host": "https://identify-eu-west-1.acrcloud.com"
 }
-logging.basicConfig(filename="dwsongs.log", level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
+#logging.basicConfig(filename="dwsongs.log", level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 if not os.path.isdir("Songs"):
  os.makedirs("Songs")
 db_file = local + "/dwsongs.db"
@@ -181,6 +180,8 @@ def sendAudio(chat_id, audio, lang, music, image=None, youtube=False):
            bot.sendAudio(chat_id, audio)
     except telepot.exception.TelegramError:
        bot.sendMessage(chat_id, translate(lang, "Sorry the track doesn't seem readable on Deezer :("))
+    except:
+       bot.sendMessage(chat_id, translate(lang, "Sorry for some reason I can't send the track"))
 def track(music, chat_id, lang, quality):
     global spo
     conn = sqlite3.connect(db_file)
@@ -233,7 +234,6 @@ def track(music, chat_id, lang, quality):
         sendAudio(chat_id, z, lang, music, image, youtube)
 def Link(music, chat_id, lang, quality, msg):
     global spo
-    global times
     done = 0
     links1 = []
     links2 = []
@@ -460,9 +460,8 @@ def Link(music, chat_id, lang, quality, msg):
        bot.sendMessage(chat_id, translate(lang, "Album not found :("))
        bot.sendMessage(chat_id, translate(lang, "Try to search it throught inline mode or search the link on Deezer"))
     except Exception as a:
-       logging.info(music)
-       logging.warning(a)
-       times += 1
+       #logging.info(music)
+       #logging.warning(a)
        bot.sendMessage(chat_id, translate(lang, "OPS :( Something went wrong please contact @An0nimia to explain the issue, if this happens again"), reply_to_message_id=msg['message_id'])
     try:
        if done == 1:
@@ -799,9 +798,8 @@ try:
         del array2[:]
         del array3[:]
        now = datetime.now()
-       if now.hour % 1 == 0 and now.minute == 0 and now.second == 0 or times == 4:
+       if now.hour % 1 == 0 and now.minute == 0 and now.second == 0:
         downloa = deezloader.Login(setting.username, setting.password)
-        times = 0
 except KeyboardInterrupt:
    os.rmdir(loc_dir)
    print("\nSTOPPED")
