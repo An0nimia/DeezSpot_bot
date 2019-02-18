@@ -181,7 +181,7 @@ def sendAudio(chat_id, audio, lang, music, image=None, youtube=False):
     except telepot.exception.TelegramError:
        bot.sendMessage(chat_id, translate(lang, "Sorry the track doesn't seem readable on Deezer :("))
     except Exception as a:
-       logging.info(a)
+       logging.warning(a)
        bot.sendMessage(chat_id, translate(lang, "Sorry for some reason I can't send the track"))
 def track(music, chat_id, lang, quality):
     global spo
