@@ -709,7 +709,7 @@ def start(msg):
         sendPhoto(chat_id, open("example.jpg", "rb"), caption=translate(lang, "The bot commands can find here"))
      except FileNotFoundError:
         pass
-     sendMessage(chat_id, translate(lang, "Press for search songs or albums or artists\nP.S. Remember you can do this digiting @ in your keyboard and select DeezerDW_bot\nSend a Deezer or Spotify link to download\nSend a song o vocal message to recognize the track"),
+     sendMessage(chat_id, translate(lang, "Press for search songs or albums or artists\nP.S. Remember you can do this digiting @ in your keyboard and select DeezloaderRMX_bot\nSend a Deezer or Spotify link to download\nSend a song o vocal message to recognize the track"),
                     reply_markup=InlineKeyboardMarkup(
                                      inline_keyboard=[
                                                 [InlineKeyboardButton(text="Search artist", switch_inline_query_current_chat="artist:"), InlineKeyboardButton(text="Search album", switch_inline_query_current_chat="album:")],
