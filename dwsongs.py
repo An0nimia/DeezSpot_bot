@@ -569,14 +569,11 @@ def inline(msg, from_id, query_data, lang, query_id):
                                  ))
      elif "down" in query_data:
       if ans == "2":
-       try:
-          if users[from_id] == 3:
-           bot.answerCallbackQuery(query_id, translate(lang, "Wait to finish and press download again, did you thought that you could download how much songs did you want? :)"), show_alert=True)
-           return
-          else:
-              users[from_id] += 1
-       except KeyError:
-          users[from_id] = 1
+       if users[from_id] == 3:
+        bot.answerCallbackQuery(query_id, translate(lang, "Wait to finish and press download again, did you thought that you could download how much songs did you want? :)"), show_alert=True)
+        return
+       else:
+           users[from_id] += 1
       bot.answerCallbackQuery(query_id, translate(lang, "Songs are downloading"))
       try:
          url = request("https://api.deezer.com/artist/" + query_data.split("/")[-4] + "/" + query_data.split("/")[-1], lang, from_id, True).json()
@@ -702,6 +699,11 @@ def start(msg):
        qualit[chat_id]
     except KeyError:
        qualit[chat_id] = "MP3_320"
+    if ans == "2":
+     try:
+        users[chat_id]
+     except KeyError:
+        users[chat_id] = 0
     if content_type == "text" and msg['text'] == "/start":
      try:
         sendPhoto(chat_id, open("example.jpg", "rb"), caption=translate(lang, "The bot commands can find here"))
@@ -730,37 +732,24 @@ def start(msg):
     elif content_type == "voice" or content_type == "audio":
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, lang)).start()
     elif content_type == "text" and msg['text'] == "/info":
-     sendMessage(chat_id, "Version: 3.1\nName:@DeezerDW_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezerDW\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
+     sendMessage(chat_id, "Version: 1.0 RMX\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMX\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
     elif content_type == "text":
-     try:
-        if ans == "2" and users[chat_id] == 3:
-         sendMessage(chat_id, translate(lang, "Wait to finish and resend the link, did you thought that you could download how much songs did you want? :)"))
-        else:
-            try:
-               msg['entities']
-               if ans == "2":
-                users[chat_id] += 1
-               Thread(target=Link, args=(msg['text'].replace("'", ""), chat_id, lang, qualit[chat_id], msg)).start()
-            except KeyError:
-               sendMessage(chat_id, translate(lang, "Press"),reply_markup=InlineKeyboardMarkup(
+     if ans == "2" and users[chat_id] == 3:
+      sendMessage(chat_id, translate(lang, "Wait to finish and resend the link, did you thought that you could download how much songs did you want? :)"))
+     else:
+         try:
+            msg['entities']
+            if ans == "2":
+             users[chat_id] += 1
+            Thread(target=Link, args=(msg['text'].replace("'", ""), chat_id, lang, qualit[chat_id], msg)).start()
+         except KeyError:
+            sendMessage(chat_id, translate(lang, "Press"),
+                            reply_markup=InlineKeyboardMarkup(
                                         inline_keyboard=[
-                                                  [InlineKeyboardButton(text="Search artist", switch_inline_query_current_chat="artist:" + msg['text']), InlineKeyboardButton(text="Search album", switch_inline_query_current_chat="album:" + msg['text'])],
-                                                  [InlineKeyboardButton(text="Search global", switch_inline_query_current_chat=msg['text'])]
+                                                   [InlineKeyboardButton(text="Search artist", switch_inline_query_current_chat="artist:" + msg['text']), InlineKeyboardButton(text="Search album", switch_inline_query_current_chat="album:" + msg['text'])],
+                                                   [InlineKeyboardButton(text="Search global", switch_inline_query_current_chat=msg['text'])]
                                         ]
-                              ))
-     except KeyError:
-        try:
-           msg['entities']
-           if ans == "2":
-            users[chat_id] = 1
-           Thread(target=Link, args=(msg['text'].replace("'", ""), chat_id, lang, qualit[chat_id], msg)).start()
-        except KeyError:
-           sendMessage(chat_id, translate(lang, "Press"),reply_markup=InlineKeyboardMarkup(
-                                     inline_keyboard=[
-                                                [InlineKeyboardButton(text="Search artist", switch_inline_query_current_chat="artist:" + msg['text']), InlineKeyboardButton(text="Search album", switch_inline_query_current_chat="album:" + msg['text'])],
-                                                [InlineKeyboardButton(text="Search global", switch_inline_query_current_chat=msg['text'])]
-                                     ]
-                           ))
+                            ))
 try:
    print("1):Free")
    print("2):Strict")
