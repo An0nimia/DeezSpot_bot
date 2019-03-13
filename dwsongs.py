@@ -632,6 +632,10 @@ def download(msg):
     except KeyError:
        msg['from'] = {"language_code": "en"}
     try:
+       qualit[from_id]
+    except KeyError:
+       qualit[from_id] = "MP3_320"
+    try:
        users[from_id]
     except KeyError:
        users[from_id] = 0
