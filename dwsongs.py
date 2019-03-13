@@ -632,9 +632,9 @@ def download(msg):
     except KeyError:
        msg['from'] = {"language_code": "en"}
     try:
-       users[chat_id]
+       users[from_id]
     except KeyError:
-       users[chat_id] = 0
+       users[from_id] = 0
     Thread(target=inline, args=(msg, from_id, query_data, msg['from']['language_code'], query_id)).start()
 def search(msg):
     query_id, from_id, query_string = telepot.glance(msg, flavor="inline_query")
@@ -671,8 +671,11 @@ def search(msg):
            pass
         search1 = search1['data']
         for a in search1:
-            if "https://www.deezer.com/album/" + str(a['album']['id']) in str(search1):
-             continue
+            try:
+               if "https://www.deezer.com/album/" + str(a['album']['id']) in str(search1):
+                continue
+            except KeyError:
+               continue
             search1.append({"link": "https://www.deezer.com/album/" + str(a['album']['id'])})
             search1[len(search1) - 1]['title'] = a['album']['title'] + " (Album)"
             search1[len(search1) - 1]['artist'] = {"name": a['artist']['name']}
