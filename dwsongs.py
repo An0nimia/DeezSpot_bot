@@ -369,7 +369,7 @@ def Link(music, chat_id, lang, quality, msg):
        elif "deezer" in music:
         if "track/" in music:
          if "?" in music:
-          music, a = music.split("?")
+          music,a = music.split("?")
          try: 
             url = request("https://api.deezer.com/track/" + music.split("/")[-1], lang, chat_id, True).json()
          except AttributeError:
@@ -446,12 +446,12 @@ def Link(music, chat_id, lang, quality, msg):
             delete(chat_id)
             return
          sendPhoto(chat_id, url['picture_big'], caption="Artist:" + url['name'] + "\nAlbum numbers:" + str(url['nb_album']) + "\nFans on Deezer:" + str(url['nb_fan']),
-                         reply_markup=InlineKeyboardMarkup(
-                                     inline_keyboard=[
+                   reply_markup=InlineKeyboardMarkup(
+                               inline_keyboard=[
                                                 [InlineKeyboardButton(text="TOP 30", callback_data=music + "/top?limit=30"), InlineKeyboardButton(text="ALBUMS", callback_data=music + "/albums")],
                                                 [InlineKeyboardButton(text="RADIO", callback_data=music + "/radio")]
-                                     ]
-                         ))
+                               ]
+                  ))
         else:
             sendMessage(chat_id, translate(lang, "Sorry :( The bot doesn't support this link"))
        else:
@@ -468,7 +468,6 @@ def Link(music, chat_id, lang, quality, msg):
        sendMessage(chat_id, translate(lang, "Try to search it throught inline mode or search the link on Deezer"))
     except Exception as a:
        logging.info(music)
-       logging.warning(a)
        sendMessage(chat_id, translate(lang, "OPS :( Something went wrong please contact @An0nimia to explain the issue, if this happens again"))
     try:
        if done == 1:
@@ -544,11 +543,11 @@ def Audio(audio, chat_id, lang):
               pass
         try:
            sendPhoto(chat_id, image, caption=track + " - " + artist,
-                         reply_markup=InlineKeyboardMarkup(
-                                     inline_keyboard=[
+                     reply_markup=InlineKeyboardMarkup(
+                                 inline_keyboard=[
                                                 [InlineKeyboardButton(text="Download", callback_data=id), InlineKeyboardButton(text="Info", callback_data=album)]
-                                     ]
-                         ))
+                                 ]
+                     ))
         except:
            sendMessage(chat_id, translate(lang, "Error :("))
 def inline(msg, from_id, query_data, lang, query_id):
@@ -610,7 +609,7 @@ def inline(msg, from_id, query_data, lang, query_id):
                                                         [InlineKeyboardButton(text="TOP 30", callback_data=music + "/top?limit=30"), InlineKeyboardButton(text="ALBUMS", callback_data=music + "/albums")],
                                                         [InlineKeyboardButton(text="RADIO", callback_data=music + "/radio")]
                                              ]
-                                 ))    
+                                 ))
     else:
         tags = query_data.split("_")
         if tags[0] == "Infos with too many bytes":
@@ -632,6 +631,10 @@ def download(msg):
        msg['from']['language_code']
     except KeyError:
        msg['from'] = {"language_code": "en"}
+    try:
+       users[chat_id]
+    except KeyError:
+       users[chat_id] = 0
     Thread(target=inline, args=(msg, from_id, query_data, msg['from']['language_code'], query_id)).start()
 def search(msg):
     query_id, from_id, query_string = telepot.glance(msg, flavor="inline_query")
@@ -668,11 +671,8 @@ def search(msg):
            pass
         search1 = search1['data']
         for a in search1:
-            try:
-               if "https://www.deezer.com/album/" + str(a['album']['id']) in str(search1):
-                continue
-            except KeyError:
-               continue
+            if "https://www.deezer.com/album/" + str(a['album']['id']) in str(search1):
+             continue
             search1.append({"link": "https://www.deezer.com/album/" + str(a['album']['id'])})
             search1[len(search1) - 1]['title'] = a['album']['title'] + " (Album)"
             search1[len(search1) - 1]['artist'] = {"name": a['artist']['name']}
@@ -699,31 +699,30 @@ def start(msg):
        qualit[chat_id]
     except KeyError:
        qualit[chat_id] = "MP3_320"
-    if ans == "2":
-     try:
-        users[chat_id]
-     except KeyError:
-        users[chat_id] = 0
+    try:
+       users[chat_id]
+    except KeyError:
+       users[chat_id] = 0
     if content_type == "text" and msg['text'] == "/start":
      try:
         sendPhoto(chat_id, open("example.jpg", "rb"), caption=translate(lang, "The bot commands can find here"))
      except FileNotFoundError:
         pass
      sendMessage(chat_id, translate(lang, "Press for search songs or albums or artists\nP.S. Remember you can do this digiting @ in your keyboard and select DeezloaderRMX_bot\nSend a Deezer or Spotify link to download\nSend a song o vocal message to recognize the track"),
-                    reply_markup=InlineKeyboardMarkup(
-                                     inline_keyboard=[
-                                                [InlineKeyboardButton(text="Search artist", switch_inline_query_current_chat="artist:"), InlineKeyboardButton(text="Search album", switch_inline_query_current_chat="album:")],
-                                                [InlineKeyboardButton(text="Search global", switch_inline_query_current_chat="")]
-                                     ]
-                         ))
+                 reply_markup=InlineKeyboardMarkup(
+                             inline_keyboard=[
+                                            [InlineKeyboardButton(text="Search artist", switch_inline_query_current_chat="artist:"), InlineKeyboardButton(text="Search album", switch_inline_query_current_chat="album:")],
+                                            [InlineKeyboardButton(text="Search global", switch_inline_query_current_chat="")]
+                             ]
+                ))
     elif content_type == "text" and msg['text'] == "/quality":
      sendMessage(chat_id, translate(lang, "Choose the quality that you want to download the song"),
-                     reply_markup=ReplyKeyboardMarkup(
-                                 keyboard=[
+                 reply_markup=ReplyKeyboardMarkup(
+                             keyboard=[
                                      [KeyboardButton(text="FLAC"), KeyboardButton(text="MP3_320Kbps")],
                                      [KeyboardButton(text="MP3_256Kbps"), KeyboardButton(text="MP3_128Kbps")]
-                                 ]
-                     ))
+                             ]
+                ))
     elif content_type == "text" and (msg['text'] == "FLAC" or msg['text'] == "MP3_320Kbps" or msg['text'] == "MP3_256Kbps" or msg['text'] == "MP3_128Kbps"):
      qualit[chat_id] = msg['text'].replace("Kbps", "")
      sendMessage(chat_id, translate(lang, "The songs will be downloaded with " + msg['text'] + " quality"), reply_markup=ReplyKeyboardRemove())
@@ -734,22 +733,22 @@ def start(msg):
     elif content_type == "text" and msg['text'] == "/info":
      sendMessage(chat_id, "Version: 1.0 RMX\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMX_group\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
     elif content_type == "text":
-     if ans == "2" and users[chat_id] == 3:
-      sendMessage(chat_id, translate(lang, "Wait to finish and resend the link, did you thought that you could download how much songs did you want? :)"))
-     else:
-         try:
-            msg['entities']
+     try:
+        msg['entities']
+        if ans == "2" and users[chat_id] == 3:
+         sendMessage(chat_id, translate(lang, "Wait to finish and resend the link, did you thought that you could download how much songs did you want? :)"))
+        else:
             if ans == "2":
              users[chat_id] += 1
             Thread(target=Link, args=(msg['text'].replace("'", ""), chat_id, lang, qualit[chat_id], msg)).start()
-         except KeyError:
-            sendMessage(chat_id, translate(lang, "Press"),
-                            reply_markup=InlineKeyboardMarkup(
-                                        inline_keyboard=[
-                                                   [InlineKeyboardButton(text="Search artist", switch_inline_query_current_chat="artist:" + msg['text']), InlineKeyboardButton(text="Search album", switch_inline_query_current_chat="album:" + msg['text'])],
-                                                   [InlineKeyboardButton(text="Search global", switch_inline_query_current_chat=msg['text'])]
-                                        ]
-                            ))
+     except KeyError:
+        sendMessage(chat_id, translate(lang, "Press"),
+                    reply_markup=InlineKeyboardMarkup(
+                                inline_keyboard=[
+                                               [InlineKeyboardButton(text="Search artist", switch_inline_query_current_chat="artist:" + msg['text']), InlineKeyboardButton(text="Search album", switch_inline_query_current_chat="album:" + msg['text'])],
+                                               [InlineKeyboardButton(text="Search global", switch_inline_query_current_chat=msg['text'])]
+                                ]
+                   ))
 try:
    print("1):Free")
    print("2):Strict")
@@ -764,22 +763,21 @@ try:
                      })
    else:
        sys.exit(0)
-   downloa = deezloader.Login(setting.username, setting.password)
+   downloa = deezloader.Login(setting.username, setting.password, setting.deezer_token)
    print("Bot started")
    while True:
        sleep(1)
        if len(array2) == len(array3):
         for a in os.listdir(loc_dir):
             try:
-               if len(array2) == len(array3):
-                shutil.rmtree(loc_dir + a)
+               shutil.rmtree(loc_dir + a)
             except NotADirectoryError:
                pass
         del array2[:]
         del array3[:]
        now = datetime.now()
        if now.hour % 1 == 0 and now.minute == 0 and now.second == 0:
-        downloa = deezloader.Login(setting.username, setting.password)
+        downloa = deezloader.Login(setting.username, setting.password, setting.deezer_token)
 except KeyboardInterrupt:
    os.rmdir(loc_dir)
    print("\nSTOPPED")
