@@ -141,7 +141,10 @@ def check_flood(chat_id, lang, msg):
           pass
 def sendMessage(chat_id, text, reply_markup="", reply_to_message_id=""):
     sleep(0.8)
-    bot.sendMessage(chat_id, text, reply_markup=reply_markup, reply_to_message_id=reply_to_message_id)
+    try:
+       bot.sendMessage(chat_id, text, reply_markup=reply_markup, reply_to_message_id=reply_to_message_id)
+    except Exception as a:
+       logging.warning(a)
 def sendPhoto(chat_id, photo, caption="", reply_markup=""):
     sleep(0.8)
     bot.sendChatAction(chat_id, "upload_photo")
@@ -467,6 +470,7 @@ def Link(music, chat_id, lang, quality, msg):
        sendMessage(chat_id, translate(lang, "Album not found :("))
        sendMessage(chat_id, translate(lang, "Try to search it throught inline mode or search the link on Deezer"))
     except Exception as a:
+       logging.warning(a)
        logging.info(music)
        sendMessage(chat_id, translate(lang, "OPS :( Something went wrong please contact @An0nimia to explain the issue, if this happens again"))
     try:
@@ -712,7 +716,7 @@ def start(msg):
        users[chat_id] = 0
     if content_type == "text" and msg['text'] == "/start":
      try:
-        sendPhoto(chat_id, open("example.jpg", "rb"), caption=translate(lang, "The bot commands can find here"))
+        sendPhoto(chat_id, open("example.png", "rb"), caption=translate(lang, "The bot commands can find here"))
      except FileNotFoundError:
         pass
      sendMessage(chat_id, translate(lang, "Press for search songs or albums or artists\nP.S. Remember you can do this digiting @ in your keyboard and select DeezloaderRMX_bot\nSend a Deezer or Spotify link to download\nSend a song o vocal message to recognize the track"),
