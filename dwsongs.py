@@ -142,7 +142,7 @@ def sendMessage(chat_id, text, reply_markup="", reply_to_message_id=""):
     sleep(0.8)
     try:
        bot.sendMessage(chat_id, text, reply_markup=reply_markup, reply_to_message_id=reply_to_message_id)
-    except telepot.exception.TelegramError:
+    except:
        pass
 def sendPhoto(chat_id, photo, caption="", reply_markup=""):
     sleep(0.8)
@@ -474,7 +474,7 @@ def Link(music, chat_id, lang, quality, msg):
     try:
        if done == 1:
         sendMessage(chat_id, translate(lang, "FINISHED :)\nRemember you can donate me here https://www.paypal.me/An0nimia"), reply_to_message_id=msg['message_id'])
-    except telepot.exception.TelegramError:
+    except:
        pass
     delete(chat_id)
 def Audio(audio, chat_id, lang):
