@@ -470,10 +470,10 @@ def Link(music, chat_id, lang, quality, msg):
     except Exception as a:
        logging.warning(a)
        logging.info(music)
-       sendMessage(chat_id, translate(lang, "OPS :( Something went wrong please contact @An0nimia to explain the issue, if this happens again"))
+       sendMessage(chat_id, translate(lang, "OPS :( Something went wrong please contact @An0nimia to explain the issue, if this happens again, and be sure to using @DeezloaderRMX_bot"))
     try:
        if done == 1:
-        sendMessage(chat_id, translate(lang, "FINISHED :)"), reply_to_message_id=msg['message_id'])
+        sendMessage(chat_id, translate(lang, "FINISHED :)\nRemember you can donate me here https://www.paypal.me/An0nimia"), reply_to_message_id=msg['message_id'])
     except telepot.exception.TelegramError:
        pass
     delete(chat_id)
@@ -714,7 +714,7 @@ def start(msg):
        users[chat_id] = 0
     if content_type == "text" and msg['text'] == "/start":
      try:
-        sendPhoto(chat_id, open("example.png", "rb"), caption=translate(lang, "The bot commands can find here"))
+        sendPhoto(chat_id, open("example.png", "rb"), caption=translate(lang, "Welcome to @DeezloaderRMX_bot\nThe bot commands can find here"))
      except FileNotFoundError:
         pass
      sendMessage(chat_id, translate(lang, "Press for search songs or albums or artists\nP.S. Remember you can do this digiting @ in your keyboard and select DeezloaderRMX_bot\nSend a Deezer or Spotify link to download\nSend a song o vocal message to recognize the track"),
