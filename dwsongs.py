@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 import os
-import sys
 import shutil
 import sqlite3
 import spotipy
@@ -32,8 +31,8 @@ array2 = []
 array3 = []
 local = os.getcwd()
 config = {
-          "key": "d8d8e2b3e982d8413bd8f3f7f3b5b51a",
-          "secret": "Xy0DL8AGiG4KBInav12P2TYMKSFRQYyclZyw3cu5",
+          "key": "de46e5c7420b418d73717c6b9ab0ba79",
+          "secret": "IQzjk1uwooSt7ilW7wt872QlcFMuO51zaZ0gw4xQ",
           "host": "https://identify-eu-west-1.acrcloud.com"
 }
 logging.basicConfig(filename="dwsongs.log", level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
@@ -143,8 +142,8 @@ def sendMessage(chat_id, text, reply_markup="", reply_to_message_id=""):
     sleep(0.8)
     try:
        bot.sendMessage(chat_id, text, reply_markup=reply_markup, reply_to_message_id=reply_to_message_id)
-    except Exception as a:
-       logging.warning(a)
+    except telepot.exception.TelegramError:
+       pass
 def sendPhoto(chat_id, photo, caption="", reply_markup=""):
     sleep(0.8)
     bot.sendChatAction(chat_id, "upload_photo")
@@ -189,8 +188,7 @@ def sendAudio(chat_id, audio, lang, music, image=None, youtube=False):
            bot.sendAudio(chat_id, audio)
     except telepot.exception.TelegramError:
        sendMessage(chat_id, translate(lang, "Sorry the track doesn't seem readable on Deezer :("))
-    except Exception as a:
-       logging.warning(a)
+    except:
        sendMessage(chat_id, translate(lang, "Sorry for some reason I can't send the track"))
 def track(music, chat_id, lang, quality):
     global spo
@@ -214,7 +212,7 @@ def track(music, chat_id, lang, quality):
                image = url['album']['images'][2]['url']
             except IndexError:
                image = "https://e-cdns-images.dzcdn.net/images/cover/90x90-000000-80-0-0.jpg"
-            z = downloa.download_trackspo(music, check=False, quality=quality, recursive=False)
+            z = downloa.download_trackspo(music, quality=quality, recursive=False)
            elif "deezer" in music:
             try:
                url = request("https://api.deezer.com/track/" + music.split("/")[-1], lang, chat_id, True).json()
@@ -229,7 +227,7 @@ def track(music, chat_id, lang, quality):
             ima = request(image).content
             if len(ima) == 13:
              image = "https://e-cdns-images.dzcdn.net/images/cover/90x90-000000-80-0-0.jpg"
-            z = downloa.download_trackdee(music, check=False, quality=quality, recursive=False)
+            z = downloa.download_trackdee(music, quality=quality, recursive=False)
         except deezloader.TrackNotFound:
            sendMessage(chat_id, translate(lang, "Track doesn't exist on Deezer or maybe it isn't readable, it'll be downloaded from YouTube..."))
            try:
@@ -313,7 +311,7 @@ def Link(music, chat_id, lang, quality, msg):
                      links1.append(a['external_urls']['spotify'])
          conn.close()
          if len(links1) <= (tot // 2):
-          z = downloa.download_albumspo(music, check=False, quality=quality, recursive=False)
+          z = downloa.download_albumspo(music, quality=quality, recursive=False)
          else:
              for a in links2:
                  track(a, chat_id, lang, quality)
@@ -344,10 +342,10 @@ def Link(music, chat_id, lang, quality, msg):
          for a in tracks['tracks']['items']:
              try:
                 track(a['track']['external_urls']['spotify'], chat_id, lang, quality)
-             except:
+             except KeyError:
                 try:
                    sendMessage(chat_id, a['track']['name'] + " Not found :(")
-                except:
+                except KeyError:
                    sendMessage(chat_id, "Error :(")
          tot = tracks['tracks']['total']
          tracks = tracks['tracks']
@@ -361,10 +359,10 @@ def Link(music, chat_id, lang, quality, msg):
                 for a in tracks['items']:
                     try:
                        track(a['track']['external_urls']['spotify'], chat_id, lang, quality)
-                    except:
+                    except KeyError:
                        try:
                           sendMessage(chat_id, a['track']['name'] + " Not found :(")
-                       except:
+                       except KeyError:
                           sendMessage(chat_id, "Error :(")
          done = 1
         else:
@@ -417,7 +415,7 @@ def Link(music, chat_id, lang, quality, msg):
          artist = url['artist']['name']
          sendPhoto(chat_id, imag, caption="Album:" + url['title'] + "\nArtist:" + artist + "\nDate:" + url['release_date'] + "\nTracks number:" + str(url['nb_tracks']))
          if len(links1) <= (url['nb_tracks'] // 2):
-          z = downloa.download_albumdee(music, check=False, quality=quality, recursive=False)
+          z = downloa.download_albumdee(music, quality=quality, recursive=False)
          else:
              for a in links2:
                  track(a, chat_id, lang, quality)
@@ -476,7 +474,7 @@ def Link(music, chat_id, lang, quality, msg):
     try:
        if done == 1:
         sendMessage(chat_id, translate(lang, "FINISHED :)"), reply_to_message_id=msg['message_id'])
-    except:
+    except telepot.exception.TelegramError:
        pass
     delete(chat_id)
 def Audio(audio, chat_id, lang):
@@ -737,8 +735,7 @@ def start(msg):
     elif content_type == "text" and (msg['text'] == "FLAC" or msg['text'] == "MP3_320Kbps" or msg['text'] == "MP3_256Kbps" or msg['text'] == "MP3_128Kbps"):
      qualit[chat_id] = msg['text'].replace("Kbps", "")
      sendMessage(chat_id, translate(lang, "The songs will be downloaded with " + msg['text'] + " quality"), reply_markup=ReplyKeyboardRemove())
-     if msg['text'] != "MP3_128Kbps":
-      sendMessage(chat_id, translate(lang, "The songs that cannot be downloaded with the quality that you choose will be downloaded in quality 128Kbps"))
+     sendMessage(chat_id, translate(lang, "The songs that cannot be downloaded with the quality that you choose will be downloaded in the best quality possible"))
     elif content_type == "voice" or content_type == "audio":
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, lang)).start()
     elif content_type == "text" and msg['text'] == "/info":
@@ -763,7 +760,6 @@ def start(msg):
 try:
    print("1):Free")
    print("2):Strict")
-   print("3):Exit")
    ans = input("Choose:")
    if ans == "1" or ans == "2":
     bot.message_loop({
@@ -772,23 +768,21 @@ try:
                       "inline_query": search,
                       "chosen_inline_result": up
                      })
-   else:
-       sys.exit(0)
-   downloa = deezloader.Login(setting.username, setting.password, setting.deezer_token)
-   print("Bot started")
-   while True:
-       sleep(1)
-       if len(array2) == len(array3):
-        for a in os.listdir(loc_dir):
-            try:
-               shutil.rmtree(loc_dir + a)
-            except NotADirectoryError:
-               pass
-        del array2[:]
-        del array3[:]
-       now = datetime.now()
-       if now.hour % 1 == 0 and now.minute == 0 and now.second == 0:
-        downloa = deezloader.Login(setting.username, setting.password, setting.deezer_token)
+    downloa = deezloader.Login(setting.username, setting.password, setting.deezer_token)
+    print("Bot started")
+    while True:
+        sleep(1)
+        if len(array2) == len(array3):
+         for a in os.listdir(loc_dir):
+             try:
+                shutil.rmtree(loc_dir + a)
+             except NotADirectoryError:
+                pass
+         del array2[:]
+         del array3[:]
+        now = datetime.now()
+        if now.hour % 1 == 0 and now.minute == 0 and now.second == 0:
+         downloa = deezloader.Login(setting.username, setting.password, setting.deezer_token)
 except KeyboardInterrupt:
    os.rmdir(loc_dir)
    print("\nSTOPPED")
