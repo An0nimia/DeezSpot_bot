@@ -633,9 +633,12 @@ def inline(msg, from_id, query_data, lang, query_id):
 def download(msg):
     query_id, from_id, query_data = telepot.glance(msg, flavor="callback_query")
     try:
-       languag[from_id] = msg['from']['language_code']
+       languag[from_id]
     except KeyError:
-       languag[from_id] = "en"
+       try:
+          languag[from_id] = msg['from']['language_code']
+       except KeyError:
+          languag[from_id] = "en"
     try:
        qualit[from_id]
     except KeyError:
@@ -700,9 +703,12 @@ def start(msg):
     pprint(msg)
     content_type, chat_type, chat_id = telepot.glance(msg)
     try:
-        languag[chat_id] = msg['from']['language_code']
+       languag[chat_id]
     except KeyError:
-       languag[chat_id] = "en"
+       try:
+          languag[chat_id] = msg['from']['language_code']
+       except KeyError:
+          languag[chat_id] = "en" 
     if check_flood(chat_id, languag[chat_id], msg) == "BANNED":
      return
     statisc(chat_id, "USERS")
@@ -726,7 +732,7 @@ def start(msg):
                                             [InlineKeyboardButton(text="Search global", switch_inline_query_current_chat="")]
                              ]
                 ))
-    elif content_type == "text" and (msg['text'] == "/enabled" or msg['text'] == "/disabled"):
+    elif content_type == "text" and msg['text'] == "/translator":
      if languag[chat_id] != "en":
       languag[chat_id] = "en"
       sendMessage(chat_id, translate(languag[chat_id], "Now the language will be english"))
