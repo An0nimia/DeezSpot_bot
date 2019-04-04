@@ -81,6 +81,7 @@ def translate(language, sms):
        pass
     return sms
 def delete(chat_id):
+    global del2
     try:
        users[chat_id] -= 1
     except KeyError:
@@ -243,6 +244,7 @@ def track(music, chat_id, lang, quality):
         sendAudio(chat_id, z, lang, music, image, youtube)
 def Link(music, chat_id, lang, quality, msg):
     global spo
+    global del1
     done = 0
     links1 = []
     links2 = []
@@ -651,7 +653,7 @@ def search(msg):
        languag[from_id] = msg['from']['language_code']
     except KeyError:
        languag[from_id] = "en"
-    if check_flood(from_id, msg['from']['language_code'], msg) == "BANNED":
+    if check_flood(from_id, languag[from_id], msg) == "BANNED":
      return
     if "album:" in query_string:
      search1 = request("https://api.deezer.com/search/album/?q=" + query_string.split("album:")[1].replace("#", "")).json()
@@ -732,7 +734,7 @@ def start(msg):
          languag[chat_id] = msg['from']['language_code']
          sendMessage(chat_id, translate(languag[chat_id], "Now the bot will use the Telegram app language"))
     elif content_type == "text" and msg['text'] == "/quality":
-     sendMessage(chat_id, translate(languag[from_id], "Choose the quality that you want to download the song"),
+     sendMessage(chat_id, translate(languag[chat_id], "Choose the quality that you want to download the song"),
                  reply_markup=ReplyKeyboardMarkup(
                              keyboard=[
                                      [KeyboardButton(text="FLAC"), KeyboardButton(text="MP3_320Kbps")],
@@ -746,7 +748,7 @@ def start(msg):
     elif content_type == "voice" or content_type == "audio":
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, languag[chat_id])).start()
     elif content_type == "text" and msg['text'] == "/info":
-     sendMessage(chat_id, "Version: 1.0 RMX\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMX_group\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
+     sendMessage(chat_id, "Version: 1.1 RMX\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMX_group\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
     elif content_type == "text":
      try:
         msg['entities']
