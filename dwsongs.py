@@ -650,15 +650,19 @@ def download(msg):
     Thread(target=inline, args=(msg, from_id, query_data, languag[from_id], query_id)).start()
 def search(msg):
     query_id, from_id, query_string = telepot.glance(msg, flavor="inline_query")
-    if query_string == "" or query_string == "album:" or query_string == "artist:":
-     return
     try:
        languag[from_id] = msg['from']['language_code']
     except KeyError:
        languag[from_id] = "en"
     if check_flood(from_id, languag[from_id], msg) == "BANNED":
      return
-    if "album:" in query_string:
+    if "" == query_string:
+     search1 = request("http://api.deezer.com/chart/").json()
+     result = [InlineQueryResultArticle(id=a['link'], title=a['title'], description=a['artist']['name'], thumb_url=a['album']['cover_big'], input_message_content=InputTextMessageContent(message_text=a['link'])) for a in search1['tracks']['data']]
+     result += [InlineQueryResultArticle(id="https://www.deezer.com/album/" + str(a['id']), title=a['title'] + " (Album)", description=a['artist']['name'], thumb_url=a['cover_big'], input_message_content=InputTextMessageContent(message_text="https://www.deezer.com/album/" + str(a['id']))) for a in search1['albums']['data']]
+     result += [InlineQueryResultArticle(id=a['link'], title=str(a['position']), description=a['name'], thumb_url=a['picture_big'], input_message_content=InputTextMessageContent(message_text=a['link'])) for a in search1['artists']['data']]
+     result += [InlineQueryResultArticle(id=a['link'], title=a['title'], description="N° tracks:" + str(a['nb_tracks']), thumb_url=a['picture_big'], input_message_content=InputTextMessageContent(message_text=a['link'])) for a in search1['playlists']['data']]
+    elif "album:" in query_string:
      search1 = request("https://api.deezer.com/search/album/?q=" + query_string.split("album:")[1].replace("#", "")).json()
      try:
         if search1['error']:
@@ -682,17 +686,14 @@ def search(msg):
         except KeyError:
            pass
         search1 = search1['data']
+        result = [InlineQueryResultArticle(id=a['link'], title=a['title'], description=a['artist']['name'], thumb_url=a['album']['cover_big'], input_message_content=InputTextMessageContent(message_text=a['link'])) for a in search1]
         for a in search1:
             try:
-               if "https://www.deezer.com/album/" + str(a['album']['id']) in str(search1):
+               if "https://www.deezer.com/album/" + str(a['album']['id']) in str(result):
                 continue
             except KeyError:
                continue
-            search1.append({"link": "https://www.deezer.com/album/" + str(a['album']['id'])})
-            search1[len(search1) - 1]['title'] = a['album']['title'] + " (Album)"
-            search1[len(search1) - 1]['artist'] = {"name": a['artist']['name']}
-            search1[len(search1) - 1]['album'] = {"cover_big": a['album']['cover_big']}
-        result = [InlineQueryResultArticle(id=a['link'], title=a['title'], description=a['artist']['name'], thumb_url=a['album']['cover_big'], input_message_content=InputTextMessageContent(message_text=a['link'])) for a in search1]
+            result += [InlineQueryResultArticle(id="https://www.deezer.com/album/" + str(a['album']['id']), title=a['album']['title'] + " (Album)", description=a['artist']['name'], thumb_url=a['album']['cover_big'], input_message_content=InputTextMessageContent(message_text="https://www.deezer.com/album/" + str(a['album']['id'])))]
     try:
        bot.answerInlineQuery(query_id, result)
     except telepot.exception.TelegramError:
@@ -708,7 +709,7 @@ def start(msg):
        try:
           languag[chat_id] = msg['from']['language_code']
        except KeyError:
-          languag[chat_id] = "en" 
+          languag[chat_id] = "en"
     if check_flood(chat_id, languag[chat_id], msg) == "BANNED":
      return
     statisc(chat_id, "USERS")
