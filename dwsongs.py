@@ -221,7 +221,7 @@ def track(music, chat_id, lang, quality):
             except AttributeError:
                return
             try:
-               image = url['album']['cover_big'].replace("500x500", "90x90")
+               image = url['album']['cover_xl'].replace("1000x1000", "90x90")
             except AttributeError:
                URL = "https://www.deezer.com/track/" + music.split("/")[-1]
                image = request(URL).text
@@ -267,7 +267,7 @@ def Link(music, chat_id, lang, quality, msg):
          try:
             ima = url['album']['images'][0]['url']
          except IndexError:
-            ima = "https://e-cdns-images.dzcdn.net/images/cover/500x500-000000-80-0-0.jpg"
+            ima = "https://e-cdns-images.dzcdn.net/images/cover/1000x1000-000000-80-0-0.jpg"
          sendPhoto(chat_id, ima, caption="Track:" + url['name'] + "\nArtist:" + url['album']['artists'][0]['name'] + "\nAlbum:" + url['album']['name'] + "\nDate:" + url['album']['release_date'])
          track(music, chat_id, lang, quality)
         elif "album/" in music:
@@ -287,7 +287,7 @@ def Link(music, chat_id, lang, quality, msg):
             ima2 = tracks['images'][0]['url']
          except IndexError:
             ima1 = "https://e-cdns-images.dzcdn.net/images/cover/90x90-000000-80-0-0.jpg"
-            ima2 = "https://e-cdns-images.dzcdn.net/images/cover/500x500-000000-80-0-0.jpg"
+            ima2 = "https://e-cdns-images.dzcdn.net/images/cover/1000x1000-000000-80-0-0.jpg"
          tot = tracks['total_tracks']
          for a in range(tot):
              image.append(ima1)
@@ -335,7 +335,7 @@ def Link(music, chat_id, lang, quality, msg):
          try:
             image = tracks['images'][0]['url']
          except IndexError:
-            image = "https://e-cdns-images.dzcdn.net/images/cover/500x500-000000-80-0-0.jpg"
+            image = "https://e-cdns-images.dzcdn.net/images/cover/1000x1000-000000-80-0-0.jpg"
          nums = tracks['tracks']['total']
          if nums > 400:
           sendMessage(chat_id, translate(lang, "Fuck you"))
@@ -379,14 +379,14 @@ def Link(music, chat_id, lang, quality, msg):
          except AttributeError:
             delete(chat_id)
             return
-         imag = url['album']['cover_big']
+         imag = url['album']['cover_xl']
          if imag == None:
           URL = "https://www.deezer.com/track/" + music.split("/")[-1]
           imag = request(URL).text
-          imag = BeautifulSoup(imag, "html.parser").find("img", class_="img_main").get("src").replace("120x120", "500x500")
+          imag = BeautifulSoup(imag, "html.parser").find("img", class_="img_main").get("src").replace("120x120", "1000x1000")
          ima = request(imag).content
          if len(ima) == 13:
-          imag = "https://e-cdns-images.dzcdn.net/images/cover/500x500-000000-80-0-0.jpg"
+          imag = "https://e-cdns-images.dzcdn.net/images/cover/1000x1000-000000-80-0-0.jpg"
          artist = url['artist']['name']
          sendPhoto(chat_id, imag, caption="Track:" + url['title'] + "\nArtist:" + artist + "\nAlbum:" + url['album']['title'] + "\nDate:" + url['album']['release_date'])
          track(music, chat_id, lang, quality)
@@ -398,18 +398,18 @@ def Link(music, chat_id, lang, quality, msg):
          except AttributeError:
             delete(chat_id)
             return
-         imag = url['cover_big']
+         imag = url['cover_xl']
          if imag == None:
           URL = "https://www.deezer.com/album/" + music.split("/")[-1]
           imag = request(URL).text
-          imag = BeautifulSoup(imag, "html.parser").find("img", class_="img_main").get("src").replace("200x200", "500x500")
+          imag = BeautifulSoup(imag, "html.parser").find("img", class_="img_main").get("src").replace("200x200", "1000x1000")
           ima = request(imag).content
           if len(ima) == 13:
-           imag = "https://e-cdns-images.dzcdn.net/images/cover/500x500-000000-80-0-0.jpg"
+           imag = "https://e-cdns-images.dzcdn.net/images/cover/1000x1000-000000-80-0-0.jpg"
          conn = sqlite3.connect(db_file)
          c = conn.cursor()
          for a in url['tracks']['data']:
-             image.append(imag.replace("500x500", "90x90"))
+             image.append(imag.replace("1000x1000", "90x90"))
              c.execute("SELECT query FROM DWSONGS WHERE id = '%s' and quality = '%s'" % (a['link'], quality))
              links2.append(a['link'])
              if c.fetchone() != None:
@@ -436,7 +436,7 @@ def Link(music, chat_id, lang, quality, msg):
           sendMessage(chat_id, translate(lang, "Fuck you"))
           delete(chat_id)
           return
-         sendPhoto(chat_id, url['picture_big'], caption="Creation:" + url['creation_date'] + "\nUser:" + url['creator']['name'] + "\nTracks number:" + str(nums))
+         sendPhoto(chat_id, url['picture_xl'], caption="Creation:" + url['creation_date'] + "\nUser:" + url['creator']['name'] + "\nTracks number:" + str(nums))
          for a in url['tracks']['data']:
              track(a['link'], chat_id, lang, quality)
          done = 1
@@ -449,7 +449,7 @@ def Link(music, chat_id, lang, quality, msg):
          except AttributeError:
             delete(chat_id)
             return
-         sendPhoto(chat_id, url['picture_big'], caption="Artist:" + url['name'] + "\nAlbum numbers:" + str(url['nb_album']) + "\nFans on Deezer:" + str(url['nb_fan']),
+         sendPhoto(chat_id, url['picture_xl'], caption="Artist:" + url['name'] + "\nAlbum numbers:" + str(url['nb_album']) + "\nFans on Deezer:" + str(url['nb_fan']),
                    reply_markup=InlineKeyboardMarkup(
                                inline_keyboard=[
                                                 [InlineKeyboardButton(text="TOP 30", callback_data=music + "/top?limit=30"), InlineKeyboardButton(text="ALBUMS", callback_data=music + "/albums")],
@@ -524,7 +524,7 @@ def Audio(audio, chat_id, lang):
            for a in range(url['total'] + 1):
                if url['data'][a]['title'] == track:
                 id = url['data'][a]['link']
-                image = url['data'][a]['album']['cover_big']
+                image = url['data'][a]['album']['cover_xl']
                 break
         except IndexError:
            try:
@@ -543,7 +543,7 @@ def Audio(audio, chat_id, lang):
                  url = request(id, lang, chat_id, True).json()
               except AttributeError:
                  return
-              image = url['album']['cover_big']
+              image = url['album']['cover_xl']
            except KeyError:
               pass
         try:
