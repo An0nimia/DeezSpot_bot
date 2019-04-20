@@ -61,13 +61,13 @@ def request(url, lang="en", chat_id=0, control=False):
     if control == True:
      try:
         if thing.json()['error']['message'] == "Quota limit exceeded":
-         sendMessage(chat_id, translate(lang, "Please resend the link :("))
+         sendMessage(chat_id, translate(lang, "Please send the link again :("))
          return
      except KeyError:
         pass
      try:
         if thing.json()['error']:
-         sendMessage(chat_id, translate(lang, "Nothing found"))
+         sendMessage(chat_id, translate(lang, "No result has been found :("))
          return
      except KeyError:
         pass
@@ -130,7 +130,7 @@ def check_flood(chat_id, lang, msg):
         if time <= 4 and date[chat_id]['msg'] > 4:
          date[chat_id]['msg'] = 0
          date[chat_id]['tries'] -= 1
-         sendMessage(chat_id, translate(lang, "It is appearing that you are trying to flood, you have to wait more that four second to send another message.\n" + str(date[chat_id]['tries']) + " possibilites :)"))
+         sendMessage(chat_id, translate(lang, "It is appearing you are trying to flood, you have to wait more that four second to send another message.\n" + str(date[chat_id]['tries']) + " possibilites :)"))
          if date[chat_id]['tries'] == 0:
           write_db("INSERT INTO BANNED(banned) values('%d')" % chat_id)
           del date[chat_id]
@@ -162,15 +162,15 @@ def sendAudio(chat_id, audio, lang, music, image=None, youtube=False):
         audio = open(audio, "rb")
         try:
            tag = EasyID3(audio.name)
-           duration = MP3(audio.name).info.length
+           duration = int(MP3(audio.name).info.length)
         except mutagen.id3._util.ID3NoHeaderError:
            tag = FLAC(audio.name)
-           duration = tag.info.length
+           duration = int(tag.info.length)
         data = {
                 "chat_id": chat_id,
                 "duration": duration,
-                "performer": tag['artist'],
-                "title": tag['title']
+                "performer": tag['artist'][0],
+                "title": tag['title'][0]
         }
         file = {
                 "audio": audio,
@@ -180,18 +180,18 @@ def sendAudio(chat_id, audio, lang, music, image=None, youtube=False):
            request = requests.post(url, params=data, files=file)
         except:
            request = requests.post(url, params=data, files=file)
-        if request.status_code == 413:
-         sendMessage(chat_id, translate(lang, "The song " + tag['artist'] + " - " + tag['title'] + " is too big to be sent"))
+        if request.status_code != 200:
+         sendMessage(chat_id, translate(lang, "The song " + tag['artist'][0] + " - " + tag['title'][0] + " is too big to be sent :("))
         else:
             if youtube == False:
-             audio = request.json()['result']['audio']['file_id']
+             audio = request.json()['result']['audio']['file_id'] 
              write_db("INSERT INTO DWSONGS(id, query, quality) values('%s', '%s', '%s')" % (music, audio, qualit[chat_id]))
        else:
            bot.sendAudio(chat_id, audio)
     except telepot.exception.TelegramError:
        sendMessage(chat_id, translate(lang, "Sorry the track doesn't seem readable on Deezer :("))
     except:
-       sendMessage(chat_id, translate(lang, "Sorry for some reason I can't send the track"))
+       sendMessage(chat_id, translate(lang, "Sorry for some reason I can't send the track :("))
 def track(music, chat_id, lang, quality):
     global spo
     conn = sqlite3.connect(db_file)
@@ -214,7 +214,7 @@ def track(music, chat_id, lang, quality):
                image = url['album']['images'][2]['url']
             except IndexError:
                image = "https://e-cdns-images.dzcdn.net/images/cover/90x90-000000-80-0-0.jpg"
-            z = downloa.download_trackspo(music, quality=quality, recursive=False)
+            z = downloa.download_trackspo(music, quality=quality, recursive_quality=False, recursive_download=False)
            elif "deezer" in music:
             try:
                url = request("https://api.deezer.com/track/" + music.split("/")[-1], lang, chat_id, True).json()
@@ -229,7 +229,7 @@ def track(music, chat_id, lang, quality):
             ima = request(image).content
             if len(ima) == 13:
              image = "https://e-cdns-images.dzcdn.net/images/cover/90x90-000000-80-0-0.jpg"
-            z = downloa.download_trackdee(music, quality=quality, recursive=False)
+            z = downloa.download_trackdee(music, quality=quality, recursive_quality=False, recursive_download=False)
         except deezloader.TrackNotFound:
            sendMessage(chat_id, translate(lang, "Track doesn't exist on Deezer or maybe it isn't readable, it'll be downloaded from YouTube..."))
            try:
@@ -259,7 +259,7 @@ def Link(music, chat_id, lang, quality, msg):
             url = spo.track(music)
          except Exception as a:
             if not "The access token expired" in str(a):
-             sendMessage(chat_id, translate(lang, "Invalid link ;"), reply_to_message_id=msg['message_id'])
+             sendMessage(chat_id, translate(lang, "Invalid link ;)"), reply_to_message_id=msg['message_id'])
              delete(chat_id)
              return
             spo = spotipy.Spotify(auth=generate_token())
@@ -277,7 +277,7 @@ def Link(music, chat_id, lang, quality, msg):
             tracks = spo.album(music)
          except Exception as a:
             if not "The access token expired" in str(a):
-             sendMessage(chat_id, translate(lang, "Invalid link ;"), reply_to_message_id=msg['message_id'])
+             sendMessage(chat_id, translate(lang, "Invalid link ;)"), reply_to_message_id=msg['message_id'])
              delete(chat_id)
              return
             spo = spotipy.Spotify(auth=generate_token())
@@ -298,7 +298,7 @@ def Link(music, chat_id, lang, quality, msg):
              links2.append(a['external_urls']['spotify'])
              if c.fetchone() != None:
               links1.append(a['external_urls']['spotify'])
-         sendPhoto(chat_id, ima2, caption="Album:" + tracks['name'] + "\nArtist:" + tracks['artists'][0]['name'] + "\nDate:" + tracks['release_date'] + "\nTracks number:" + str(tracks['total_tracks']))
+         sendPhoto(chat_id, ima2, caption="Album:" + tracks['name'] + "\nArtist:" + tracks['artists'][0]['name'] + "\nDate:" + tracks['release_date'] + "\nTracks amount:" + str(tracks['total_tracks']))
          tracks = tracks['tracks']
          if tot != 50:
             for a in range(tot // 50):
@@ -314,7 +314,7 @@ def Link(music, chat_id, lang, quality, msg):
                      links1.append(a['external_urls']['spotify'])
          conn.close()
          if len(links1) <= (tot // 2):
-          z = downloa.download_albumspo(music, quality=quality, recursive=False)
+          z = downloa.download_albumspo(music, quality=quality, recursive_quality=False, recursive_download=False)
          else:
              for a in links2:
                  track(a, chat_id, lang, quality)
@@ -327,7 +327,7 @@ def Link(music, chat_id, lang, quality, msg):
             tracks = spo.user_playlist(musi[-3], playlist_id=musi[-1])
          except Exception as a:
             if not "The access token expired" in str(a):
-             sendMessage(chat_id, translate(lang, "Invalid link ;"), reply_to_message_id=msg['message_id'])
+             sendMessage(chat_id, translate(lang, "Invalid link ;)"), reply_to_message_id=msg['message_id'])
              delete(chat_id)
              return
             spo = spotipy.Spotify(auth=generate_token())
@@ -341,7 +341,7 @@ def Link(music, chat_id, lang, quality, msg):
           sendMessage(chat_id, translate(lang, "Fuck you"))
           delete(chat_id)
           return
-         sendPhoto(chat_id, image, caption="Creation:" + tracks['tracks']['items'][0]['added_at'] + "\nUser:" + str(tracks['owner']['display_name']) + "\nTracks number:" + str(nums))
+         sendPhoto(chat_id, image, caption="Creation:" + tracks['tracks']['items'][0]['added_at'] + "\nUser:" + str(tracks['owner']['display_name']) + "\nTracks amount:" + str(nums))
          for a in tracks['tracks']['items']:
              try:
                 track(a['track']['external_urls']['spotify'], chat_id, lang, quality)
@@ -416,9 +416,9 @@ def Link(music, chat_id, lang, quality, msg):
               links1.append(a['link'])
          conn.close()
          artist = url['artist']['name']
-         sendPhoto(chat_id, imag, caption="Album:" + url['title'] + "\nArtist:" + artist + "\nDate:" + url['release_date'] + "\nTracks number:" + str(url['nb_tracks']))
+         sendPhoto(chat_id, imag, caption="Album:" + url['title'] + "\nArtist:" + artist + "\nDate:" + url['release_date'] + "\nTracks amount:" + str(url['nb_tracks']))
          if len(links1) <= (url['nb_tracks'] // 2):
-          z = downloa.download_albumdee(music, quality=quality, recursive=False)
+          z = downloa.download_albumdee(music, quality=quality, recursive_quality=False, recursive_download=False)
          else:
              for a in links2:
                  track(a, chat_id, lang, quality)
@@ -436,7 +436,7 @@ def Link(music, chat_id, lang, quality, msg):
           sendMessage(chat_id, translate(lang, "Fuck you"))
           delete(chat_id)
           return
-         sendPhoto(chat_id, url['picture_xl'], caption="Creation:" + url['creation_date'] + "\nUser:" + url['creator']['name'] + "\nTracks number:" + str(nums))
+         sendPhoto(chat_id, url['picture_xl'], caption="Creation:" + url['creation_date'] + "\nUser:" + url['creator']['name'] + "\nTracks amount:" + str(nums))
          for a in url['tracks']['data']:
              track(a['link'], chat_id, lang, quality)
          done = 1
@@ -466,9 +466,9 @@ def Link(music, chat_id, lang, quality, msg):
        except NameError:
           pass
     except deezloader.QuotaExceeded:
-       sendMessage(chat_id, translate(lang, "Please resend the link :("))
+       sendMessage(chat_id, translate(lang, "Please send the link again :("))
     except deezloader.AlbumNotFound:
-       sendMessage(chat_id, translate(lang, "Album not found :("))
+       sendMessage(chat_id, translate(lang, "Album didn't find :("))
        sendMessage(chat_id, translate(lang, "Try to search it throught inline mode or search the link on Deezer"))
     except Exception as a:
        logging.warning(a)
@@ -486,7 +486,7 @@ def Audio(audio, chat_id, lang):
     try:
        bot.download_file(audio, file)
     except telepot.exception.TelegramError:
-       sendMessage(chat_id, translate(lang, "File sent too big, please send a file max 20 MB size"))
+       sendMessage(chat_id, translate(lang, "File sent is too big, please send a file lower than 20 MB"))
        return
     audio = acrcloud.recognizer(config, file)
     try:
@@ -574,7 +574,7 @@ def inline(msg, from_id, query_data, lang, query_id):
      elif "down" in query_data:
       if ans == "2":
        if users[from_id] == 3:
-        bot.answerCallbackQuery(query_id, translate(lang, "Wait to finish and press download again, did you thought that you could download how much songs did you want? :)"), show_alert=True)
+        bot.answerCallbackQuery(query_id, translate(lang, "Wait the end and repeat the step, did you think you could download how much songs you wanted? ;)"), show_alert=True)
         return
        else:
            users[from_id] += 1
@@ -624,7 +624,7 @@ def inline(msg, from_id, query_data, lang, query_id):
         else:
             if ans == "2":
              if users[from_id] == 3:
-              bot.answerCallbackQuery(query_id, translate(lang, "Wait to finish and press download again, did you thought that you could download how much songs did you want? :)"), show_alert=True)
+              bot.answerCallbackQuery(query_id, translate(lang, "Wait the end and repeat the step, did you think you could download how much songs you wanted? ;)"), show_alert=True)
               return
              else:
                  users[from_id] += 1
@@ -723,25 +723,25 @@ def start(msg):
        users[chat_id] = 0
     if content_type == "text" and msg['text'] == "/start":
      try:
-        sendPhoto(chat_id, open("example.png", "rb"), caption=translate(languag[chat_id], "Welcome to @DeezloaderRMX_bot\nThe bot commands can find here"))
+        sendPhoto(chat_id, open("example.png", "rb"), caption=translate(languag[chat_id], "Welcome to @DeezloaderRMX_bot\nPress '/' to get commands list"))
      except FileNotFoundError:
         pass
      sendMessage(chat_id, translate(languag[chat_id], "Press for search songs or albums or artists\nP.S. Remember you can do this digiting @ in your keyboard and select DeezloaderRMX_bot\nSend a Deezer or Spotify link to download\nSend a song o vocal message to recognize the track"),
                  reply_markup=InlineKeyboardMarkup(
                              inline_keyboard=[
-                                            [InlineKeyboardButton(text="Search artist", switch_inline_query_current_chat="artist:"), InlineKeyboardButton(text="Search album", switch_inline_query_current_chat="album:")],
-                                            [InlineKeyboardButton(text="Search global", switch_inline_query_current_chat="")]
+                                            [InlineKeyboardButton(text="Search by artist", switch_inline_query_current_chat="artist:"), InlineKeyboardButton(text="Search by album", switch_inline_query_current_chat="album:")],
+                                            [InlineKeyboardButton(text="Global search", switch_inline_query_current_chat="")]
                              ]
                 ))
     elif content_type == "text" and msg['text'] == "/translator":
      if languag[chat_id] != "en":
       languag[chat_id] = "en"
-      sendMessage(chat_id, translate(languag[chat_id], "Now the language will be english"))
+      sendMessage(chat_id, translate(languag[chat_id], "Now the language is english"))
      else:
          languag[chat_id] = msg['from']['language_code']
          sendMessage(chat_id, translate(languag[chat_id], "Now the bot will use the Telegram app language"))
     elif content_type == "text" and msg['text'] == "/quality":
-     sendMessage(chat_id, translate(languag[chat_id], "Choose the quality that you want to download the song"),
+     sendMessage(chat_id, translate(languag[chat_id], "Select default download quality"),
                  reply_markup=ReplyKeyboardMarkup(
                              keyboard=[
                                      [KeyboardButton(text="FLAC"), KeyboardButton(text="MP3_320Kbps")],
@@ -750,17 +750,17 @@ def start(msg):
                 ))
     elif content_type == "text" and (msg['text'] == "FLAC" or msg['text'] == "MP3_320Kbps" or msg['text'] == "MP3_256Kbps" or msg['text'] == "MP3_128Kbps"):
      qualit[chat_id] = msg['text'].replace("Kbps", "")
-     sendMessage(chat_id, translate(languag[chat_id], "The songs will be downloaded with " + msg['text'] + " quality"), reply_markup=ReplyKeyboardRemove())
-     sendMessage(chat_id, translate(languag[chat_id], "The songs that cannot be downloaded with the quality that you choose will be downloaded in the best quality possible"))
+     sendMessage(chat_id, translate(languag[chat_id], "Songs will be downloaded in " + msg['text'] + " quality"), reply_markup=ReplyKeyboardRemove())
+     sendMessage(chat_id, translate(languag[chat_id], "Songs which cannot be downloaded in quality you have chosen will be downloaded in the best quality possible"))
     elif content_type == "voice" or content_type == "audio":
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id, languag[chat_id])).start()
     elif content_type == "text" and msg['text'] == "/info":
-     sendMessage(chat_id, "Version: 1.1 RMX\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMX_group\nUsers:" + statisc(chat_id, "USERS") + "\nTracks downloaded:" + statisc(chat_id, "TRACKS"))
+     sendMessage(chat_id, "Version: 1.1 RMX\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMX_group\nUsers:" + statisc(chat_id, "USERS") + "\nTotal downloads:" + statisc(chat_id, "TRACKS"))
     elif content_type == "text":
      try:
         msg['entities']
         if ans == "2" and users[chat_id] == 3:
-         sendMessage(chat_id, translate(languag[chat_id], "Wait to finish and resend the link, did you thought that you could download how much songs did you want? :)"))
+         sendMessage(chat_id, translate(languag[chat_id], "Wait the end and repeat the step, did you think you could download how much songs you wanted? ;)"))
         else:
             if ans == "2":
              users[chat_id] += 1
@@ -778,13 +778,13 @@ try:
    print("2):Strict")
    ans = input("Choose:")
    if ans == "1" or ans == "2":
+    downloa = deezloader.Login(setting.username, setting.password, setting.deezer_token)
     bot.message_loop({
                       "chat": start,
                       "callback_query": download,
                       "inline_query": search,
                       "chosen_inline_result": up
                      })
-    downloa = deezloader.Login(setting.username, setting.password, setting.deezer_token)
     print("Bot started")
     while True:
         sleep(1)
