@@ -39,8 +39,8 @@ config = {
           "host": "https://identify-eu-west-1.acrcloud.com"
 }
 logging.basicConfig(filename="dwsongs.log", level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
-if not os.path.isdir("Songs"):
- os.makedirs("Songs")
+if not os.path.isdir(loc_dir):
+ os.makedirs(loc_dir)
 conn = sqlite3.connect(db_file)
 c = conn.cursor()
 try:
