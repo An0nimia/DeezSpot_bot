@@ -151,7 +151,7 @@ def sendPhoto(chat_id, photo, caption="", reply_markup=""):
     bot.sendChatAction(chat_id, "upload_photo")
     try:
        bot.sendPhoto(chat_id, photo, caption=caption, reply_markup=reply_markup)
-    except telepot.exception.TelegramError:
+    except:
        pass
 def sendAudio(chat_id, audio, link="", image=None, youtube=False):
     sleep(0.8)
