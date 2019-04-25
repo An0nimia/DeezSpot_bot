@@ -82,11 +82,11 @@ def translate(language, sms):
     return sms
 def delete(chat_id):
     global del2
+    del2 += 1
     try:
        users[chat_id] -= 1
     except KeyError:
        pass
-    del2 += 1
 def write_db(execution):
     conn = sqlite3.connect(db_file)
     c = conn.cursor()
@@ -177,9 +177,9 @@ def sendAudio(chat_id, audio, link="", image=None, youtube=False):
         }
         url = "https://api.telegram.org/bot" + token + "/sendAudio"
         try:
-           request = requests.post(url, params=data, files=file)
+           request = requests.post(url, params=data, files=file, timeout=20)
         except:
-           request = requests.post(url, params=data, files=file)
+           request = requests.post(url, params=data, files=file, timeout=20)
         if request.status_code != 200:
          sendMessage(chat_id, translate(languag[chat_id], "The song " + tag['artist'][0] + " - " + tag['title'][0] + " is too big to be sent :("))
         else:
