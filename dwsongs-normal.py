@@ -400,9 +400,9 @@ def Link(link, chat_id, quality, msg):
           URL = "https://www.deezer.com/album/" + link.split("/")[-1]
           image1 = request(URL).text
           image1 = BeautifulSoup(image1, "html.parser").find("img", class_="img_main").get("src").replace("200x200", "1000x1000")
-          ima = request(imag).content
-          if len(ima) == 13:
-           image1 = "https://e-cdns-images.dzcdn.net/images/cover/1000x1000-000000-80-0-0.jpg"
+         ima = request(image1).content
+         if len(ima) == 13:
+          image1 = "https://e-cdns-images.dzcdn.net/images/cover/1000x1000-000000-80-0-0.jpg"
          image2 = image1.replace("1000x1000", "90x90")
          conn = sqlite3.connect(db_file)
          c = conn.cursor()
