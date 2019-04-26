@@ -578,7 +578,7 @@ def inline(msg, from_id, query_data, query_id):
            users[from_id] += 1
       bot.answerCallbackQuery(query_id, translate(languag[from_id], "Songs are downloading"))
       try:
-         url = request("https://api.deezer.com/artist/" + query_data.split("/")[-4] + "/" + query_data.split("/")[-1], languag[from_id], from_id, True).json()
+         url = request("https://api.deezer.com/artist/" + query_data.split("/")[-4] + "/" + query_data.split("/")[-1], from_id, True).json()
       except AttributeError:
          return
       for a in url['data']:
