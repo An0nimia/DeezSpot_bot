@@ -148,15 +148,15 @@ def sendMessage(chat_id, text, reply_markup="", reply_to_message_id=""):
        pass
 def sendPhoto(chat_id, photo, caption="", reply_markup=""):
     sleep(0.8)
-    bot.sendChatAction(chat_id, "upload_photo")
     try:
+       bot.sendChatAction(chat_id, "upload_photo")
        bot.sendPhoto(chat_id, photo, caption=caption, reply_markup=reply_markup)
     except:
        pass
 def sendAudio(chat_id, audio, link="", image=None, youtube=False):
     sleep(0.8)
-    bot.sendChatAction(chat_id, "upload_audio")
     try:
+       bot.sendChatAction(chat_id, "upload_audio") 
        if os.path.isfile(audio):
         audio = open(audio, "rb")
         try:
@@ -246,10 +246,10 @@ def track(link, chat_id, quality):
 def Link(link, chat_id, quality, msg):
     global spo
     global del1
+    del1 += 1
     done = 0
     links1 = []
     links2 = []
-    del1 += 1
     try:
        if "spotify" in link:
         if "track/" in link:
