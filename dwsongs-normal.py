@@ -291,11 +291,16 @@ def Link(link, chat_id, quality, msg):
          tot = tracks['total_tracks']
          conn = sqlite3.connect(db_file)
          c = conn.cursor()
+         count = 0
          for a in tracks['tracks']['items']:
              c.execute("SELECT query FROM DWSONGS WHERE id = '%s' and quality = '%s'" % (a['external_urls']['spotify'], quality.split("MP3_")[-1]))
              links2.append(a['external_urls']['spotify'])
              if c.fetchone() != None:
               links1.append(a['external_urls']['spotify'])
+         if (count / 1000) > 40000:
+          sendMessage(chat_id, translate(languag[chat_id], "If you do this again I will come to your home and I will ddos your ass :)"))
+          delete(chat_id)
+          return
          sendPhoto(chat_id, image1, caption="Album:" + tracks['name'] + "\nArtist:" + tracks['artists'][0]['name'] + "\nDate:" + tracks['release_date'] + "\nTracks amount:" + str(tot))
          tracks = tracks['tracks']
          if tot != 50:
@@ -395,6 +400,10 @@ def Link(link, chat_id, quality, msg):
          except AttributeError:
             delete(chat_id)
             return
+         if url['duration'] > 40000:
+          sendMessage(chat_id, translate(languag[chat_id], "If you do this again I will come to your home and I will ddos your ass :)"))
+          delete(chat_id)
+          return
          image1 = url['cover_xl']
          if image1 == None:
           URL = "https://www.deezer.com/album/" + link.split("/")[-1]
@@ -467,7 +476,7 @@ def Link(link, chat_id, quality, msg):
        sendMessage(chat_id, translate(languag[chat_id], "Please send the link again :("))
     except deezloader.AlbumNotFound:
        sendMessage(chat_id, translate(languag[chat_id], "Album didn't find on Deezer :("))
-       sendMessage(chat_id, translate(lang, "Try to search it throught inline mode or search the link on Deezer"))
+       sendMessage(chat_id, translate(languag[chat_id], "Try to search it throught inline mode or search the link on Deezer"))
     except Exception as a:
        logging.warning(a)
        logging.info(link)
