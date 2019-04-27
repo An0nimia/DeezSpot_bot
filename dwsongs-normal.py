@@ -14,7 +14,6 @@ import deezloader
 from time import sleep
 from pprint import pprint
 from mutagen.mp3 import MP3
-from pyrogram import Client
 from threading import Thread
 from datetime import datetime
 from mutagen.flac import FLAC
@@ -25,9 +24,6 @@ from telepot.namedtuple import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboar
 downloa = deezloader.Login(setting.username, setting.password, setting.deezer_token)
 token = setting.token
 bot = telepot.Bot(token)
-bot_name = input("Insert bot name:")
-app = Client("my_account", "887439", "5e347289fb55cc88406b1180326b145d")
-app.start()
 users = {}
 qualit = {}
 date = {}
@@ -144,30 +140,6 @@ def check_flood(chat_id, msg):
           date[chat_id] = {"time": msg['date'], "tries": 3, "msg": 0}
        except KeyError:
           pass
-def sendZip(chat_id, link, zip_name="", quality="", image=""):
-    conn = sqlite3.connect(db_file)
-    c = conn.cursor()
-    c.execute("SELECT query FROM DWSONGS WHERE id = '%s' and quality = '%s'" % (link, quality.split("MP3_")[-1]))
-    z = c.fetchone()
-    if z != None:
-     file_id = z[0] 
-    else:
-        quality = zip_name.split("(")[-1].split(")")[0]
-        imag = image.url.split("/")
-        if imag[-2] == "image":
-         imag = loc_dir + imag[-1]
-        else:
-            imag = loc_dir + imag[-2]
-        try:
-           open(imag, "wb").write(image.content)
-           file_id = app.send_document(bot_name, zip_name, thumb=imag)['document']['file_id']
-           write_db("INSERT INTO DWSONGS(id, query, quality) values('%s', '%s', '%s')" % (link, file_id, quality.split("MP3_")[-1]))
-        except:
-           sendMessage(chat_id, translate(languag[chat_id], "Nothing to send :("))
-    try:
-       bot.sendDocument(chat_id, file_id)
-    except:
-       sendMessage(chat_id, translate(languag[chat_id], "Sorry I can do nothing"))   
 def sendMessage(chat_id, text, reply_markup="", reply_to_message_id=""):
     sleep(0.8)
     try:
@@ -179,7 +151,7 @@ def sendPhoto(chat_id, photo, caption="", reply_markup=""):
     try:
        bot.sendChatAction(chat_id, "upload_photo")
        bot.sendPhoto(chat_id, photo, caption=caption, reply_markup=reply_markup)
-    except telepot.exception.TelegramError:
+    except:
        pass
 def sendAudio(chat_id, audio, link="", image=None, youtube=False):
     sleep(0.8)
@@ -201,7 +173,7 @@ def sendAudio(chat_id, audio, link="", image=None, youtube=False):
         }
         file = {
                 "audio": audio,
-                "thumb": image.content
+                "thumb": image
         }
         url = "https://api.telegram.org/bot" + token + "/sendAudio"
         try:
@@ -209,19 +181,11 @@ def sendAudio(chat_id, audio, link="", image=None, youtube=False):
         except:
            request = requests.post(url, params=data, files=file, timeout=20)
         if request.status_code != 200:
-         sendMessage(chat_id, translate(languag[chat_id], "The song " + tag['artist'][0] + " - " + tag['title'][0] + " is too big to be sent :(, wait..."))
-         imag = image.url.split("/")
-         if imag[-2] == "image":
-          imag = loc_dir + imag[-1]
-         else:
-             imag = loc_dir + imag[-2]
-         open(imag, "wb").write(image.content)
-         file_id = app.send_audio(bot_name, audio.name, thumb=imag, duration=duration, performer=tag['artist'][0], title=tag['title'][0])['audio']['file_id']
-         bot.sendAudio(chat_id, file_id)
+         sendMessage(chat_id, translate(languag[chat_id], "The song " + tag['artist'][0] + " - " + tag['title'][0] + " is too big to be sent :("))
         else:
-            file_id = request.json()['result']['audio']['file_id']
-        if youtube == False:
-         write_db("INSERT INTO DWSONGS(id, query, quality) values('%s', '%s', '%s')" % (link, file_id, audio.name.split("(")[-1].split(")")[0]))
+            if youtube == False:
+             file_id = request.json()['result']['audio']['file_id']
+             write_db("INSERT INTO DWSONGS(id, query, quality) values('%s', '%s', '%s')" % (link, file_id, audio.name.split("(")[-1].split(")")[0]))
        else:
            bot.sendAudio(chat_id, audio)
     except telepot.exception.TelegramError:
@@ -277,7 +241,7 @@ def track(link, chat_id, quality):
            except dwytsongs.TrackNotFound:
               sendMessage(chat_id, translate(languag[chat_id], "Sorry I cannot download this song :("))
               return
-        image = request(image)
+        image = request(image).content
         sendAudio(chat_id, z, link, image, youtube)
 def Link(link, chat_id, quality, msg):
     global spo
@@ -327,13 +291,12 @@ def Link(link, chat_id, quality, msg):
          tot = tracks['total_tracks']
          conn = sqlite3.connect(db_file)
          c = conn.cursor()
-         exist = c.execute("SELECT query FROM DWSONGS WHERE id = '%s' and quality = '%s'" % (link, quality.split("MP3_")[-1])).fetchone()
          count = 0
          for a in tracks['tracks']['items']:
              count += a['duration_ms']
              c.execute("SELECT query FROM DWSONGS WHERE id = '%s' and quality = '%s'" % (a['external_urls']['spotify'], quality.split("MP3_")[-1]))
              links2.append(a['external_urls']['spotify'])
-             if c.fetchone() != None and exist != None:
+             if c.fetchone() != None:
               links1.append(a['external_urls']['spotify'])
          if (count / 1000) > 40000:
           sendMessage(chat_id, translate(languag[chat_id], "If you do this again I will come to your home and I will ddos your ass :)"))
@@ -351,13 +314,12 @@ def Link(link, chat_id, quality, msg):
                 for a in tracks2['items']:
                     c.execute("SELECT query FROM DWSONGS WHERE id = '%s' and quality = '%s'" % (a['external_urls']['spotify'], quality.split("MP3_")[-1]))
                     links2.append(a['external_urls']['spotify'])
-                    if c.fetchone() != None and exist != None:
+                    if c.fetchone() != None:
                      links1.append(a['external_urls']['spotify'])
          conn.close()
-         if len(links1) != tot:
-          z,zip_name = downloa.download_albumspo(link, quality=quality, recursive_quality=False, recursive_download=False, create_zip=True)
+         if len(links1) <= tot // 2:
+          z = downloa.download_albumspo(link, quality=quality, recursive_quality=False, recursive_download=False)
          else:
-             sendZip(chat_id, link, quality=quality)
              for a in links2:
                  track(a, chat_id, quality)
          done = 1
@@ -454,19 +416,17 @@ def Link(link, chat_id, quality, msg):
          image2 = image1.replace("1000x1000", "90x90")
          conn = sqlite3.connect(db_file)
          c = conn.cursor()
-         exist = c.execute("SELECT query FROM DWSONGS WHERE id = '%s' and quality = '%s'" % (link, quality.split("MP3_")[-1])).fetchone()
          for a in url['tracks']['data']:
              c.execute("SELECT query FROM DWSONGS WHERE id = '%s' and quality = '%s'" % (a['link'], quality.split("MP3_")[-1]))
              links2.append(a['link'])
-             if c.fetchone() != None and exist != None:
+             if c.fetchone() != None:
               links1.append(a['link'])
          conn.close()
          tot = url['nb_tracks']
          sendPhoto(chat_id, image1, caption="Album:" + url['title'] + "\nArtist:" + url['artist']['name'] + "\nDate:" + url['release_date'] + "\nTracks amount:" + str(tot))
-         if len(links1) != tot:
-          z,zip_name = downloa.download_albumdee(link, quality=quality, recursive_quality=False, recursive_download=False, create_zip=True)
+         if len(links1) <= tot // 2:
+          z = downloa.download_albumdee(link, quality=quality, recursive_quality=False, recursive_download=False)
          else:
-             sendZip(chat_id, link, quality=quality)
              for a in links2:
                  track(a, chat_id, quality)
          done = 1
@@ -508,17 +468,16 @@ def Link(link, chat_id, quality, msg):
        else:
            sendMessage(chat_id, translate(languag[chat_id], "Sorry :( The bot doesn't support this link"))
        try:
-          image2 = request(image2)
+          image2 = request(image2).content
           for a in range(len(z)):
               sendAudio(chat_id, z[a], links2[a], image2)
-          sendZip(chat_id, link, zip_name, quality, image2)
        except NameError:
           pass
     except deezloader.QuotaExceeded:
        sendMessage(chat_id, translate(languag[chat_id], "Please send the link again :("))
     except deezloader.AlbumNotFound:
        sendMessage(chat_id, translate(languag[chat_id], "Album didn't find on Deezer :("))
-       sendMessage(chat_id, translate(langug[chat_id], "Try to search it throught inline mode or search the link on Deezer"))
+       sendMessage(chat_id, translate(languag[chat_id], "Try to search it throught inline mode or search the link on Deezer"))
     except Exception as a:
        logging.warning(a)
        logging.info(link)
@@ -842,7 +801,7 @@ try:
              try:
                 shutil.rmtree(loc_dir + a)
              except NotADirectoryError:
-                os.remove(loc_dir + a)
+                pass
         now = datetime.now()
         if now.hour % 1 == 0 and now.minute == 0 and now.second == 0:
          downloa = deezloader.Login(setting.username, setting.password, setting.deezer_token)
