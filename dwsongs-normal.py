@@ -15,7 +15,6 @@ from time import sleep
 from pprint import pprint
 from mutagen.mp3 import MP3
 from threading import Thread
-from datetime import datetime
 from mutagen.flac import FLAC
 from bs4 import BeautifulSoup
 import spotipy.oauth2 as oauth2
@@ -53,7 +52,7 @@ except sqlite3.OperationalError:
 def generate_token():
     return oauth2.SpotifyClientCredentials(client_id="c6b23f1e91f84b6a9361de16aba0ae17", client_secret="237e355acaa24636abc79f1a089e6204").get_access_token()
 spo = spotipy.Spotify(auth=generate_token())
-def request(url, chat_id=0, control=False):
+def request(url, chat_id=None, control=False):
     try:
        thing = requests.get(url)
     except:
@@ -140,20 +139,20 @@ def check_flood(chat_id, msg):
           date[chat_id] = {"time": msg['date'], "tries": 3, "msg": 0}
        except KeyError:
           pass
-def sendMessage(chat_id, text, reply_markup="", reply_to_message_id=""):
+def sendMessage(chat_id, text, reply_markup=None, reply_to_message_id=None):
     sleep(0.8)
     try:
        bot.sendMessage(chat_id, text, reply_markup=reply_markup, reply_to_message_id=reply_to_message_id)
     except:
        pass
-def sendPhoto(chat_id, photo, caption="", reply_markup=""):
+def sendPhoto(chat_id, photo, caption=None, reply_markup=None):
     sleep(0.8)
     try:
        bot.sendChatAction(chat_id, "upload_photo")
        bot.sendPhoto(chat_id, photo, caption=caption, reply_markup=reply_markup)
     except:
        pass
-def sendAudio(chat_id, audio, link="", image=None, youtube=False):
+def sendAudio(chat_id, audio, link=None, image=None, youtube=False):
     sleep(0.8)
     try:
        bot.sendChatAction(chat_id, "upload_audio") 
@@ -763,7 +762,7 @@ def start(msg):
     elif content_type == "voice" or content_type == "audio":
      Thread(target=Audio, args=(msg[content_type]['file_id'], chat_id)).start()
     elif content_type == "text" and msg['text'] == "/info":
-     sendMessage(chat_id, "Version: 1.2 RMX\nName:@DeezloaderRMX_bot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMX_group\nUsers:" + statisc(chat_id, "USERS") + "\nTotal downloads:" + statisc(chat_id, "TRACKS"))
+     sendMessage(chat_id, "Version: 1.3 RMX\nName:@DeezloaderRMXBot\nCreator:@An0nimia\nDonation:https://www.paypal.me/An0nimia\nForum:https://t.me/DeezloaderRMX_group\nUsers:" + statisc(chat_id, "USERS") + "\nTotal downloads:" + statisc(chat_id, "TRACKS"))
     elif content_type == "text":
      try:
         msg['entities']
@@ -802,9 +801,6 @@ try:
                 shutil.rmtree(loc_dir + a)
              except NotADirectoryError:
                 pass
-        now = datetime.now()
-        if now.hour % 1 == 0 and now.minute == 0 and now.second == 0:
-         downloa = deezloader.Login(setting.username, setting.password, setting.deezer_token)
 except KeyboardInterrupt:
    os.rmdir(loc_dir)
    print("\nSTOPPED")
