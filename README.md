@@ -30,4 +30,4 @@ This project has been created for integrate deezloader library in a Telegram bot
 	donation = https://www.paypal.me/An0nimia
 	group = https://t.me/DeezloaderRMX_group
 
-	setting.ini file for use the bot
+setting.ini file for use the bot
