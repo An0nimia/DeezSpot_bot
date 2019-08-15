@@ -1645,8 +1645,8 @@ def start(msg):
 
 	elif content_type == "voice" or content_type == "audio":
 		Thread(
-			target=Audio,
-			args=(
+			target = Audio,
+			args = (
 				msg[content_type]['file_id'],
 				chat_id
 			)
