@@ -63,7 +63,7 @@ languag = {}
 
 del1 = 0
 del2 = 0
-free = 0
+free = 1
 default_time = 0.8
 is_audio = 0
 
