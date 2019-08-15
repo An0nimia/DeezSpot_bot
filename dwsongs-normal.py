@@ -86,9 +86,9 @@ config = {
 acrcloud = acrcloud.ACRcloud(config)
 
 logging.basicConfig(
-	filename="dwsongs.log",
-	level=logging.WARNING,
-	format="%(asctime)s %(levelname)s %(name)s %(message)s"
+	filename = "dwsongs.log",
+	level = logging.WARNING,
+	format = "%(asctime)s %(levelname)s %(name)s %(message)s"
 )
 
 if not os.path.isdir(loc_dir):
@@ -107,12 +107,12 @@ except sqlite3.OperationalError:
 
 def generate_token():
 	return oauth2.SpotifyClientCredentials(
-		client_id="c6b23f1e91f84b6a9361de16aba0ae17",
-		client_secret="237e355acaa24636abc79f1a089e6204"
+		client_id = "c6b23f1e91f84b6a9361de16aba0ae17",
+		client_secret = "237e355acaa24636abc79f1a089e6204"
 	).get_access_token()
 
 spo = spotipy.Spotify(
-	auth=generate_token()
+	auth = generate_token()
 )
 
 def request(url, chat_id=None, control=False):
@@ -343,8 +343,12 @@ def sendAudio(chat_id, audio, link=None, image=None, youtube=False):
 						timeout = 8
 					)
 
+				pprint(
+					request.json()
+				)
+
 				file_id = request.json()['result']['audio']['file_id']
-				
+
 				if youtube == False:
 					quality = (
 						audio
@@ -361,7 +365,7 @@ def sendAudio(chat_id, audio, link=None, image=None, youtube=False):
 						)
 					)
 			else:
-				sendMessage(chat_id, "The song is too big to be sent :( > 50 MB")
+				sendMessage(chat_id, "The song is bigger than 50 MB, more than the api support")
 		else:
 			bot.sendAudio(chat_id, audio)
 
@@ -369,7 +373,7 @@ def sendAudio(chat_id, audio, link=None, image=None, youtube=False):
 		sendMessage(chat_id, "Sorry the track doesn't seem readable on Deezer :(")
 
 	except Exception as a:
-		logging.warning("While sending audio 372")
+		logging.warning("While sending audio 457")
 		logging.warning(a)
 		sendMessage(chat_id, "Sorry for some reason I can't send the track :(")
 
@@ -401,15 +405,15 @@ def track(link, chat_id, quality):
 					url = spo.track(link)
 				except:
 					spo = spotipy.Spotify(
-						auth=generate_token()
+						auth = generate_token()
 					)
 
 					url = spo.track(link)
 
 				try:
-					image = url['album']['images'][1]['url']
+					image = url['album']['images'][2]['url']
 				except IndexError:
-					image = "https://e-cdns-images.dzcdn.net/images/cover/320x320-000000-80-0-0.jpg"
+					image = "https://e-cdns-images.dzcdn.net/images/cover/90x90-000000-80-0-0.jpg"
 
 				z = downloa.download_trackspo(
 					link,
@@ -429,7 +433,7 @@ def track(link, chat_id, quality):
 					return
 
 				try:
-					image = url['album']['cover_xl'].replace("1000x1000", "320x320")
+					image = url['album']['cover_xl'].replace("1000x1000", "90x90")
 				except AttributeError:
 					URL = "https://www.deezer.com/track/" + ids
 					image = request(URL).text
@@ -438,13 +442,13 @@ def track(link, chat_id, quality):
 						BeautifulSoup(image, "html.parser")
 						.find("img", class_="img_main")
 						.get("src")
-						.replace("120x120", "320x320")
+						.replace("120x120", "90x90")
 					)
 
 				ima = request(image).content
 
 				if len(ima) == 13:
-					image = "https://e-cdns-images.dzcdn.net/images/cover/320x320-000000-80-0-0.jpg"
+					image = "https://e-cdns-images.dzcdn.net/images/cover/90x90-000000-80-0-0.jpg"
 
 				z = downloa.download_trackdee(
 					link,
@@ -472,7 +476,6 @@ def track(link, chat_id, quality):
 				return
 
 		image = request(image).content
-
 		sendAudio(chat_id, z, link, image, youtube)
 
 def Link(link, chat_id, quality, msg):
@@ -484,13 +487,13 @@ def Link(link, chat_id, quality, msg):
 	links1 = []
 	links2 = []
 	quali = quality.split("MP3_")[-1]
+	
+	if "?" in link:
+		link, a = link.split("?")
 
 	try:
 		if "spotify" in link:
 			if "track/" in link:
-				if "?" in link:
-					link, a = link.split("?")
-
 				try:
 					url = spo.track(link)
 				except Exception as a:
@@ -504,7 +507,7 @@ def Link(link, chat_id, quality, msg):
 						return
 
 					spo = spotipy.Spotify(
-						auth=generate_token()
+						auth = generate_token()
 					)
 
 					url = spo.track(link)
@@ -519,8 +522,8 @@ def Link(link, chat_id, quality, msg):
 					caption = (
 						send_image_track_query
 						% (
-							url['name'], 
-							url['album']['artists'][0]['name'], 
+							url['name'],
+							url['album']['artists'][0]['name'],
 							url['album']['name'],
 							url['album']['release_date']
 						)
@@ -530,9 +533,6 @@ def Link(link, chat_id, quality, msg):
 				track(link, chat_id, quality)
 
 			elif "album/" in link:
-				if "?" in link:
-					link,a = link.split("?")
-				
 				try:
 					tracks = spo.album(link)
 				except Exception as a:
@@ -552,10 +552,10 @@ def Link(link, chat_id, quality, msg):
 					tracks = spo.album(link)
 
 				try:
-					image2 = tracks['images'][1]['url']
+					image3 = tracks['images'][2]['url']
 					image1 = tracks['images'][0]['url']
 				except IndexError:
-					image2 = "https://e-cdns-images.dzcdn.net/images/cover/320x320-000000-80-0-0.jpg"
+					image3 = "https://e-cdns-images.dzcdn.net/images/cover/90x90-000000-80-0-0.jpg"
 					image1 = "https://e-cdns-images.dzcdn.net/images/cover/1000x1000-000000-80-0-0.jpg"
 
 				tot = tracks['total_tracks']
@@ -593,9 +593,9 @@ def Link(link, chat_id, quality, msg):
 					caption = (
 						send_image_album_query
 						% (
-							url['name'],
-							url['artists'][0]['name'],
-							url['release_date'],
+							tracks['name'],
+							tracks['artists'][0]['name'],
+							tracks['release_date'],
 							tot
 						)
 					)
@@ -609,7 +609,7 @@ def Link(link, chat_id, quality, msg):
 							tracks2 = spo.next(tracks)
 						except:
 							spo = spotipy.Spotify(
-								auth=generate_token()
+								auth = generate_token()
 							)
 
 							tracks2 = spo.next(tracks)
@@ -626,7 +626,7 @@ def Link(link, chat_id, quality, msg):
 								a['external_urls']['spotify']
 							)
 
-							if c.fetchone() != None and exist != None:
+							if c.fetchone() != None:
 								links1.append(
 									a['external_urls']['spotify']
 								)
@@ -638,7 +638,7 @@ def Link(link, chat_id, quality, msg):
 						link,
 						quality = quality,
 						recursive_quality = True,
-						recursive_download = True,
+						recursive_download = True
 					)
 				else:
 					for a in links2:
@@ -647,9 +647,6 @@ def Link(link, chat_id, quality, msg):
 				done = 1
 
 			elif "playlist/" in link:
-				if "?" in link:
-					link, a = link.split("?")
-
 				musi = link.split("/")
 
 				try:
@@ -726,7 +723,6 @@ def Link(link, chat_id, quality, msg):
 							)
 
 							tracks = spo.next(tracks)
-						
 						for a in tracks['items']:
 							try:
 								track(
@@ -739,7 +735,7 @@ def Link(link, chat_id, quality, msg):
 									sendMessage(chat_id, a['track']['name'] + " Not found :(")
 								except KeyError:
 									sendMessage(chat_id, "Error :(")
-				
+
 				done = 1
 
 			else:
@@ -747,10 +743,7 @@ def Link(link, chat_id, quality, msg):
 
 		elif "deezer" in link:
 			if "track/" in link:
-				if "?" in link:
-					link, a = link.split("?")
-				
-				try: 
+				try:
 					url = request(
 						"https://api.deezer.com/track/" + link
 						.split("/")[-1],
@@ -795,10 +788,7 @@ def Link(link, chat_id, quality, msg):
 				track(link, chat_id, quality)
 
 			elif "album/" in link:
-				if "?" in link:
-					link, a = link.split("?")
-				
-				try: 
+				try:
 					url = request(
 						"https://api.deezer.com/album/" + link
 						.split("/")[-1],
@@ -831,7 +821,7 @@ def Link(link, chat_id, quality, msg):
 				if len(ima) == 13:
 					image1 = "https://e-cdns-images.dzcdn.net/images/cover/1000x1000-000000-80-0-0.jpg"
 
-				image2 = image1.replace("1000x1000", "320x320")
+				image3 = image1.replace("1000x1000", "90x90")
 
 				conn = sqlite3.connect(db_file)
 				c = conn.cursor()
@@ -872,7 +862,7 @@ def Link(link, chat_id, quality, msg):
 						link,
 						quality = quality,
 						recursive_quality = True,
-						recursive_download = True,
+						recursive_download = True
 					)
 				else:
 					for a in links2:
@@ -881,9 +871,6 @@ def Link(link, chat_id, quality, msg):
 				done = 1
 
 			elif "playlist/" in link:
-				if "?" in link:
-					link, a = link.split("?")
-
 				try:
 					url = request(
 						"https://api.deezer.com/playlist/" + link
@@ -924,9 +911,6 @@ def Link(link, chat_id, quality, msg):
 				done = 1
 
 			elif "artist/" in link:
-				if "?" in link:
-					link, a = link.split("?")
-
 				link = "https://api.deezer.com/artist/" + link.split("/")[-1]
 
 				try:
@@ -939,7 +923,7 @@ def Link(link, chat_id, quality, msg):
 					chat_id, url['picture_xl'],
 					caption = (
 						"Artist:" + url['name'] + 
-						"\nAlbum numbers:" + str(url['nb_album']) + 
+						"\nAlbum numbers:" + str(url['nb_album']) +
 						"\nFans on Deezer:" + str(url['nb_fan'])
 					),
 					reply_markup = InlineKeyboardMarkup(
@@ -971,10 +955,10 @@ def Link(link, chat_id, quality, msg):
 			sendMessage(chat_id, "Sorry :( The bot doesn't support this link")
 
 		try:
-			image2 = request(image2).content
+			image3 = request(image3).content
 
 			for a in range(len(z)):
-				sendAudio(chat_id, z[a], links2[a], image2)
+				sendAudio(chat_id, z[a], links2[a], image3)
 		except NameError:
 			pass
 
@@ -1351,7 +1335,7 @@ def inline(msg, from_id, query_data, query_id):
 
 def download(msg):
 	query_id, from_id, query_data = telepot.glance(
-		msg, flavor="callback_query"
+		msg, flavor = "callback_query"
 	)
 
 	try:
@@ -1586,7 +1570,7 @@ def start(msg):
 
 		sendMessage(
 			chat_id,
-			"Press for search songs or albums or artists\nP.S. Remember you can do this digiting @ in your keyboard and select " + 
+			"Press for search songs or albums or artists\nP.S. Remember you can do this digiting @ in your keyboard and select " +
 			bot_name +
 			"\nSend a Deezer or Spotify link to download\nSend a song o vocal message to recognize the track",
 			reply_markup = InlineKeyboardMarkup(
@@ -1692,7 +1676,7 @@ def start(msg):
 		elif what == "0":
 			free = 0
 
-		else: 
+		else:
 			Thread(
 				target = sendall,
 				args = (
@@ -1709,11 +1693,11 @@ def start(msg):
 			else:
 				if ans == "2":
 					users[chat_id] += 1
-				
+
 				Thread(
 					target = Link,
 					args = (
-						msg['text'].replace("'", ""), 
+						msg['text'].replace("'", ""),
 						chat_id, qualit[chat_id], msg
 					)
 				).start()
