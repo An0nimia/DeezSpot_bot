@@ -272,8 +272,8 @@ def sendMessage(chat_id, text, reply_markup=None, reply_to_message_id=None):
 			reply_to_message_id = reply_to_message_id
 		)
 	except Exception as a:
-		log.warning("While sending message error 275")
-		log.warning(a)
+		logging.warning("While sending message error 275")
+		logging.warning(a)
 
 def sendPhoto(chat_id, photo, caption=None, reply_markup=None):
 	sleep(default_time)
