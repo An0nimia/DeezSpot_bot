@@ -1747,8 +1747,10 @@ try:
 
 	while True:
 		sleep(1)
+		path = os.statvfs("/")
+		free_space = path.f_bavail * path.f_frsize
 
-		if del1 == del2 and is_audio == 0:
+		if (del1 == del2 and is_audio == 0) or free_space <= 2000000000:
 			del1, del2 = 0, 0
 
 			for a in os.listdir(loc_dir):
