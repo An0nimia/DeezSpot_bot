@@ -440,9 +440,9 @@ def track(link, chat_id, quality):
 
 					image = (
 						BeautifulSoup(image, "html.parser")
-						.find("img", class_="img_main")
-						.get("src")
-						.replace("120x120", "90x90")
+						.find("meta", property="og:image")
+						.get("content")
+						.replace("500x500", "90x90")
 					)
 
 				ima = request(image).content
