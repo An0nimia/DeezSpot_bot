@@ -762,9 +762,9 @@ def Link(link, chat_id, quality, msg):
 
 					image1 = (
 						BeautifulSoup(image1, "html.parser")
-						.find("img", class_="img_main")
-						.get("src")
-						.replace("120x120", "1000x1000")
+						.find("meta", property="og:image")
+						.get("content")
+						.replace("500x500", "90x90")
 					)
 
 				ima = request(image1).content
@@ -809,6 +809,7 @@ def Link(link, chat_id, quality, msg):
 				if image1 == None:
 					URL = "https://www.deezer.com/album/" + link.split("/")[-1]
 					image1 = request(URL).text
+
 					image1 = (
 						BeautifulSoup(image1, "html.parser")
 						.find("img", class_="img_main")
