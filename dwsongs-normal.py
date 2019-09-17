@@ -489,7 +489,7 @@ def Link(link, chat_id, quality, msg):
 	quali = quality.split("MP3_")[-1]
 	
 	if "?" in link:
-		link, a = link.split("?")
+		link = link.split("?")[0]
 
 	try:
 		if "spotify" in link:
