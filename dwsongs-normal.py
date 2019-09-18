@@ -26,9 +26,11 @@ from telepot.namedtuple import (
 	ReplyKeyboardRemove, InlineKeyboardMarkup,
 	InlineKeyboardButton, InlineQueryResultArticle, InputTextMessageContent
 )
-
+path = os.getcwd()
+setting = path + "/DeezloaderAn0n_bot/setting.ini"
 config = configparser.ConfigParser()
-config.read("setting.ini")
+config.read(setting)
+print (setting)
 
 try:
 	mail = config['login']['mail']
