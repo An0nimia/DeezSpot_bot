@@ -26,9 +26,10 @@ from telepot.namedtuple import (
 	ReplyKeyboardRemove, InlineKeyboardMarkup,
 	InlineKeyboardButton, InlineQueryResultArticle, InputTextMessageContent
 )
-
+path = os.getcwd()
+setting = path + "/DeezloaderAn0n_bot/setting.ini"
 config = configparser.ConfigParser()
-config.read("setting.ini")
+config.read(setting)
 
 try:
 	mail = config['login']['mail']
@@ -51,7 +52,7 @@ except KeyError:
 	print("Something went wrong with configuration file")
 	sys.exit(0)
 
-downloa = deezloader.Login(mail, password, deezer_token)
+downloa = deezloader.Login(deezer_token)
 
 bot = telepot.Bot(bot_token)
 bot_name = bot.getMe()['username']
