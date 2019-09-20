@@ -31,8 +31,6 @@ config = configparser.ConfigParser()
 config.read("setting.ini")
 
 try:
-	mail = config['login']['mail']
-	password = config['login']['password']
 	deezer_token = config['login']['token']
 
 	bot_token = config['bot']['token']
@@ -51,7 +49,7 @@ except KeyError:
 	print("Something went wrong with configuration file")
 	sys.exit(0)
 
-downloa = deezloader.Login(mail, password, deezer_token)
+downloa = deezloader.Login(deezer_token)
 
 bot = telepot.Bot(bot_token)
 bot_name = bot.getMe()['username']
