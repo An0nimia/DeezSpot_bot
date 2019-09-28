@@ -9,8 +9,6 @@ This project has been created for integrate deezloader library in a Telegram bot
 
 ## SETTING
 	[login]
-	mail = deezer e-mail
-	password = deezer password
 	token = deezer arl cookie
 	
 	[bot]
