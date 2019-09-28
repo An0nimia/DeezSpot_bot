@@ -454,7 +454,7 @@ def track(link, chat_id, quality):
 					recursive_quality = True,
 					recursive_download = True,
 				)
-		except deezloader.exceptions.TrackNotFound:
+		except (deezloader.exceptions.TrackNotFound, deezloader.exceptions.NoDataApi):
 			sendMessage(chat_id, "Track doesn't exist on Deezer or maybe it isn't readable, it'll be downloaded from YouTube...")
 
 			try:
