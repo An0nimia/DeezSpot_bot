@@ -1,0 +1,10 @@
+spotipy
+telepot
+mutagen
+acrcloud
+requests
+dwytsongs
+deezloader
+configparser
+pprint
+bs4
