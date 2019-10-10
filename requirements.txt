@@ -1,9 +1,7 @@
-spotipy
 telepot
 mutagen
 acrcloud
 requests
 dwytsongs
 deezloader
-configparser
 bs4
