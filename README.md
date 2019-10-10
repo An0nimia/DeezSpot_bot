@@ -9,14 +9,13 @@ This project has been created for integrate deezloader library in a Telegram bot
 
 ## Installation
 	apt install ffmpeg
-	git clone https://github.com/CyanBook/DeezloaderAn0n_bot.git
+	git clone https://github.com/An0nimia/DeezloaderAn0n_bot.git
 	pip3 install -r requirements.txt
-	nano setting.ini
 	chmod +x dwsongs-normal.py && ./dwsongs-normal
 
 ## Settings
 	[login]
-	token = deezer arl cookie
+	token = deezer arl cookie #To grab arl cookie by press F12, then go to Application -> Cookies and copy the value
 	
 	[bot]
 	token = bot token
@@ -34,4 +33,3 @@ This project has been created for integrate deezloader library in a Telegram bot
 	creator = An0nimia
 	donation = https://www.paypal.me/An0nimia
 	group = https://t.me/DeezloaderRMX_group
-To grab arl cookie by press F12, then go to Application -> Cookies and copy the value
