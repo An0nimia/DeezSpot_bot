@@ -1,7 +1,6 @@
 telepot
 mutagen
 acrcloud
-requests
 dwytsongs
 deezloader
 bs4
