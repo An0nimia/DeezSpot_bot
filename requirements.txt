@@ -6,5 +6,4 @@ requests
 dwytsongs
 deezloader
 configparser
-pprint
 bs4
