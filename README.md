@@ -11,7 +11,7 @@ This project has been created for integrate deezloader library in a Telegram bot
 	apt install ffmpeg
 	git clone https://github.com/An0nimia/DeezloaderAn0n_bot.git
 	pip3 install -r requirements.txt
-	chmod +x dwsongs-normal.py && ./dwsongs-normal
+	chmod +x dwsongs-normal.py && ./dwsongs-normal.py
 
 ## Settings
 	[login]
