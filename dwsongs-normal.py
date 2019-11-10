@@ -1736,7 +1736,7 @@ try:
 		path = os.statvfs("/")
 		free_space = path.f_bavail * path.f_frsize
 
-		if (del1 == del2 and is_audio == 0) or free_space <= 4000000000:
+		if (del1 == del2 and is_audio == 0) or free_space <= 4000000000 or del2 > del1:
 			del1 = 0
 			del2 = 0
 
