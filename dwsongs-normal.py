@@ -338,7 +338,7 @@ def sendAudio(chat_id, audio, link = None, image = None, youtube = False):
 
 				file_param = {
 						"audio": open(audio, "rb"),
-						"thumb": image
+						"thumb": get(image).content
 
 				}
 
