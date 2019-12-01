@@ -57,10 +57,11 @@ del2 = 0
 free = 1
 default_time = 0
 is_audio = 0
+telegram_file_api_limit = 1500000000
 telegram_audio_api_limit = 50000000
-send_image_track_query = "Track: %s \nArtist: %s \nAlbum: %s \nDate: %s"
-send_image_album_query = "Album: %s \nArtist: %s \nDate: %s \nTracks amount: %d"
-send_image_playlist_query = "Creation: %s \nUser: %s \nTracks amount: %d"
+send_image_track_query = "🎧 Track: %s \n👤 Artist: %s \n💽 Album: %s \n📅 Date: %s"
+send_image_album_query = "💽 Album: %s \n👤 Artist: %s \n📅 Date: %s \n🎧 Tracks amount: %d"
+send_image_playlist_query = "📅 Creation: %s \n👤 User: %s \n🎧 Tracks amount: %d"
 insert_query = "INSERT INTO DWSONGS (id, query, quality) values ('%s', '%s', '%s')"
 where_query = "SELECT query FROM DWSONGS WHERE id = '{}' and quality = '{}'"
 db_file = "dwsongs.db"
@@ -190,10 +191,8 @@ def delete(chat_id):
 
 	del2 += 1
 
-	try:
+	if ans == "2":
 		users[chat_id] -= 1
-	except KeyError:
-		pass
 
 def write_db(execution):
 	conn = connect(db_file)
@@ -338,7 +337,7 @@ def sendAudio(chat_id, audio, link = None, image = None, youtube = False):
 
 				file_param = {
 						"audio": open(audio, "rb"),
-						"thumb": get(image).content
+						"thumb": image
 
 				}
 
@@ -349,14 +348,14 @@ def sendAudio(chat_id, audio, link = None, image = None, youtube = False):
 						url,
 						params = data,
 						files = file_param,
-						timeout = 20
+						timeout = 40
 					)
 				except:
 					request = post(
 						url,
 						params = data,
 						files = file_param,
-						timeout = 20
+						timeout = 40
 					)
 
 				file_id = request.json()['result']['audio']['file_id']
@@ -377,7 +376,7 @@ def sendAudio(chat_id, audio, link = None, image = None, youtube = False):
 						)
 					)
 			else:
-				sendMessage(chat_id, "The song is bigger than 50MB")
+				sendMessage(chat_id, "The song is too big to be sent :(")
 		else:
 			bot.sendAudio(chat_id, audio)
 
@@ -460,10 +459,11 @@ def track(link, chat_id, quality):
 					)
 
 				youtube = True
-			except dwytsongs.TrackNotFound:
+			except:
 				sendMessage(chat_id, "Sorry I cannot download this song %s :(" % link)
 				return
 
+		image = request(image).content
 		sendAudio(chat_id, z, link, image, youtube)
 
 def Link(link, chat_id, quality, msg):
@@ -615,13 +615,12 @@ def Link(link, chat_id, quality, msg):
 				conn.close()
 
 				if len(links1) != tot:
-					z, zip_name = downloa.download_albumspo(
+					z = downloa.download_albumspo(
 						link,
 						quality = quality,
 						recursive_quality = True,
 						recursive_download = True,
-						not_interface = True,
-						zips = True
+						not_interface = True
 					)
 				else:
 					for a in links2:
@@ -681,10 +680,10 @@ def Link(link, chat_id, quality, msg):
 							chat_id,
 							quality
 						)
-					except KeyError:
+					except:
 						try:
 							sendMessage(chat_id, "%s Not found :(" % a['track']['name'])
-						except KeyError:
+						except:
 							sendMessage(chat_id, "Error :(")
 
 				tot = tracks['tracks']['total']
@@ -708,7 +707,7 @@ def Link(link, chat_id, quality, msg):
 									chat_id,
 									quality
 								)
-							except KeyError:
+							except:
 								try:
 									sendMessage(chat_id, "%s Not found :(" % a['track']['name'])
 								except KeyError:
@@ -814,13 +813,12 @@ def Link(link, chat_id, quality, msg):
 				)
 
 				if len(links1) != tot:
-					z, zip_name = downloa.download_albumdee(
+					z = downloa.download_albumdee(
 						link,
 						quality = quality,
 						recursive_quality = True,
 						recursive_download = True,
-						not_interface = True,
-						zips = True
+						not_interface = True
 					)
 				else:
 					for a in links2:
@@ -877,7 +875,7 @@ def Link(link, chat_id, quality, msg):
 				sendPhoto(
 					chat_id, url['picture_xl'],
 					caption = (
-						"Artist: %s \nAlbum numbers: %d \nFans on Deezer: %d"
+						"👤 Artist: %s \n💽 Album numbers: %d \n👥 Fans on Deezer: %d"
 						% (
 							url['name'],
 							url['nb_album'],
@@ -888,21 +886,21 @@ def Link(link, chat_id, quality, msg):
 						inline_keyboard = [
 							[
 								InlineKeyboardButton(
-									text = "TOP 30",
+									text = "TOP 30 🔝",
 									callback_data = "%s/top?limit=30" % link
 								),
 								InlineKeyboardButton(
-									text = "ALBUMS",
+									text = "ALBUMS 💽",
 									callback_data = "%s/albums" % link
 								)
 							],
 							[
 								InlineKeyboardButton(
-									text = "RADIO",
+									text = "RADIO 📻",
 									callback_data = "%s/radio" % link
 								),
 								InlineKeyboardButton(
-									text = "RELATED",
+									text = "RELATED 🗣",
 									callback_data = "%s/related" % link
 								)
 							]
@@ -917,10 +915,13 @@ def Link(link, chat_id, quality, msg):
 			sendMessage(chat_id, "Sorry :( The bot doesn't support this link %s :(" % link)
 
 		try:
+			image3 = request(image3).content
+
 			for a in range(
 				len(z)
 			):
 				sendAudio(chat_id, z[a], links2[a], image3)
+
 		except NameError:
 			pass
 
@@ -1061,11 +1062,11 @@ def Audio(audio, chat_id):
 				inline_keyboard = [
 					[
 						InlineKeyboardButton(
-							text = "Download",
+							text = "Download ⬇️",
 							callback_data = ids
 						),
 						InlineKeyboardButton(
-							text = "Info",
+							text = "Info ❕",
 							callback_data = album
 						)
 					]
@@ -1128,7 +1129,7 @@ def inline(msg, from_id, query_data, query_id):
 			bot.answerCallbackQuery(
 				query_id,
 				translate(
-					languag[from_id], "Songs are downloading"
+					languag[from_id], "Songs are downloading ⬇️"
 				)
 			)
 
@@ -1209,21 +1210,21 @@ def inline(msg, from_id, query_data, query_id):
 			keyboard = [
 				[
 					InlineKeyboardButton(
-						text = "TOP 30",
+						text = "TOP 30 🔝",
 						callback_data = "%s/top?limit=30" % link
 					),
 					InlineKeyboardButton(
-						text = "ALBUMS",
+						text = "ALBUMS 💽",
 						callback_data = "%s/albums" % link
 					)
 				],
 				[
 					InlineKeyboardButton(
-						text = "RADIO",
+						text = "RADIO 📻",
 						callback_data = "%s/radio" % link
 					),
 					InlineKeyboardButton(
-						text = "RELATED",
+						text = "RELATED 🗣",
 						callback_data = "%s/related" % link
 					)
 				]
@@ -1232,7 +1233,7 @@ def inline(msg, from_id, query_data, query_id):
 			sendPhoto(
 					from_id, url['picture_xl'],
 					caption = (
-						"Artist: %s \nAlbum numbers: %d \nFans on Deezer: %d"
+						"👤 Artist: %s \n💽 Album numbers: %d \n👥 Fans on Deezer: %d"
 						% (
 							url['name'],
 							url['nb_album'],
@@ -1272,7 +1273,7 @@ def inline(msg, from_id, query_data, query_id):
 			bot.answerCallbackQuery(
 				query_id,
 				text = (
-					"Album: %s\nDate: %s\nLabel: %s\nGenre: %s"
+					"💽 Album: %s\n📅 Date: %s\n📀 Label: %s\n🎵 Genre: %s"
 					% (
 						tags[0],
 						tags[1],
@@ -1534,31 +1535,31 @@ def start(msg):
 				inline_keyboard = [
 					[
 						InlineKeyboardButton(
-							text = "Search by artist",
+							text = "Search by artist 👤",
 							switch_inline_query_current_chat = "art: "
 						),
 						InlineKeyboardButton(
-							text = "Search by album",
+							text = "Search by album 💽",
 							switch_inline_query_current_chat = "alb: "
 						)
 					],
 					[
 						InlineKeyboardButton(
-							text = "Search playlist",
+							text = "Search playlist 📂",
 							switch_inline_query_current_chat = "pla: "
 						),
 						InlineKeyboardButton(
-								text = "Search label",
+								text = "Search label 📀",
 								switch_inline_query_current_chat = "lbl: "
 							)
 					],
 					[
 						InlineKeyboardButton(
-							text = "Search track",
+							text = "Search track 🎧",
 							switch_inline_query_current_chat = "trk: "
 						),
 						InlineKeyboardButton(
-							text = "Global search",
+							text = "Global search 📊",
 							switch_inline_query_current_chat = ""
 						)
 					]
@@ -1576,7 +1577,7 @@ def start(msg):
 
 	elif content_type == "text" and msg['text'] == "/quality":
 		sendMessage(
-			chat_id, "Select default download quality\nCURRENTLY: %s" % qualit[chat_id],
+			chat_id, "Select default download quality\nCURRENTLY: %s 🔊" % qualit[chat_id],
 			reply_markup = ReplyKeyboardMarkup(
 				keyboard = [
 					[
@@ -1608,7 +1609,7 @@ def start(msg):
 		qualit[chat_id] = msg['text'].replace("Kbps", "")
 
 		sendMessage(
-			chat_id, "Songs will be downloaded in %s quality" % msg['text'],
+			chat_id, "Songs will be downloaded in %s quality 🔊" % msg['text'],
 			reply_markup = ReplyKeyboardRemove()
 		)
 
@@ -1623,7 +1624,7 @@ def start(msg):
 	elif content_type == "text" and msg['text'] == "/info":
 		sendMessage(
 			chat_id,
-			"Version: %s \nName: @%s \nCreator: @%s \nDonation: %s \nForum: %s \nUsers: %d \nTotal downloads: %d"
+			"🔺 Version: %s \n🔻 Name: @%s \n✒️ Creator: @%s \n💵 Donation: %s \n📣 Forum: %s \n👥 Users: %d \n⬇️ Total downloads: %d"
 			% (
 				version,
 				bot_name,
@@ -1675,31 +1676,31 @@ def start(msg):
 					inline_keyboard = [
 						[
 							InlineKeyboardButton(
-								text = "Search artist",
+								text = "Search artist 👤",
 								switch_inline_query_current_chat = "art: %s" % text
 							),
 							InlineKeyboardButton(
-								text = "Search album",
+								text = "Search album 💽",
 								switch_inline_query_current_chat = "alb: %s" % text
 							)
 						],
 						[
 							InlineKeyboardButton(
-								text = "Search playlist",
+								text = "Search playlist 📂",
 								switch_inline_query_current_chat = "pla: %s" % text
 							),
 							InlineKeyboardButton(
-								text = "Search label",
+								text = "Search label 📀",
 								switch_inline_query_current_chat = "lbl: %s" % text
 							)
 						],
 						[
 							InlineKeyboardButton(
-								text = "Search track",
+								text = "Search track 🎧",
 								switch_inline_query_current_chat = "trk: %s" % text
 							),
 							InlineKeyboardButton(
-								text = "Search global",
+								text = "Search global 📊",
 								switch_inline_query_current_chat = text
 							)
 						]
@@ -1745,6 +1746,8 @@ try:
 					rmtree(loc_dir + a)
 				except NotADirectoryError:
 					os.remove(loc_dir + a)
+				except OSError:
+					pass
 except KeyboardInterrupt:
 	os.rmdir(loc_dir)
 	print("\nSTOPPED")
