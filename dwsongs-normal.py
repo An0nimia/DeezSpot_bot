@@ -54,10 +54,9 @@ date = {}
 languag = {}
 del1 = 0
 del2 = 0
-free = 1
+free = 0
 default_time = 0
 is_audio = 0
-telegram_file_api_limit = 1500000000
 telegram_audio_api_limit = 50000000
 send_image_track_query = "🎧 Track: %s \n👤 Artist: %s \n💽 Album: %s \n📅 Date: %s"
 send_image_album_query = "💽 Album: %s \n👤 Artist: %s \n📅 Date: %s \n🎧 Tracks amount: %d"
@@ -375,14 +374,13 @@ def sendAudio(chat_id, audio, link = None, image = None, youtube = False):
 							quality
 						)
 					)
-			else:
-				sendMessage(chat_id, "The song is too big to be sent :(")
+				else:
+					sendMessage(chat_id, "Sorry the song is too big to be sent. (50 MB)")
 		else:
 			bot.sendAudio(chat_id, audio)
 
 	except telepot.exception.TelegramError:
 		sendMessage(chat_id, "Sorry the track %s doesn't seem readable on Deezer :(" % link)
-
 
 def track(link, chat_id, quality):
 	global spo
@@ -450,12 +448,16 @@ def track(link, chat_id, quality):
 			try:
 				if "spotify" in link:
 					z = dwytsongs.download_trackspo(
-						link, check = False
+						link,
+						recursive_download = True,
+						not_interface = True
 					)
 
 				elif "deezer" in link:
 					z = dwytsongs.download_trackdee(
-						link, check = False
+						link,
+						recursive_download = True,
+						not_interface = True
 					)
 
 				youtube = True
@@ -549,10 +551,10 @@ def Link(link, chat_id, quality, msg):
 				tot = tracks['total_tracks']
 				conn = connect(db_file)
 				c = conn.cursor()
-				count = 0
+				count = [0]
 
-				for a in tracks['tracks']['items']:
-					count += a['duration_ms']
+				def lazy(a):
+					count[0] += a['duration_ms']
 
 					c.execute(
 						where_query.format(a['external_urls']['spotify'], quali)
@@ -567,7 +569,28 @@ def Link(link, chat_id, quality, msg):
 							a['external_urls']['spotify']
 						)
 
-				if (count / 1000) > 40000:
+				for a in tracks['tracks']['items']:
+					lazy(a)
+
+				tracks1 = tracks
+
+				if tot != 50:
+					for a in range(tot // 50):
+						try:
+							tracks1 = spo.next(tracks1['tracks'])
+						except:
+							spo = Spotify(
+								generate_token()
+							)
+
+							tracks1 = spo.next(tracks1['tracks'])
+
+						for a in tracks1['items']:
+							lazy(a)
+
+				conn.close()
+
+				if (count[0] / 1000) > 40000:
 					sendMessage(chat_id, "If you do this again I will come to your home and I will ddos your ass :)")
 					delete(chat_id)
 					return
@@ -584,35 +607,6 @@ def Link(link, chat_id, quality, msg):
 						)
 					)
 				)
-
-				tracks = tracks['tracks']
-
-				if tot != 50:
-					for a in range(tot // 50):
-						try:
-							tracks2 = spo.next(tracks)
-						except:
-							spo = Spotify(
-								generate_token()
-							)
-
-							tracks2 = spo.next(tracks)
-
-						for a in tracks2['items']:
-							c.execute(
-								where_query.format(a['external_urls']['spotify'], quali)
-							)
-
-							links2.append(
-								a['external_urls']['spotify']
-							)
-
-							if c.fetchone():
-								links1.append(
-									a['external_urls']['spotify']
-								)
-
-				conn.close()
 
 				if len(links1) != tot:
 					z = downloa.download_albumspo(
@@ -673,7 +667,7 @@ def Link(link, chat_id, quality, msg):
 					)
 				)
 
-				for a in tracks['tracks']['items']:
+				def lazy(a):
 					try:
 						track(
 							a['track']['external_urls']['spotify'],
@@ -683,35 +677,27 @@ def Link(link, chat_id, quality, msg):
 					except:
 						try:
 							sendMessage(chat_id, "%s Not found :(" % a['track']['name'])
-						except:
+						except KeyError:
 							sendMessage(chat_id, "Error :(")
 
+				for a in tracks['tracks']['items']:
+					lazy(a)
+
 				tot = tracks['tracks']['total']
-				tracks = tracks['tracks']
 
 				if tot != 100:
 					for a in range(tot // 100):
 						try:
-							tracks = spo.next(tracks)
+							tracks = spo.next(tracks['tracks'])
 						except:
 							spo = Spotify(
 								generate_token()
 							)
 
-							tracks = spo.next(tracks)
+							tracks = spo.next(tracks['tracks'])
 
 						for a in tracks['items']:
-							try:
-								track(
-									a['track']['external_urls']['spotify'],
-									chat_id,
-									quality
-								)
-							except:
-								try:
-									sendMessage(chat_id, "%s Not found :(" % a['track']['name'])
-								except KeyError:
-									sendMessage(chat_id, "Error :(")
+							lazy(a)
 
 				done = 1
 
@@ -921,7 +907,6 @@ def Link(link, chat_id, quality, msg):
 				len(z)
 			):
 				sendAudio(chat_id, z[a], links2[a], image3)
-
 		except NameError:
 			pass
 
