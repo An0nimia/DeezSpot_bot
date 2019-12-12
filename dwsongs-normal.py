@@ -54,9 +54,10 @@ date = {}
 languag = {}
 del1 = 0
 del2 = 0
-free = 1
+free = 0
 default_time = 0
 is_audio = 0
+root = 560950095
 telegram_audio_api_limit = 50000000
 send_image_track_query = "🎧 Track: %s \n👤 Artist: %s \n💽 Album: %s \n📅 Date: %s"
 send_image_album_query = "💽 Album: %s \n👤 Artist: %s \n📅 Date: %s \n🎧 Tracks amount: %d"
@@ -188,6 +189,25 @@ def write_db(execution):
 			break
 		except OperationalError:
 			pass
+
+def check_image(image1, ids):
+	if not image1:
+		URL = "https://www.deezer.com/track/%s" % ids
+		body = request(URL).text
+
+		image1 = (
+			BeautifulSoup(body, "html.parser")
+			.find("meta", property = "og:image")
+			.get("content")
+			.replace("500x500", "1000x1000")
+		)
+
+	ima = request(image1).content
+
+	if len(ima) == 13:
+		image1 = "https://e-cdns-images.dzcdn.net/images/cover/1000x1000-000000-80-0-0.jpg"
+	
+	return image1
 
 def sendall(msg):
 	conn = connect(db_file)
@@ -358,14 +378,16 @@ def sendAudio(chat_id, audio, link = None, image = None, youtube = False):
 						)
 					)
 			else:
-				sendMessage(chat_id, "Song too big to be sent :(")
+				sendMessage(chat_id, "Song too be to be sent :(")
 		else:
 			bot.sendAudio(chat_id, audio)
 
 	except telepot.exception.TelegramError:
 		sendMessage(chat_id, "Sorry the track %s doesn't seem readable on Deezer :(" % link)
 
-def track(link, chat_id, quality, mores = None):
+def track(link, chat_id, quality):
+	global spo
+
 	conn = connect(db_file)
 	c = conn.cursor()
 	lin = "track/%s" % link.split("/")[-1]
@@ -385,7 +407,16 @@ def track(link, chat_id, quality, mores = None):
 
 			if "spotify" in link:
 				try:
-					image = mores['album']['images'][2]['url']
+					url = spo.track(link)
+				except:
+					spo = Spotify(
+						generate_token()
+					)
+
+					url = spo.track(link)
+
+				try:
+					image = url['album']['images'][2]['url']
 				except IndexError:
 					image = "https://e-cdns-images.dzcdn.net/images/cover/90x90-000000-80-0-0.jpg"
 
@@ -398,7 +429,16 @@ def track(link, chat_id, quality, mores = None):
 				)
 
 			elif "deezer" in link:
-				image = mores.replace("1000x1000", "90x90")
+				ids = link.split("/")[-1]
+
+				try:
+					url = request(
+						"https://api.deezer.com/track/%s" % ids, chat_id, True
+					).json()['album']['cover_xl']
+				except AttributeError:
+					return
+
+				image = check_image(url, ids).replace("1000x1000", "90x90")
 
 				z = downloa.download_trackdee(
 					link,
@@ -483,7 +523,7 @@ def Link(link, chat_id, quality, msg):
 					)
 				)
 
-				track(link, chat_id, quality, url)
+				track(link, chat_id, quality)
 
 			elif "album/" in link:
 				try:
@@ -506,9 +546,11 @@ def Link(link, chat_id, quality, msg):
 
 				try:
 					image3 = tracks['images'][2]['url']
+					image2 = tracks['images'][1]['url']
 					image1 = tracks['images'][0]['url']
 				except IndexError:
 					image3 = "https://e-cdns-images.dzcdn.net/images/cover/90x90-000000-80-0-0.jpg"
+					image2 = "https://e-cdns-images.dzcdn.net/images/cover/320x320-000000-80-0-0.jpg"
 					image1 = "https://e-cdns-images.dzcdn.net/images/cover/1000x1000-000000-80-0-0.jpg"
 
 				tot = tracks['total_tracks']
@@ -677,23 +719,9 @@ def Link(link, chat_id, quality, msg):
 					delete(chat_id)
 					return
 
-				image1 = url['album']['cover_xl']
-
-				if not image1:
-					URL = "https://www.deezer.com/track/%s" % ids
-					image1 = request(URL).text
-
-					image1 = (
-						BeautifulSoup(image1, "html.parser")
-						.find("meta", property = "og:image")
-						.get("content")
-						.replace("500x500", "1000x1000")
-					)
-
-				ima = request(image1).content
-
-				if len(ima) == 13:
-					image1 = "https://e-cdns-images.dzcdn.net/images/cover/1000x1000-000000-80-0-0.jpg"
+				image1 = check_image(
+					url['album']['cover_xl'], ids
+				)
 
 				sendPhoto(
 					chat_id, image1,
@@ -708,7 +736,7 @@ def Link(link, chat_id, quality, msg):
 					)
 				)
 
-				track(link, chat_id, quality, image1)
+				track(link, chat_id, quality)
 
 			elif "album/" in link:
 				try:
@@ -742,6 +770,7 @@ def Link(link, chat_id, quality, msg):
 				if len(ima) == 13:
 					image1 = "https://e-cdns-images.dzcdn.net/images/cover/1000x1000-000000-80-0-0.jpg"
 
+				image2 = image1.replace("1000x1000", "320x320")
 				image3 = image1.replace("1000x1000", "90x90")
 				conn = connect(db_file)
 				c = conn.cursor()
@@ -784,6 +813,11 @@ def Link(link, chat_id, quality, msg):
 						not_interface = True
 					)
 				else:
+					sendZip(
+						chat_id, link,
+						quality = quality
+					)
+
 					for a in links2:
 						track(a, chat_id, quality)
 
@@ -1469,10 +1503,10 @@ def start(msg):
 
 	content_type, chat_type, chat_id = telepot.glance(msg)
 
-	if free == 0 and chat_id != 560950095:
+	if free == 0 and chat_id != root:
 		return
 
-	if check_flood(chat_id, msg['date']) == "BANNED":
+	if check_flood(chat_id, msg['date']) == "BANNED" and chat_id != root:
 		return
 
 	pprint(msg)
@@ -1598,7 +1632,7 @@ def start(msg):
 			)
 		)
 
-	elif content_type == "text" and chat_id == 560950095 and "the cat is on the table" in msg['text']:
+	elif content_type == "text" and chat_id == root and "the cat is on the table" in msg['text']:
 		what = msg['text'].split("the cat is on the table ")[-1]
 
 		if what == "1":
