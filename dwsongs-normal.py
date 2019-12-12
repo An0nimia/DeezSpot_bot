@@ -127,25 +127,6 @@ def request(url, chat_id = None, control = False):
 
 	return thing
 
-def check_image(image1, ids):
-	if not image1:
-		URL = "https://www.deezer.com/track/%s" % ids
-		image1 = request(URL).text
-
-		image1 = (
-			BeautifulSoup(image1, "html.parser")
-			.find("meta", property = "og:image")
-			.get("content")
-			.replace("500x500", "1000x1000")
-		)
-
-	ima = request(image1).content
-
-	if len(ima) == 13:
-		image1 = "https://e-cdns-images.dzcdn.net/images/cover/1000x1000-000000-80-0-0.jpg"
-
-	return image1
-
 def init_user(chat_id, msg):
 	try:
 		languag[chat_id]
@@ -358,13 +339,15 @@ def sendAudio(chat_id, audio, link = None, image = None, youtube = False):
 					)
 
 				file_id = request.json()['result']['audio']['file_id']
-
+			
 				if not youtube:
 					quality = (
 						audio
 						.split("(")[-1]
 						.split(")")[0]
 					)
+
+					link = "track/%s" % link.split("/")[-1]
 
 					write_db(
 						insert_query
@@ -374,22 +357,22 @@ def sendAudio(chat_id, audio, link = None, image = None, youtube = False):
 							quality
 						)
 					)
-				else:
-					sendMessage(chat_id, "Sorry the song is too big to be sent. (50 MB)")
+			else:
+				sendMessage(chat_id, "Song too big to be sent :(")
 		else:
 			bot.sendAudio(chat_id, audio)
 
 	except telepot.exception.TelegramError:
 		sendMessage(chat_id, "Sorry the track %s doesn't seem readable on Deezer :(" % link)
 
-def track(link, chat_id, quality):
-	global spo
-
+def track(link, chat_id, quality, mores = None):
 	conn = connect(db_file)
 	c = conn.cursor()
+	lin = "track/%s" % link.split("/")[-1]
+	qua = quality.split("MP3_")[-1]
 
 	match = c.execute(
-		where_query.format(link, quality.split("MP3_")[-1])
+		where_query.format(lin, qua)
 	).fetchone()
 
 	conn.close()
@@ -402,16 +385,7 @@ def track(link, chat_id, quality):
 
 			if "spotify" in link:
 				try:
-					url = spo.track(link)
-				except:
-					spo = Spotify(
-						generate_token()
-					)
-
-					url = spo.track(link)
-
-				try:
-					image = url['album']['images'][2]['url']
+					image = mores['album']['images'][2]['url']
 				except IndexError:
 					image = "https://e-cdns-images.dzcdn.net/images/cover/90x90-000000-80-0-0.jpg"
 
@@ -424,16 +398,7 @@ def track(link, chat_id, quality):
 				)
 
 			elif "deezer" in link:
-				ids = link.split("/")[-1]
-
-				try:
-					url = request(
-						"https://api.deezer.com/track/%s" % ids, chat_id, True
-					).json()['album']['cover_xl']
-				except AttributeError:
-					return
-
-				image = check_image(url, ids).replace("1000x1000", "90x90")
+				image = mores.replace("1000x1000", "90x90")
 
 				z = downloa.download_trackdee(
 					link,
@@ -520,7 +485,7 @@ def Link(link, chat_id, quality, msg):
 					)
 				)
 
-				track(link, chat_id, quality)
+				track(link, chat_id, quality, url)
 
 			elif "album/" in link:
 				try:
@@ -551,23 +516,21 @@ def Link(link, chat_id, quality, msg):
 				tot = tracks['total_tracks']
 				conn = connect(db_file)
 				c = conn.cursor()
+				lin = "album/%s" % link.split("/")[-1]
 				count = [0]
 
 				def lazy(a):
 					count[0] += a['duration_ms']
+					lin = "track/%s" % a['external_urls']['spotify'].split("/")[-1]
 
 					c.execute(
-						where_query.format(a['external_urls']['spotify'], quali)
+						where_query.format(lin, quali)
 					)
 
-					links2.append(
-						a['external_urls']['spotify']
-					)
+					links2.append(lin)
 
 					if c.fetchone():
-						links1.append(
-							a['external_urls']['spotify']
-						)
+						links1.append(lin)
 
 				for a in tracks['tracks']['items']:
 					lazy(a)
@@ -716,9 +679,23 @@ def Link(link, chat_id, quality, msg):
 					delete(chat_id)
 					return
 
-				image1 = check_image(
-					url['album']['cover_xl'], ids
-				)
+				image1 = url['album']['cover_xl']
+
+				if not image1:
+					URL = "https://www.deezer.com/track/%s" % ids
+					image1 = request(URL).text
+
+					image1 = (
+						BeautifulSoup(image1, "html.parser")
+						.find("meta", property = "og:image")
+						.get("content")
+						.replace("500x500", "1000x1000")
+					)
+
+				ima = request(image1).content
+
+				if len(ima) == 13:
+					image1 = "https://e-cdns-images.dzcdn.net/images/cover/1000x1000-000000-80-0-0.jpg"
 
 				sendPhoto(
 					chat_id, image1,
@@ -733,7 +710,7 @@ def Link(link, chat_id, quality, msg):
 					)
 				)
 
-				track(link, chat_id, quality)
+				track(link, chat_id, quality, image1)
 
 			elif "album/" in link:
 				try:
@@ -768,19 +745,21 @@ def Link(link, chat_id, quality, msg):
 					image1 = "https://e-cdns-images.dzcdn.net/images/cover/1000x1000-000000-80-0-0.jpg"
 
 				image3 = image1.replace("1000x1000", "90x90")
-
 				conn = connect(db_file)
 				c = conn.cursor()
+				lin = "album/%s" % ids
 
 				for a in url['tracks']['data']:
+					lin = "track/%s" % a['link'].split("/")[-1]
+
 					c.execute(
-						where_query.format(a['link'], quali)
+						where_query.format(lin, quali)
 					)
 
-					links2.append(a['link'])
+					links2.append(lin)
 
 					if c.fetchone():
-						links1.append(a['link'])
+						links1.append(lin)
 
 				conn.close()
 				tot = url['nb_tracks']
