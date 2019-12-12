@@ -309,15 +309,15 @@ def sendAudio(chat_id, audio, link = None, image = None, youtube = False):
 
 			if os.path.getsize(audio) < telegram_audio_api_limit:
 				data = {
-						"chat_id": chat_id,
-						"duration": int(duration),
-						"performer": tag['artist'][0],
-						"title": tag['title'][0]
+					"chat_id": chat_id,
+					"duration": int(duration),
+					"performer": tag['artist'][0],
+					"title": tag['title'][0]
 				}
 
 				file_param = {
-						"audio": open(audio, "rb"),
-						"thumb": image
+					"audio": open(audio, "rb"),
+					"thumb": image
 
 				}
 
