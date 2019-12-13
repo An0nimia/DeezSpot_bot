@@ -687,17 +687,18 @@ def Link(link, chat_id, quality, msg):
 					lazy(a)
 
 				tot = tracks['tracks']['total']
+				tracks = tracks['tracks']
 
 				if tot != 100:
 					for a in range(tot // 100):
 						try:
-							tracks = spo.next(tracks['tracks'])
+							tracks = spo.next(tracks)
 						except:
 							spo = Spotify(
 								generate_token()
 							)
 
-							tracks = spo.next(tracks['tracks'])
+							tracks = spo.next(tracks)
 
 						for a in tracks['items']:
 							lazy(a)
@@ -813,11 +814,6 @@ def Link(link, chat_id, quality, msg):
 						not_interface = True
 					)
 				else:
-					sendZip(
-						chat_id, link,
-						quality = quality
-					)
-
 					for a in links2:
 						track(a, chat_id, quality)
 
