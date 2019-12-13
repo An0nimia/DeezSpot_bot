@@ -27,8 +27,10 @@ from telepot.namedtuple import (
 	InlineKeyboardButton, InlineQueryResultArticle, InputTextMessageContent
 )
 
-config = ConfigParser()
-config.read("setting.ini")
+path = os.getcwd()
+setting = path + "/DeezloaderAn0n_bot/setting.ini"
+config = configparser.ConfigParser()
+config.read(setting)
 
 #Path to Download the Songs
 local = "/media/nas/Deezloader"
