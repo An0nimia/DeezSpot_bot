@@ -30,6 +30,10 @@ from telepot.namedtuple import (
 config = ConfigParser()
 config.read("setting.ini")
 
+#Path to Download the Songs
+local = "/media/nas/Deezloader"
+#songfolder = 'output="/media/nas/Deezloader/Songs/"'
+
 try:
 	deezer_token = config['login']['token']
 	bot_token = config['bot']['token']
@@ -64,8 +68,9 @@ send_image_album_query = "💽 Album: %s \n👤 Artist: %s \n📅 Date: %s \n�
 send_image_playlist_query = "📅 Creation: %s \n👤 User: %s \n🎧 Tracks amount: %d"
 insert_query = "INSERT INTO DWSONGS (id, query, quality) values ('%s', '%s', '%s')"
 where_query = "SELECT query FROM DWSONGS WHERE id = '{}' and quality = '{}'"
-db_file = "dwsongs.db"
-loc_dir = "Songs/"
+
+db_file = local + "/dwsongs.db"
+loc_dir = local + "/Songs/"
 
 config = {
 	"key": acrcloud_key,
@@ -301,89 +306,8 @@ def sendMessage(chat_id, text, reply_markup = None, reply_to_message_id = None):
 def sendPhoto(chat_id, photo, caption = None, reply_markup = None):
 	sleep(default_time)
 
-	try:
-		bot.sendChatAction(chat_id, "upload_photo")
-
-		bot.sendPhoto(
-			chat_id,
-			photo,
-			caption = caption,
-			reply_markup = reply_markup
-		)
-	except:
-		pass
-
 def sendAudio(chat_id, audio, link = None, image = None, youtube = False):
 	sleep(default_time)
-
-	try:
-		bot.sendChatAction(chat_id, "upload_audio")
-
-		if os.path.isfile(audio):
-			try:
-				tag = EasyID3(audio)
-				duration = MP3(audio).info.length
-			except ID3NoHeaderError:
-				tag = FLAC(audio)
-				duration = tag.info.length
-
-			if os.path.getsize(audio) < telegram_audio_api_limit:
-				data = {
-					"chat_id": chat_id,
-					"duration": int(duration),
-					"performer": tag['artist'][0],
-					"title": tag['title'][0]
-				}
-
-				file_param = {
-					"audio": open(audio, "rb"),
-					"thumb": image
-
-				}
-
-				url = "https://api.telegram.org/bot%s/sendAudio" % bot_token
-
-				try:
-					request = post(
-						url,
-						params = data,
-						files = file_param,
-						timeout = 40
-					)
-				except:
-					request = post(
-						url,
-						params = data,
-						files = file_param,
-						timeout = 40
-					)
-
-				file_id = request.json()['result']['audio']['file_id']
-			
-				if not youtube:
-					quality = (
-						audio
-						.split("(")[-1]
-						.split(")")[0]
-					)
-
-					link = "track/%s" % link.split("/")[-1]
-
-					write_db(
-						insert_query
-						% (
-							link,
-							file_id,
-							quality
-						)
-					)
-			else:
-				sendMessage(chat_id, "Song too be to be sent :(")
-		else:
-			bot.sendAudio(chat_id, audio)
-
-	except telepot.exception.TelegramError:
-		sendMessage(chat_id, "Sorry the track %s doesn't seem readable on Deezer :(" % link)
 
 def track(link, chat_id, quality):
 	global spo
@@ -1701,45 +1625,24 @@ def start(msg):
 			)
 
 try:
-	print(
-		"""
-		1): Free
-		2): Strict
-		"""
+	ans = "1"
+	bot.message_loop(
+		{
+			"chat": start,
+			"callback_query": download,
+			"inline_query": search,
+			"chosen_inline_result": nada
+		}
 	)
-
-	ans = input("Choose: ")
-
-	if ans == "1" or ans == "2":
-		bot.message_loop(
-			{
-				"chat": start,
-				"callback_query": download,
-				"inline_query": search,
-				"chosen_inline_result": nada
-			}
-		)
-	else:
-		exit()
 
 	print("Bot started")
 
 	while True:
-		sleep(1)
+		sleep(10)
 		path = os.statvfs("/")
 		free_space = path.f_bavail * path.f_frsize
 
-		if (del1 == del2 and is_audio == 0) or free_space <= 4000000000 or del2 > del1:
-			del1 = 0
-			del2 = 0
-
-			for a in os.listdir(loc_dir):
-				try:
-					rmtree(loc_dir + a)
-				except NotADirectoryError:
-					os.remove(loc_dir + a)
-				except OSError:
-					pass
+		if (del1 == del2 and is_audio == 0) or free_space <= 2000000000:
+			del1, del2 = 0, 0
 except KeyboardInterrupt:
-	os.rmdir(loc_dir)
 	print("\nSTOPPED")
