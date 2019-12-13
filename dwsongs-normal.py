@@ -29,7 +29,7 @@ from telepot.namedtuple import (
 
 path = os.getcwd()
 setting = path + "/DeezloaderAn0n_bot/setting.ini"
-config = configparser.ConfigParser()
+config = ConfigParser()
 config.read(setting)
 
 #Path to Download the Songs
