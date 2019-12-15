@@ -49,9 +49,7 @@ downloa = Login(deezer_token)
 bot = telepot.Bot(bot_token)
 bot_name = bot.getMe()['username']
 users = {}
-qualit = {}
 date = {}
-languag = {}
 del1 = 0
 del2 = 0
 free = 1
@@ -130,22 +128,19 @@ def request(url, chat_id = None, control = False):
 
 def init_user(chat_id, msg):
 	try:
-		languag[chat_id]
-	except KeyError:
-		try:
-			languag[chat_id] = msg['from']['language_code']
-		except KeyError:
-			languag[chat_id] = "en"
-
-	try:
-		qualit[chat_id]
-	except KeyError:
-		qualit[chat_id] = "MP3_320"
-
-	try:
 		users[chat_id]
 	except KeyError:
-		users[chat_id] = 0
+		try:
+			langua = msg['from']['language_code']
+		except KeyError:
+			langua = "en"
+
+		users[chat_id] = {
+			"quality": "MP3_320",
+			"tongue": langua,
+			"c_downloads": 0,
+
+		}
 
 def translate(language, sms):
 	try:
@@ -173,7 +168,7 @@ def delete(chat_id):
 	del2 += 1
 
 	if ans == "2":
-		users[chat_id] -= 1
+		users[chat_id]['c_downloads'] -= 1
 
 def write_db(execution):
 	conn = connect(db_file)
@@ -290,7 +285,7 @@ def sendMessage(chat_id, text, reply_markup = None, reply_to_message_id = None):
 		bot.sendMessage(
 			chat_id,
 			translate(
-				languag[chat_id], text
+				users[chat_id]['tongue'], text
 			),
 			reply_markup = reply_markup,
 			reply_to_message_id = reply_to_message_id
@@ -559,6 +554,19 @@ def Link(link, chat_id, quality, msg):
 				lin = "album/%s" % link.split("/")[-1]
 				count = [0]
 
+				sendPhoto(
+					chat_id, image1,
+					caption = (
+						send_image_album_query
+						% (
+							tracks['name'],
+							tracks['artists'][0]['name'],
+							tracks['release_date'],
+							tot
+						)
+					)
+				)
+
 				def lazy(a):
 					count[0] += a['duration_ms']
 					lin = "track/%s" % a['external_urls']['spotify'].split("/")[-1]
@@ -575,20 +583,20 @@ def Link(link, chat_id, quality, msg):
 				for a in tracks['tracks']['items']:
 					lazy(a)
 
-				tracks1 = tracks
+				tracks = tracks['tracks']
 
 				if tot != 50:
 					for a in range(tot // 50):
 						try:
-							tracks1 = spo.next(tracks1['tracks'])
+							tracks = spo.next(tracks)
 						except:
 							spo = Spotify(
 								generate_token()
 							)
 
-							tracks1 = spo.next(tracks1['tracks'])
+							tracks = spo.next(tracks)
 
-						for a in tracks1['items']:
+						for a in tracks['items']:
 							lazy(a)
 
 				conn.close()
@@ -597,19 +605,6 @@ def Link(link, chat_id, quality, msg):
 					sendMessage(chat_id, "If you do this again I will come to your home and I will ddos your ass :)")
 					delete(chat_id)
 					return
-
-				sendPhoto(
-					chat_id, image1,
-					caption = (
-						send_image_album_query
-						% (
-							tracks['name'],
-							tracks['artists'][0]['name'],
-							tracks['release_date'],
-							tot
-						)
-					)
-				)
 
 				if len(links1) != tot:
 					z = downloa.download_albumspo(
@@ -1082,7 +1077,6 @@ def inline(msg, from_id, query_data, query_id):
 		except AttributeError:
 			return
 
-
 		if "album" in query_data:
 			keyboard += [
 				[
@@ -1104,11 +1098,11 @@ def inline(msg, from_id, query_data, query_id):
 
 		elif "down" in query_data:
 			if ans == "2":
-				if users[from_id] == 3:
+				if users[from_id]['c_downloads'] == 3:
 					bot.answerCallbackQuery(
 						query_id,
 						translate(
-							languag[from_id],
+							users[from_id]['tongue'],
 							"Wait the end and repeat the step, did you think you could download how much songs you wanted? ;)"
 						),
 						show_alert = True
@@ -1116,12 +1110,12 @@ def inline(msg, from_id, query_data, query_id):
 
 					return
 				else:
-					users[from_id] += 1
+					users[from_id]['c_downloads'] += 1
 
 			bot.answerCallbackQuery(
 				query_id,
 				translate(
-					languag[from_id], "Songs are downloading ⬇️"
+					users[from_id]['tongue'], "Songs are downloading ⬇️"
 				)
 			)
 
@@ -1129,15 +1123,15 @@ def inline(msg, from_id, query_data, query_id):
 				Link(
 					"https://www.deezer.com/track/%d" % a['id'],
 					from_id,
-					qualit[from_id],
+					users[from_id]['quality'],
 					msg['message']
 				)
 
 				if ans == "2":
-					users[from_id] += 1
+					users[from_id]['c_downloads'] += 1
 
 			if ans == "2":
-				users[from_id] -= 1
+				users[from_id]['c_downloads'] -= 1
 
 		elif "radio" in query_data or "top" in query_data:
 			if "radio" in query_data:
@@ -1221,32 +1215,32 @@ def inline(msg, from_id, query_data, query_id):
 					)
 				]
 			]
-			
+
 			sendPhoto(
-					from_id, url['picture_xl'],
-					caption = (
-						"👤 Artist: %s \n💽 Album numbers: %d \n👥 Fans on Deezer: %d"
-						% (
-							url['name'],
-							url['nb_album'],
-							url['nb_fan']
-						)
-					),
-					reply_markup = InlineKeyboardMarkup(
-						inline_keyboard = keyboard
+				from_id, url['picture_xl'],
+				caption = (
+					"👤 Artist: %s \n💽 Album numbers: %d \n👥 Fans on Deezer: %d"
+					% (
+						url['name'],
+						url['nb_album'],
+						url['nb_fan']
 					)
+				),
+				reply_markup = InlineKeyboardMarkup(
+					inline_keyboard = keyboard
 				)
+			)
 
 		try:
 			bot.editMessageReplyMarkup(
+				(
 					(
-						(
-							from_id, message_id
-						)
-					),
-					reply_markup = InlineKeyboardMarkup(
-						inline_keyboard = keyboard
+						from_id, message_id
 					)
+				),
+				reply_markup = InlineKeyboardMarkup(
+					inline_keyboard = keyboard
+				)
 			)
 		except telepot.exception.TelegramError:
 			pass
@@ -1257,7 +1251,7 @@ def inline(msg, from_id, query_data, query_id):
 			bot.answerCallbackQuery(
 				query_id,
 				translate(
-					languag[from_id], query_data
+					users[from_id]['tongue'], query_data
 				)
 			)
 
@@ -1278,34 +1272,33 @@ def inline(msg, from_id, query_data, query_id):
 
 		else:
 			if ans == "2":
-				if users[from_id] == 3:
+				if users[from_id]['c_downloads'] == 3:
 					bot.answerCallbackQuery(
 						query_id,
 						translate(
-							languag[from_id], "Wait the end and repeat the step, did you think you could download how much songs you wanted? ;)"
+							users[from_id]['tongue'], "Wait the end and repeat the step, did you think you could download how much songs you wanted? ;)"
 						),
 						show_alert = True
 					)
 
 					return
 				else:
-					users[from_id] += 1
+					users[from_id]['c_downloads'] += 1
 
 			bot.answerCallbackQuery(
 				query_id,
 				translate(
-					languag[from_id], "Song is downloading"
+					users[from_id]['tongue'], "Song is downloading"
 				)
 			)
 
 			Link(
 				query_data, from_id,
-				qualit[from_id], msg['message']
+				users[from_id]['quality'], msg['message']
 			)
 
 def download(msg):
 	query_id, from_id, query_data = telepot.glance(msg, flavor = "callback_query")
-
 	init_user(from_id, msg)
 
 	Thread(
@@ -1512,8 +1505,8 @@ def start(msg):
 	if content_type == "text" and msg['text'] == "/start":
 		try:
 			sendPhoto(
-					chat_id, open("example.jpg", "rb"),
-					caption = "Welcome to @%s \nPress '/' to get commands list" % bot_name
+				chat_id, open("example.jpg", "rb"),
+				caption = "Welcome to @%s \nPress '/' to get commands list" % bot_name
 			)
 		except FileNotFoundError:
 			pass
@@ -1560,16 +1553,16 @@ def start(msg):
 		)
 
 	elif content_type == "text" and msg['text'] == "/translator":
-		if languag[chat_id] != "en":
-			languag[chat_id] = "en"
+		if users[chat_id]['tongue'] != "en":
+			users[chat_id]['tongue'] = "en"
 			sendMessage(chat_id, "Now the language is english")
 		else:
-			languag[chat_id] = msg['from']['language_code']
+			users[chat_id]['tongue'] = msg['from']['language_code']
 			sendMessage(chat_id, "Now the bot will use the Telegram app language")
 
 	elif content_type == "text" and msg['text'] == "/quality":
 		sendMessage(
-			chat_id, "Select default download quality\nCURRENTLY: %s 🔊" % qualit[chat_id],
+			chat_id, "Select default download quality\nCURRENTLY: %s 🔊" % users[chat_id]['quality'],
 			reply_markup = ReplyKeyboardMarkup(
 				keyboard = [
 					[
@@ -1598,7 +1591,7 @@ def start(msg):
 		msg['text'] == "MP3_256Kbps" or 
 		msg['text'] == "MP3_128Kbps"
 	):
-		qualit[chat_id] = msg['text'].replace("Kbps", "")
+		users[chat_id]['quality'] = msg['text'].replace("Kbps", "")
 
 		sendMessage(
 			chat_id, "Songs will be downloaded in %s quality 🔊" % msg['text'],
@@ -1649,17 +1642,17 @@ def start(msg):
 		try:
 			msg['entities']
 
-			if ans == "2" and users[chat_id] == 3:
+			if ans == "2" and users[chat_id]['c_downloads'] == 3:
 				sendMessage(chat_id, "Wait the end and repeat the step, did you think you could download how much songs you wanted? ;)")
 			else:
 				if ans == "2":
-					users[chat_id] += 1
+					users[chat_id]['c_downloads'] += 1
 
 				Thread(
 					target = Link,
 					args = (
 						text, chat_id,
-						qualit[chat_id], msg
+						users[chat_id]['quality'], msg
 					)
 				).start()
 		except KeyError:
