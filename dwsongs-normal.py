@@ -675,7 +675,7 @@ def Link(link, chat_id, quality, msg):
 					except:
 						try:
 							sendMessage(chat_id, "%s Not found :(" % a['track']['name'])
-						except KeyError:
+						except:
 							sendMessage(chat_id, "Error :(")
 
 				for a in tracks['tracks']['items']:
