@@ -34,7 +34,7 @@ config = ConfigParser()
 config.read(setting)
 
 #Path to Download the Songs
-local = "/media/nas/Deezloader"
+local = "/media/pimedia/Deezloader"
 
 try:
 	deezer_token = config['login']['token']
