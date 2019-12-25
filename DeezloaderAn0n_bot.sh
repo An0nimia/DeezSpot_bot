@@ -1,31 +1,30 @@
 #!/bin/sh
-
-path=`dirname "$0"`
-deezbot="${path}/dwsongs-normal.py"
+#Path to DeezloaerBot
+path="./dwsongs-normal.py"
 
 case "$1" in
   start)
-    if [ "$(ps aux | grep -c dwsongs-normal.py)" -gt 1 ] 
+    echo "start"
+    if pgrep dwsongs-normal.py > /dev/null
 	then
         echo "DeezloaderAn0n_bot is already running!"
         exit 1
     else
-	echo "DeezloaderAn0n_bot started!"
-	$deezbot
+	$path
+	echo "else"
     fi
 
     ;;
 
   stop)
-    if [ "$(ps aux | grep -c dwsongs-normal.py)" -gt 1 ]
+    if pgrep dwsongs-normal.py > /dev/null
 	then
-	pkill -f dwsongs-normal.py
-	echo "DeezloaderAn0n_bot stopped!"
+		pkill -f dwsongs-normal.py
     else
-	echo "DeezloaderAn0n_bot is not running!"
-    	exit 1
-
-    fi
+	    echo "DeezloaderAn0n_bot is not running!"
+        exit 1
+		
+	fi
 
     ;;
 
