@@ -264,7 +264,7 @@ def check_flood(chat_id, time_now = 0):
 
 				sendMessage(
 					chat_id,
-					"It is appearing you are trying to flood, you have to wait more that four second to send another message.\n%d possibilites :)" % date[chat_id]['tries']
+					"It is appearing you are trying to flood, you have to wait more than four second to send another message.\n%d possibilites :)" % date[chat_id]['tries']
 				)
 
 				if date[chat_id]['tries'] == 0:
@@ -585,19 +585,18 @@ def Link(link, chat_id, quality, msg):
 
 				tracks = tracks['tracks']
 
-				if tot != 50:
-					for a in range(tot // 50):
-						try:
-							tracks = spo.next(tracks)
-						except:
-							spo = Spotify(
-								generate_token()
-							)
+				for a in range(tot // 50 - 1):
+					try:
+						tracks = spo.next(tracks)
+					except:
+						spo = Spotify(
+							generate_token()
+						)
 
-							tracks = spo.next(tracks)
+						tracks = spo.next(tracks)
 
-						for a in tracks['items']:
-							lazy(a)
+					for a in tracks['items']:
+						lazy(a)
 
 				conn.close()
 
@@ -684,19 +683,18 @@ def Link(link, chat_id, quality, msg):
 				tot = tracks['tracks']['total']
 				tracks = tracks['tracks']
 
-				if tot != 100:
-					for a in range(tot // 100):
-						try:
-							tracks = spo.next(tracks)
-						except:
-							spo = Spotify(
-								generate_token()
-							)
+				for a in range(tot // 100 - 1):
+					try:
+						tracks = spo.next(tracks)
+					except:
+						spo = Spotify(
+							generate_token()
+						)
 
-							tracks = spo.next(tracks)
+						tracks = spo.next(tracks)
 
-						for a in tracks['items']:
-							lazy(a)
+					for a in tracks['items']:
+						lazy(a)
 
 				done = 1
 
