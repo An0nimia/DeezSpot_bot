@@ -27,7 +27,6 @@ from telepot.namedtuple import (
 	InlineKeyboardButton, InlineQueryResultArticle, InputTextMessageContent
 )
 
-
 path = os.getcwd()
 setting = path + "/DeezloaderAn0n_bot/setting.ini"
 config = ConfigParser()
