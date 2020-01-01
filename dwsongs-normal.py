@@ -27,8 +27,14 @@ from telepot.namedtuple import (
 	InlineKeyboardButton, InlineQueryResultArticle, InputTextMessageContent
 )
 
+path = os.getcwd()
+setting = path + "/DeezloaderAn0n_bot/setting.ini"
 config = ConfigParser()
-config.read("setting.ini")
+config.read(setting)
+
+#Path to Download the Songs
+local = "/media/pimedia/Deezloader/"
+
 
 try:
 	deezer_token = config['login']['token']
@@ -62,8 +68,8 @@ send_image_album_query = "💽 Album: %s \n👤 Artist: %s \n📅 Date: %s \n�
 send_image_playlist_query = "📅 Creation: %s \n👤 User: %s \n🎧 Tracks amount: %d"
 insert_query = "INSERT INTO DWSONGS (id, query, quality) values ('%s', '%s', '%s')"
 where_query = "SELECT query FROM DWSONGS WHERE id = '{}' and quality = '{}'"
-db_file = "dwsongs.db"
-loc_dir = "Songs/"
+db_file = local + "dwsongs.db"
+loc_dir = local + "Songs/"
 
 config = {
 	"key": acrcloud_key,
@@ -74,7 +80,7 @@ config = {
 acrcloud = ACRcloud(config)
 
 logging.basicConfig(
-	filename = "dwsongs.log",
+	filename = local + "dwsongs.log",
 	level = logging.WARNING,
 	format = "%(asctime)s %(levelname)s %(name)s %(message)s"
 )
