@@ -70,7 +70,7 @@ insert_query = "INSERT INTO DWSONGS (id, query, quality) values ('%s', '%s', '%s
 where_query = "SELECT query FROM DWSONGS WHERE id = '{}' and quality = '{}'"
 db_file = local + "dwsongs.db"
 loc_dir = local + "Songs/"
-print loc_dir
+print (loc_dir)
 
 config = {
 	"key": acrcloud_key,
