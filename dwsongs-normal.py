@@ -316,7 +316,7 @@ def sendPhoto(chat_id, photo, caption = None, reply_markup = None):
 def sendAudio(chat_id, audio, link = None, image = None, youtube = False):
 	sleep(default_time)
 
-    try:
+	try:
 		bot.sendChatAction(chat_id, "upload_audio")
 
 		if os.path.isfile(audio):
