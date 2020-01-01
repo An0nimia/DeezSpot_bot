@@ -32,6 +32,9 @@ setting = path + "/DeezloaderAn0n_bot/setting.ini"
 config = ConfigParser()
 config.read(setting)
 
+print(path)
+print(setting)
+
 #Path to Download the Songs
 local = "/media/pimedia/Deezloader/"
 
