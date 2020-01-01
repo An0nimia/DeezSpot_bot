@@ -301,10 +301,89 @@ def sendMessage(chat_id, text, reply_markup = None, reply_to_message_id = None):
 def sendPhoto(chat_id, photo, caption = None, reply_markup = None):
 	sleep(default_time)
 
-    
+	try:
+		bot.sendChatAction(chat_id, "upload_photo")
+
+		bot.sendPhoto(
+			chat_id,
+			photo,
+			caption = caption,
+			reply_markup = reply_markup
+		)
+	except:
+		pass
+
 def sendAudio(chat_id, audio, link = None, image = None, youtube = False):
 	sleep(default_time)
 
+    	try:
+		bot.sendChatAction(chat_id, "upload_audio")
+
+		if os.path.isfile(audio):
+			try:
+				tag = EasyID3(audio)
+				duration = MP3(audio).info.length
+			except ID3NoHeaderError:
+				tag = FLAC(audio)
+				duration = tag.info.length
+
+			if os.path.getsize(audio) < telegram_audio_api_limit:
+				data = {
+					"chat_id": chat_id,
+					"duration": int(duration),
+					"performer": tag['artist'][0],
+					"title": tag['title'][0]
+				}
+
+				file_param = {
+					"audio": open(audio, "rb"),
+					"thumb": image
+
+				}
+
+				url = "https://api.telegram.org/bot%s/sendAudio" % bot_token
+
+				try:
+					request = post(
+						url,
+						params = data,
+						files = file_param,
+						timeout = 40
+					)
+				except:
+					request = post(
+						url,
+						params = data,
+						files = file_param,
+						timeout = 40
+					)
+
+				file_id = request.json()['result']['audio']['file_id']
+			
+				if not youtube:
+					quality = (
+						audio
+						.split("(")[-1]
+						.split(")")[0]
+					)
+
+					link = "track/%s" % link.split("/")[-1]
+
+					write_db(
+						insert_query
+						% (
+							link,
+							file_id,
+							quality
+						)
+					)
+			else:
+				sendMessage(chat_id, "Song too be to be sent :(")
+		else:
+			bot.sendAudio(chat_id, audio)
+
+	except telepot.exception.TelegramError:
+		sendMessage(chat_id, "Sorry the track %s doesn't seem readable on Deezer :(" % link)
 
 def track(link, chat_id, quality):
 	global spo
