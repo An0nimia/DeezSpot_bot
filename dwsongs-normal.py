@@ -19,7 +19,6 @@ from configparser import ConfigParser
 from deezloader import Login, exceptions
 from sqlite3 import connect, OperationalError
 from mutagen.id3._util import ID3NoHeaderError
-from pyrogram.errors.exceptions.bad_request_400 import FilePartMissing
 
 from telegram.ext import (
 	CommandHandler, Updater, Filters,
