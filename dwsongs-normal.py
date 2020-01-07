@@ -308,7 +308,7 @@ def sendMessage(chat_id, text, reply_markup = None, reply_to_message_id = None):
 			reply_markup = reply_markup,
 			reply_to_message_id = reply_to_message_id
 		)
-	except (error.Unauthorized, error.TimedOut):
+	except (error.Unauthorized, error.TimedOut, error.BadRequest):
 		pass
 
 def sendPhoto(chat_id, photo, caption = None, reply_markup = None):
