@@ -27,7 +27,7 @@ from telegram.ext import (
 
 from telegram import (
 	Bot, ReplyKeyboardMarkup, KeyboardButton, error,
-	ReplyKeyboardRemove, InlineKeyboardMarkup, TelegramError,
+	ReplyKeyboardRemove, InlineKeyboardMarkup, TelegramError, InputMediaPhoto,
 	InlineKeyboardButton, InlineQueryResultArticle, InputTextMessageContent
 )
 
@@ -898,7 +898,7 @@ def Link(link, chat_id, quality, message_id):
 			for a in range(
 				len(z)
 			):
-				sendAudio(chat_id, z[a], links[a], image3)
+				sendAudio(chat_id, z[a], links2[a], image3)
 		except NameError:
 			pass
 
@@ -1177,8 +1177,6 @@ def inline(message_id, chat_id, query_data, query_id):
 				)
 
 			else:
-				bot.deleteMessage(chat_id, message_id)
-
 				keyboard = [
 					[
 						InlineKeyboardButton(
@@ -1202,18 +1200,21 @@ def inline(message_id, chat_id, query_data, query_id):
 					]
 				]
 
-				sendPhoto(
-					chat_id, url['picture_xl'],
-					caption = (
-						"👤 Artist: %s \n💽 Album numbers: %d \n👥 Fans on Deezer: %d"
-						% (
-							url['name'],
-							url['nb_album'],
-							url['nb_fan']
+				bot.edit_message_media(
+					chat_id, message_id,
+					media = InputMediaPhoto(
+						url['picture_xl'],
+						caption = (
+							"👤 Artist: %s \n💽 Album numbers: %d \n👥 Fans on Deezer: %d"
+							% (
+								url['name'],
+								url['nb_album'],
+								url['nb_fan']
+							)
 						)
-					),
-					reply_markup = InlineKeyboardMarkup(keyboard)
+					)
 				)
+
 			try:
 				bot.editMessageReplyMarkup(
 					chat_id, message_id,
