@@ -80,7 +80,7 @@ acrcloud = ACRcloud(config)
 
 logging.basicConfig(
 	filename = "dwsongs.log",
-	level = logging.WARNING,
+	level = logging.WARN,
 	format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
@@ -89,7 +89,7 @@ if not os.path.isdir(loc_dir):
 
 conn = connect(db_file)
 c = conn.cursor()
-c.execute("CREATE TABLE IF NOT EXISTS DWSONGS (id text, query text, quality text, PRIMARY KEY (id, query, quality))")
+c.execute("CREATE TABLE IF NOT EXISTS DWSONGS (id text, query text, quality text, PRIMARY KEY (id, quality))")
 c.execute("CREATE TABLE IF NOT EXISTS BANNED (banned int, PRIMARY KEY (banned))")
 c.execute("CREATE TABLE IF NOT EXISTS CHAT_ID (chat_id int, PRIMARY KEY (chat_id))")
 conn.commit()
@@ -910,9 +910,9 @@ def Link(link, chat_id, quality, message_id):
 		sendMessage(chat_id, "Try to search it throught inline mode or search the link on Deezer")
 
 	except Exception as a:
-		logging.warning(a)
-		logging.warning(quality)
-		logging.warning(link)
+		logging.warn(a)
+		logging.warn(quality)
+		logging.warn(link)
 
 		sendMessage(
 			chat_id, "OPS :( Something went wrong please send to @An0nimia this link: {} {}, if this happens again".format(link, quality)
