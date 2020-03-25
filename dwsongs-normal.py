@@ -5,7 +5,6 @@ import logging
 import dwytsongs
 from time import sleep
 from shutil import rmtree
-from pprint import pprint
 from spotipy import Spotify
 from mutagen.mp3 import MP3
 from threading import Thread
@@ -17,8 +16,8 @@ import spotipy.oauth2 as oauth2
 from mutagen.easyid3 import EasyID3
 from configparser import ConfigParser
 from deezloader import Login, exceptions
-from sqlite3 import connect, OperationalError
 from mutagen.id3._util import ID3NoHeaderError
+from sqlite3 import connect, OperationalError, IntegrityError
 
 from telegram.ext import (
 	CommandHandler, Updater, Filters,
@@ -90,14 +89,11 @@ if not os.path.isdir(loc_dir):
 
 conn = connect(db_file)
 c = conn.cursor()
-
-try:
-	c.execute("CREATE TABLE DWSONGS (id text, query text, quality text)")
-	c.execute("CREATE TABLE BANNED (banned int)")
-	c.execute("CREATE TABLE CHAT_ID (chat_id int)")
-	conn.commit()
-except OperationalError:
-	pass
+c.execute("CREATE TABLE IF NOT EXISTS DWSONGS (id text, query text, quality text, PRIMARY KEY (id, query, quality))")
+c.execute("CREATE TABLE IF NOT EXISTS BANNED (banned int, PRIMARY KEY (banned))")
+c.execute("CREATE TABLE IF NOT EXISTS CHAT_ID (chat_id int, PRIMARY KEY (chat_id))")
+conn.commit()
+conn.close()
 
 def generate_token():
 	return oauth2.SpotifyClientCredentials(
@@ -183,8 +179,12 @@ def write_db(execution):
 			conn.commit()
 			conn.close()
 			break
+
 		except OperationalError:
 			pass
+
+		except IntegrityError:
+			break
 
 def check_image(image1, ids):
 	if not image1:
@@ -533,11 +533,9 @@ def Link(link, chat_id, quality, message_id):
 
 				try:
 					image3 = tracks['images'][2]['url']
-					image2 = tracks['images'][1]['url']
 					image1 = tracks['images'][0]['url']
 				except IndexError:
 					image3 = "https://e-cdns-images.dzcdn.net/images/cover/90x90-000000-80-0-0.jpg"
-					image2 = "https://e-cdns-images.dzcdn.net/images/cover/320x320-000000-80-0-0.jpg"
 					image1 = "https://e-cdns-images.dzcdn.net/images/cover/1000x1000-000000-80-0-0.jpg"
 
 				tot = tracks['total_tracks']
@@ -756,7 +754,6 @@ def Link(link, chat_id, quality, message_id):
 				if len(ima) == 13:
 					image1 = "https://e-cdns-images.dzcdn.net/images/cover/1000x1000-000000-80-0-0.jpg"
 
-				image2 = image1.replace("1000x1000", "320x320")
 				image3 = image1.replace("1000x1000", "90x90")
 				conn = connect(db_file)
 				c = conn.cursor()
@@ -1021,19 +1018,18 @@ def Audio(audio, chat_id):
 
 			image = url['album']['images'][0]['url']
 		except KeyError:
-			pass
-
-		try:
-			ids = "https://api.deezer.com/track/%s" % infos['external_metadata']['deezer']['track']['id']
-
 			try:
-				url = request(ids, chat_id, True).json()
-			except AttributeError:
-				return
+				ids = "https://api.deezer.com/track/%s" % infos['external_metadata']['deezer']['track']['id']
 
-			image = url['album']['cover_xl']
-		except KeyError:
-			pass
+				try:
+					url = request(ids, chat_id, True).json()
+				except AttributeError:
+					return
+
+				image = url['album']['cover_xl']
+			except KeyError:
+				sendMessage(chat_id, "Sorry I can't Shazam the track :(")
+				return
 
 	keyboard = [
 		[
@@ -1471,6 +1467,7 @@ def menu(update, context):
 	text = infos_message.text
 	message_id = infos_message.message_id
 	is_audio = infos_message.audio
+	is_voice = infos_message.voice
 	things = infos_message.entities
 	infos_user = update.effective_user
 	tongue = infos_user.language_code
@@ -1563,10 +1560,15 @@ def menu(update, context):
 
 		sendMessage(chat_id, "Songs which cannot be downloaded in quality you have chosen will be downloaded in the best quality possible")
 
-	elif is_audio:
+	elif is_audio or is_voice:
+		if is_audio:
+			file_id = is_audio['file_id']
+		else:
+			file_id = is_voice['file_id']
+
 		Thread(
 			target = Audio,
-			args = (is_audio['file_id'], chat_id)
+			args = (file_id, chat_id)
 		).start()
 
 	elif text == "/info":
@@ -1680,7 +1682,7 @@ try:
 		)
 
 		sets.dispatcher.add_handler(
-			MessageHandler(Filters.audio | Filters.text, menu)
+			MessageHandler(Filters.audio | Filters.text | Filters.voice, menu)
 		)
 
 		sets.dispatcher.add_handler(
@@ -1693,7 +1695,7 @@ try:
 
 		sets.start_polling()
 	else:
-		exit()
+		raise KeyboardInterrupt
 
 	print("Bot started")
 
@@ -1716,3 +1718,4 @@ try:
 except KeyboardInterrupt:
 	os.rmdir(loc_dir)
 	print("\nSTOPPED")
+	exit()
