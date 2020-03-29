@@ -542,7 +542,7 @@ def Link(link, chat_id, quality, message_id):
 				a in link
 				for a in services_supported
 			):
-				if count[0] > 40000:
+				if count[0] > seconds_limits_album:
 					sendMessage(chat_id, "If you do this again I will come to your home and I will ddos your ass :)")
 					delete(chat_id)
 					return
@@ -680,7 +680,7 @@ def Link(link, chat_id, quality, message_id):
 				for a in services_supported
 			):
 
-				if tot > 400:
+				if tot > max_songs:
 					sendMessage(chat_id, "Fuck you")
 					delete(chat_id)
 					return
@@ -769,6 +769,12 @@ def Link(link, chat_id, quality, message_id):
 
 		else:
 			sendMessage(chat_id, not_supported_links % link)
+
+	except FileNotFoundError:
+		sendMessage(
+			chat_id, "Resend link please...",
+			reply_to_message_id = message_id
+		)
 
 	except error.TimedOut:
 		sendMessage(chat_id, "Retry after a few minutes")
