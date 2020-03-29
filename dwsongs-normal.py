@@ -58,7 +58,7 @@ users = {}
 date = {}
 del1 = 0
 del2 = 0
-free = 0
+free = 1
 is_audio = 0
 initialize()
 
