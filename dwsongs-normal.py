@@ -58,7 +58,7 @@ users = {}
 date = {}
 del1 = 0
 del2 = 0
-free = 1
+free = 0
 is_audio = 0
 initialize()
 
@@ -139,9 +139,7 @@ def init_user(chat_id, tongue):
 		users[chat_id] = {
 			"quality": "MP3_320",
 			"tongue": tongue,
-			"c_downloads": 0,
-			"tracks": True,
-			"zips": True
+			"c_downloads": 0
 		}
 
 def delete(chat_id):
