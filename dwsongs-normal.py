@@ -1529,7 +1529,7 @@ def menu(update, context):
 	elif text == "/shazam":
 		sendMessage(chat_id, "Send the audio or voice message to identify the song")
 
-	elif text == "/help_me":
+	elif text == "/helpa":
 		sendMessage(chat_id, help_message)
 
 	elif is_audio or is_voice:
