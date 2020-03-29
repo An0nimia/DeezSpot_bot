@@ -1430,11 +1430,6 @@ def menu(update, context):
 	things = infos_message.entities
 	infos_user = update.effective_user
 
-	try:
-		tongue = infos_user.language_code
-	except AttributeError:
-		tongue = "en"
-
 	if (
 		check_flood(chat_id, date) == "BANNED" and not chat_id in roots or 
 		free == 0 and not chat_id in roots
@@ -1444,18 +1439,20 @@ def menu(update, context):
 	if not text:
 		text = caption
 
-		if not text:
-			text = ""
-
 	if not view_db(user_exist % chat_id):
 		statisc(chat_id, "USERS")
 
-		sendMessage(
+		bot.sendMessage(
 			chat_id, help_message,
 			reply_markup = InlineKeyboardMarkup(first_time_keyboard)
 		)
 
 		return
+
+	try:
+		tongue = infos_user.language_code
+	except AttributeError:
+		tongue = "en"
 
 	init_user(chat_id, tongue)
 
@@ -1529,8 +1526,8 @@ def menu(update, context):
 	elif text == "/shazam":
 		sendMessage(chat_id, "Send the audio or voice message to identify the song")
 
-	elif text == "/helpa":
-		sendMessage(chat_id, help_message)
+	elif text == "/help":
+		bot.sendMessage(chat_id, help_message)
 
 	elif is_audio or is_voice:
 		if is_audio:
