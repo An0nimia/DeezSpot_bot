@@ -3,8 +3,7 @@
 from telegram import InlineKeyboardButton
 
 not_interface = False
-default_time = 0.8
-channel = -1001311929366
+default_time = 0.0
 roots = [560950095]
 limit = 2000000000
 seconds_limits_album = 40000
@@ -23,7 +22,7 @@ api_type2 = "https://api.deezer.com/search/?q={}:\"{}\""
 song_default_image = "https://e-cdns-images.dzcdn.net/images/cover/1000x1000-000000-80-0-0.jpg"
 services_supported = ["spotify", "deezer"]
 comandss = ["start", "settings", "info", "shazam", "help"]
-settingss = ["zips", "tracks", "quality", "tongue"]
+settingss = ["quality", "tongue"]
 qualities = ["FLAC", "MP3_320", "MP3_256", "MP3_128"]
 send_image_track_query = "🎧 Track: %s \n👤 Artist: %s \n💽 Album: %s \n📅 Date: %s"
 send_image_album_query = "💽 Album: %s \n👤 Artist: %s \n📅 Date: %s \n🎧 Tracks amount: %d"
