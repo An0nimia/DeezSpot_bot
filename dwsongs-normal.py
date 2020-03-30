@@ -115,7 +115,11 @@ def authorized(chat_id, date = 0):
 	ok = True
 
 	if (
-		check_flood(chat_id, date) == "BANNED" or free == 0 and not chat_id in roots
+		(
+			(
+				check_flood(chat_id, date) == "BANNED"
+			) or free == 0
+		) and not chat_id in roots
 	):
 		ok = False
 
