@@ -30,7 +30,7 @@ from telegram.ext import (
 from telegram import (
 	Bot, ReplyKeyboardMarkup, error, ReplyKeyboardRemove,
 	InlineKeyboardMarkup, TelegramError, InputMediaPhoto,
-	InlineKeyboardButton, InlineQueryResultArticle, InputTextMessageContent
+	InlineQueryResultArticle, InputTextMessageContent
 )
 
 config = ConfigParser()
@@ -53,7 +53,6 @@ except KeyError:
 downloa = Login(deezer_token)
 sets = Updater(bot_token, use_context = True)
 bot = Bot(bot_token)
-bot_name = bot.getMe()['username']
 users = {}
 date = {}
 del1 = 0
@@ -79,38 +78,6 @@ logging.basicConfig(
 spo = Spotify(
 	generate_token()
 )
-
-end_keyboard = [
-	[
-		InlineKeyboardButton(
-			"SHARE", share_message % bot_name
-		)
-	]
-]
-
-qualities_keyboard = [
-	[
-		InlineKeyboardButton(
-			qualities[a],
-			callback_data = qualities[a]
-		),
-		InlineKeyboardButton(
-			qualities[a + 1],
-			callback_data = qualities[a + 1]
-		)
-	] for a in range(
-		0, len(qualities), 2
-	)
-]
-
-first_time_keyboard = [
-	[
-		InlineKeyboardButton(
-			"✅",
-			url = "t.me/%s?start" % bot_name
-		)
-	]
-]
 
 def reque(url, chat_id = None, control = False):
 	thing = request(url)
@@ -141,6 +108,18 @@ def init_user(chat_id, tongue):
 			"tongue": tongue,
 			"c_downloads": 0
 		}
+
+def authorized(chat_id, date = 0):
+	global free
+
+	ok = True
+
+	if (
+		check_flood(chat_id, date) == "BANNED" or free == 0 and not chat_id in roots
+	):
+		ok = False
+
+	return ok
 
 def delete(chat_id):
 	global del2
@@ -511,7 +490,7 @@ def Link(link, chat_id, quality, message_id):
 					for a in tracks['items']:
 						lazy(a)
 
-				count[0] /= 1000
+				count[0] //= 1000
 				mode = downloa.download_albumspo
 
 			elif "deezer" in link:
@@ -1176,22 +1155,18 @@ def inline(message_id, chat_id, query_data, query_id, tongue):
 def download(update, context):
 	infos_user = update.effective_user
 	chat_id = infos_user.id
-
-	try:
-		tongue = infos_user.language_code
-	except AttributeError:
-		tongue = "en"
-
 	infos_query = update.callback_query
 	message_id = infos_query.message.message_id
 	query_data = infos_query.data
 	query_id = infos_query.id
 
-	if (
-		check_flood(chat_id) == "BANNED" and not chat_id in roots or 
-		free == 0 and not chat_id in roots
-	):
+	if not authorized(chat_id):
 		return
+
+	try:
+		tongue = infos_user.language_code
+	except AttributeError:
+		tongue = "en"
 
 	init_user(chat_id, tongue)
 
@@ -1206,21 +1181,17 @@ def download(update, context):
 def search(update, context):
 	infos_user = update.effective_user
 	chat_id = infos_user.id
+	infos_query = update.inline_query
+	query_string = infos_query.query
+	query_id = infos_query.id
+
+	if not authorized(chat_id):
+		return
 
 	try:
 		tongue = infos_user.language_code
 	except AttributeError:
 		tongue = "en"
-
-	infos_query = update.inline_query
-	query_string = infos_query.query
-	query_id = infos_query.id
-
-	if (
-		check_flood(chat_id) == "BANNED" and not chat_id in roots or 
-		free == 0 and not chat_id in roots
-	):
-		return
 
 	init_user(chat_id, tongue)
 
@@ -1430,10 +1401,7 @@ def menu(update, context):
 	things = infos_message.entities
 	infos_user = update.effective_user
 
-	if (
-		check_flood(chat_id, date) == "BANNED" and not chat_id in roots or 
-		free == 0 and not chat_id in roots
-	):
+	if not authorized(chat_id, date):
 		return
 
 	if not text:
@@ -1459,7 +1427,7 @@ def menu(update, context):
 	if text == "/start":
 		sendPhoto(
 			chat_id, open(photo, "rb"),
-			start_message % bot_name
+			start_message
 		)
 
 		keyboard = [
@@ -1604,13 +1572,8 @@ def menu(update, context):
 				).start()
 
 try:
-	print(
-		"""
-		1): Free
-		2): Strict
-		"""
-	)
-
+	print("1): Free")
+	print("2): Strict")
 	ans = input("Choose: ")
 
 	if ans == "1" or ans == "2":
