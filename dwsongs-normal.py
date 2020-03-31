@@ -615,7 +615,7 @@ def Link(link, chat_id, quality, message_id):
 						links.append(
 							a['track']['external_urls']['spotify']
 						)
-					except KeyError:
+					except (KeyError, TypeError):
 						links.append("Error :(")
 
 				for a in tracks['tracks']['items']:
