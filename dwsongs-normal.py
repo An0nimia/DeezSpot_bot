@@ -1566,11 +1566,13 @@ def menu(update, context):
 			else:
 				if ans == "2":
 					users[chat_id]['c_downloads'] += 1
-
+				
+				linked = infos_message.parse_entity(things[0])
+				
 				Thread(
 					target = Link,
 					args = (
-						text, chat_id,
+						linked, chat_id,
 						users[chat_id]['quality'], message_id
 					)
 				).start()
