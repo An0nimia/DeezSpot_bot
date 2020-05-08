@@ -17,7 +17,7 @@ from configparser import ConfigParser
 from deezloader import Login, exceptions
 from mutagen.id3._util import ID3NoHeaderError
 
-from deezloader.settings import (
+from deezloader.deezer_settings import (
 	api_track, api_album,
 	api_playlist, api_search_trk
 )
