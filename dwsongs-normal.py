@@ -764,7 +764,7 @@ def Link(link, chat_id, quality, msg):
 
 				tot = url['nb_tracks']
 
-				if tot > 400:
+				if tot > 1000:
 					sendMessage(chat_id, "Fuck you")
 					delete(chat_id)
 					return
