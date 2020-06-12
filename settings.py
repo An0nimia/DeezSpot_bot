@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-from telegram import InlineKeyboardButton
+from telegram.ext import InlineKeyboardButton
 
 not_interface = False
 default_time = 0.0
