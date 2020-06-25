@@ -24,20 +24,20 @@ services_supported = ["spotify", "deezer"]
 comandss = ["start", "settings", "info", "shazam", "help"]
 settingss = ["quality", "tongue"]
 qualities = ["FLAC", "MP3_320", "MP3_256", "MP3_128"]
-send_image_track_query = "🎧 Track: %s \n👤 Artist: %s \n💽 Album: %s \n📅 Date: %s"
-send_image_album_query = "💽 Album: %s \n👤 Artist: %s \n📅 Date: %s \n🎧 Tracks amount: %d"
-send_image_artist_query = "👤 Artist: %s \n💽 Album numbers: %d \n👥 Fans on Deezer: %d"
-tags_query = "💽 Album: %s\n📅 Date: %s\n📀 Label: %s\n🎵 Genre: %s"
-info_msg = "🔺 Version: %s\n🔻 Name: @%s\n✒️ Creator: @%s\n💵 Donation: %s\n📣 Forum: %s\n👥 Users: %d\n⬇️ Total downloads: %d"
-send_image_playlist_query = "📅 Creation: %s \n👤 User: %s \n🎧 Tracks amount: %d"
+send_image_track_query = "🎧 Track : %s \n👤 Artist : %s \n💽 Album: %s \n📅 Date: %s"
+send_image_album_query = "💽 Album : %s \n👤 Artist : %s \n📅 Date: %s \n🎧 Total Tracks : %d"
+send_image_artist_query = "👤 Artist : %s \n💽 Number Of Albums : %d \n👥 Fans on Deezer : %d"
+tags_query = "💽 Album: %s\n📅 Date : %s\n📀 Label : %s\n🎵 Genre: %s"
+info_msg = "🔺 Version: %s\n🔻 Name : @%s\n✒️ Creator : @%s\n💵 Donation: %s\n📣 Forum : %s\n👥 Users: %d\n⬇️ Total downloads : %d"
+send_image_playlist_query = "📅 Creation : %s \n👤 User : %s \n🎧 Total Tracks : %d"
 insert_query = "INSERT INTO DWSONGS (id, query, quality) values ('%s', '%s', '%s')"
 where_query = "SELECT query FROM DWSONGS WHERE id = '{}' and quality = '{}'"
 user_exist = "SELECT chat_id FROM CHAT_ID where chat_id = '%d'"
 share_message = "tg://msg?text=Start @%s for download all the songs which you want ;)" % bot_name
 start_message = "Welcome to @%s \nPress '/' to get commands list" % bot_name
 not_supported_links = "Sorry :( The bot doesn't support this link %s :("
-rate_link = "https://t.me/BotsArchive/298"
-end_message = "FINISHED :) Rate me here %s" % rate_link
+rate_link = "https://t.me/whereareyoufrom"
+end_message = "FINISHED :) Donate Via MoMo. %s" % rate_link
 
 help_message = (
 	"/start: Start the bot" +
