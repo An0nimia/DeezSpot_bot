@@ -24,11 +24,11 @@ services_supported = ["spotify", "deezer"]
 comandss = ["start", "settings", "info", "shazam", "help"]
 settingss = ["quality", "tongue"]
 qualities = ["FLAC", "MP3_320", "MP3_256", "MP3_128"]
-send_image_track_query = "🎧 Track : %s \n👤 Artist : %s \n💽 Album: %s \n📅 Date: %s"
-send_image_album_query = "💽 Album : %s \n👤 Artist : %s \n📅 Date: %s \n🎧 Total Tracks : %d"
+send_image_track_query = "🎧 Track : %s \n👤 Artist : %s \n💽 Album : %s \n📅 Date : %s"
+send_image_album_query = "💽 Album : %s \n👤 Artist : %s \n📅 Date : %s \n🎧 Total Tracks : %d"
 send_image_artist_query = "👤 Artist : %s \n💽 Number Of Albums : %d \n👥 Fans on Deezer : %d"
 tags_query = "💽 Album: %s\n📅 Date : %s\n📀 Label : %s\n🎵 Genre: %s"
-info_msg = "🔺 Version: %s\n🔻 Name : @%s\n✒️ Creator : @%s\n💵 Donation: %s\n📣 Forum : %s\n👥 Users: %d\n⬇️ Total downloads : %d"
+info_msg = "🔺 Version: %s\n🔻 Name : @%s\n✒️ Creator : @%s\n💵 Donation : %s\n📣 Forum : %s\n👥 Users : %d\n⬇️ Total downloads : %d"
 send_image_playlist_query = "📅 Creation : %s \n👤 User : %s \n🎧 Total Tracks : %d"
 insert_query = "INSERT INTO DWSONGS (id, query, quality) values ('%s', '%s', '%s')"
 where_query = "SELECT query FROM DWSONGS WHERE id = '{}' and quality = '{}'"
@@ -45,7 +45,7 @@ help_message = (
 	"\n\n/shazam: Identify a song by a voice or audio message (You can do without calling this command, just send the media)" +
 	"\n\n/help: Show this message" +
 	"\n\n" +
-	"Just send a spotify or deezer link to download, or type what you are looking for"
+	"Just send me a spotify or deezer link to download your songs, or type what you are looking for"
 )
 
 end_keyboard = [
