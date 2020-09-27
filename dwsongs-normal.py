@@ -1,51 +1,52 @@
 #!/usr/bin/python3
 
 import os
-import telepot
 import logging
 import dwytsongs
+from utils import *
+from settings import *
 from time import sleep
 from shutil import rmtree
-from pprint import pprint
 from spotipy import Spotify
 from mutagen.mp3 import MP3
 from threading import Thread
 from mutagen.flac import FLAC
-from bs4 import BeautifulSoup
 from acrcloud import ACRcloud
-from requests import post, get
-import spotipy.oauth2 as oauth2
 from mutagen.easyid3 import EasyID3
 from configparser import ConfigParser
 from deezloader import Login, exceptions
-from sqlite3 import connect, OperationalError
 from mutagen.id3._util import ID3NoHeaderError
 
-from telepot.namedtuple import (
-	ReplyKeyboardMarkup, KeyboardButton,
-	ReplyKeyboardRemove, InlineKeyboardMarkup,
-	InlineKeyboardButton, InlineQueryResultArticle, InputTextMessageContent
+from deezloader.deezer_settings import (
+	api_track, api_album,
+	api_playlist, api_search_trk
 )
 
-path = os.getcwd()
-setting = path + "/DeezloaderAn0n_bot/setting.ini"
-config = ConfigParser()
-config.read(setting)
+from telegram.ext import (
+	CommandHandler, Updater, Filters,
+	CallbackQueryHandler, InlineQueryHandler, MessageHandler
+)
 
-print(path)
-print(setting)
+from telegram import (
+	Bot, ReplyKeyboardMarkup, error, ReplyKeyboardRemove,
+	InlineKeyboardMarkup, TelegramError, InputMediaPhoto,
+	InlineQueryResultArticle, InputTextMessageContent
+)
+
+#path = os.getcwd()
+#setting = path + "/DeezloaderAn0n_bot/settings.ini"
+
+config = ConfigParser()
+config.read(ini_file)
 
 #Path to Download the Songs
 local = "/media/pimedia/Deezloader/"
-
-
 try:
 	deezer_token = config['login']['token']
 	bot_token = config['bot']['token']
 	acrcloud_key = config['acrcloud']['key']
 	acrcloud_hash = config['acrcloud']['secret']
 	acrcloud_host = config['acrcloud']['host']
-	ya_key = config['yandex']['key']
 	version = config['bot_info']['version']
 	creator = config['bot_info']['creator']
 	donation_link = config['bot_info']['donation']
@@ -55,25 +56,15 @@ except KeyError:
 	exit()
 
 downloa = Login(deezer_token)
-bot = telepot.Bot(bot_token)
-bot_name = bot.getMe()['username']
+sets = Updater(bot_token, use_context = True)
+bot = Bot(bot_token)
 users = {}
 date = {}
 del1 = 0
 del2 = 0
 free = 1
-default_time = 0
 is_audio = 0
-root = 560950095
-telegram_audio_api_limit = 50000000
-send_image_track_query = "🎧 Track: %s \n👤 Artist: %s \n💽 Album: %s \n📅 Date: %s"
-send_image_album_query = "💽 Album: %s \n👤 Artist: %s \n📅 Date: %s \n🎧 Tracks amount: %d"
-send_image_playlist_query = "📅 Creation: %s \n👤 User: %s \n🎧 Tracks amount: %d"
-insert_query = "INSERT INTO DWSONGS (id, query, quality) values ('%s', '%s', '%s')"
-where_query = "SELECT query FROM DWSONGS WHERE id = '{}' and quality = '{}'"
-db_file = local + "dwsongs.db"
-loc_dir = local + "Songs/"
-print (loc_dir)
+initialize()
 
 config = {
 	"key": acrcloud_key,
@@ -85,39 +76,16 @@ acrcloud = ACRcloud(config)
 
 logging.basicConfig(
 	filename = local + "dwsongs.log",
-	level = logging.WARNING,
-	format = "%(asctime)s %(levelname)s %(name)s %(message)s"
+	level = logging.ERROR,
+	format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
-
-if not os.path.isdir(loc_dir):
-	os.makedirs(loc_dir)
-
-conn = connect(db_file)
-c = conn.cursor()
-
-try:
-	c.execute("CREATE TABLE DWSONGS (id text, query text, quality text)")
-	c.execute("CREATE TABLE BANNED (banned int)")
-	c.execute("CREATE TABLE CHAT_ID (chat_id int)")
-	conn.commit()
-except OperationalError:
-	pass
-
-def generate_token():
-	return oauth2.SpotifyClientCredentials(
-		client_id = "c6b23f1e91f84b6a9361de16aba0ae17",
-		client_secret = "237e355acaa24636abc79f1a089e6204"
-	).get_access_token()
 
 spo = Spotify(
 	generate_token()
 )
 
-def request(url, chat_id = None, control = False):
-	try:
-		thing = get(url)
-	except:
-		thing = get(url)
+def reque(url, chat_id = None, control = False):
+	thing = request(url)
 
 	if control:
 		try:
@@ -136,41 +104,31 @@ def request(url, chat_id = None, control = False):
 
 	return thing
 
-def init_user(chat_id, msg):
+def init_user(chat_id, tongue):
 	try:
 		users[chat_id]
 	except KeyError:
-		try:
-			langua = msg['from']['language_code']
-		except KeyError:
-			langua = "en"
-
 		users[chat_id] = {
 			"quality": "MP3_320",
-			"tongue": langua,
-			"c_downloads": 0,
-
+			"tongue": tongue,
+			"c_downloads": 0
 		}
 
-def translate(language, sms):
-	try:
-		language = language.split("-")[0]
+def authorized(chat_id, date = 0):
+	global free
 
-		if not "en" in language:
-			api = (
-				"https://translate.yandex.net/api/v1.5/tr.json/translate?key=%s&text=%s&lang=en-%s"
-				% (
-					ya_key,
-					sms,
-					language
-				)
-			)
+	ok = True
 
-			sms = request(api).json()['text'][0]
-	except:
-		pass
+	if (
+		(
+			(
+				check_flood(chat_id, date) == "BANNED"
+			) or free == 0
+		) and not chat_id in roots
+	):
+		ok = False
 
-	return sms
+	return ok
 
 def delete(chat_id):
 	global del2
@@ -180,76 +138,9 @@ def delete(chat_id):
 	if ans == "2":
 		users[chat_id]['c_downloads'] -= 1
 
-def write_db(execution):
-	conn = connect(db_file)
-	c = conn.cursor()
-
-	while True:
-		sleep(1)
-
-		try:
-			c.execute(execution)
-			conn.commit()
-			conn.close()
-			break
-		except OperationalError:
-			pass
-
-def check_image(image1, ids):
-	if not image1:
-		URL = "https://www.deezer.com/track/%s" % ids
-		body = request(URL).text
-
-		image1 = (
-			BeautifulSoup(body, "html.parser")
-			.find("meta", property = "og:image")
-			.get("content")
-			.replace("500x500", "1000x1000")
-		)
-
-	ima = request(image1).content
-
-	if len(ima) == 13:
-		image1 = "https://e-cdns-images.dzcdn.net/images/cover/1000x1000-000000-80-0-0.jpg"
-	
-	return image1
-
-def sendall(msg):
-	conn = connect(db_file)
-	c = conn.cursor()
-	alls = c.execute("SELECT chat_id FROM CHAT_ID").fetchall()
-	conn.close()
-
-	for a in alls:
-		sendMessage(a[0], msg)
-
-def statisc(chat_id, do):
-	conn = connect(db_file)
-	c = conn.cursor()
-
-	if do == "USERS":
-		c.execute("SELECT chat_id FROM CHAT_ID where chat_id = '%d'" % chat_id)
-
-		if not c.fetchone():
-			write_db("INSERT INTO CHAT_ID (chat_id) values ('%d')" % chat_id)
-
-		c.execute("SELECT chat_id FROM CHAT_ID")
-
-	elif do == "TRACKS":
-		c.execute("SELECT id FROM DWSONGS")
-
-	infos = len(
-		c.fetchall()
-	)
-
-	conn.close()
-	return infos
-
 def check_flood(chat_id, time_now = 0):
-	conn = connect(db_file)
-	c = conn.cursor()
-	exist = c.execute("SELECT banned FROM BANNED where banned = '%d'" % chat_id).fetchone()
-	conn.close()
+	query = "SELECT banned FROM BANNED where banned = '%d'" % chat_id
+	exist = view_db(query)
 
 	if exist:
 		return "BANNED"
@@ -278,7 +169,8 @@ def check_flood(chat_id, time_now = 0):
 				)
 
 				if date[chat_id]['tries'] == 0:
-					write_db("INSERT INTO BANNED (banned) values ('%d')" % chat_id)
+					query = "INSERT INTO BANNED (banned) values ('%d')" % chat_id
+					write_db(query)
 					del date[chat_id]
 					sendMessage(chat_id, "You are banned :)")
 	except KeyError:
@@ -288,11 +180,35 @@ def check_flood(chat_id, time_now = 0):
 			"msg": 0
 		}
 
+def create_keyboard(array, chat_id):
+	keyboard = [
+		[]
+	]
+
+	for a in array:
+		keyboard[0] += [
+			InlineKeyboardButton(
+				"{}: {}".format(
+					a.capitalize(), users[chat_id][a]
+				),
+				callback_data = "%s" % a
+			)
+		]
+
+	return keyboard
+
 def sendMessage(chat_id, text, reply_markup = None, reply_to_message_id = None):
 	sleep(default_time)
 
 	try:
-		bot.sendMessage(
+		users[chat_id]['tongue']
+	except KeyError:
+		users[chat_id]['tongue'] = "en"
+
+	try:
+		bot.sendChatAction(chat_id, "typing")
+
+		return bot.sendMessage(
 			chat_id,
 			translate(
 				users[chat_id]['tongue'], text
@@ -300,7 +216,7 @@ def sendMessage(chat_id, text, reply_markup = None, reply_to_message_id = None):
 			reply_markup = reply_markup,
 			reply_to_message_id = reply_to_message_id
 		)
-	except:
+	except (error.Unauthorized, error.TimedOut, error.BadRequest):
 		pass
 
 def sendPhoto(chat_id, photo, caption = None, reply_markup = None):
@@ -309,31 +225,68 @@ def sendPhoto(chat_id, photo, caption = None, reply_markup = None):
 	try:
 		bot.sendChatAction(chat_id, "upload_photo")
 
-		bot.sendPhoto(
-			chat_id,
-			photo,
+		return bot.sendPhoto(
+			chat_id, photo,
 			caption = caption,
 			reply_markup = reply_markup
 		)
-	except:
+	except (error.Unauthorized, error.TimedOut):
 		pass
 
-def sendAudio(chat_id, audio, link = None, image = None, youtube = False):
+def sendAudio(
+	chat_id, audio,
+	link = None,
+	image = None,
+	youtube = False
+):
 	sleep(default_time)
+
+	try:
+		if os.path.isfile(audio):
+			bot.sendChatAction(chat_id, "upload_audio")
+
+			try:
+				tag = EasyID3(audio)
+				duration = int(MP3(audio).info.length)
+			except ID3NoHeaderError:
+				tag = FLAC(audio)
+				duration = int(tag.info.length)
+
+			if os.path.getsize(audio) < telegram_audio_api_limit:
+				file_id = bot.sendAudio(
+					chat_id, open(audio, "rb"),
+					thumb = open(image.url, "rb"),
+					duration = duration,
+					performer = tag['artist'][0],
+					title = tag['title'][0]
+				)['audio']['file_id']
+
+				if not youtube:
+					quality = fast_split(audio)
+					link = "track/%s" % link.split("/")[-1]
+
+					write_db(
+						insert_query
+						% (
+							link,
+							file_id,
+							quality
+						)
+					)
+			else:
+				sendMessage(chat_id, "Song too big :(")
+		else:
+			bot.sendAudio(chat_id, audio)
+	except error.BadRequest:
+		sendMessage(chat_id, "Sorry the track %s doesn't seem readable on Deezer :(" % link)
 
 def track(link, chat_id, quality):
 	global spo
 
-	conn = connect(db_file)
-	c = conn.cursor()
 	lin = "track/%s" % link.split("/")[-1]
 	qua = quality.split("MP3_")[-1]
-
-	match = c.execute(
-		where_query.format(lin, qua)
-	).fetchone()
-
-	conn.close()
+	query = where_query.format(lin, qua)
+	match = view_db(query)
 
 	if match:
 		sendAudio(chat_id, match[0])
@@ -354,82 +307,77 @@ def track(link, chat_id, quality):
 				try:
 					image = url['album']['images'][2]['url']
 				except IndexError:
-					image = "https://e-cdns-images.dzcdn.net/images/cover/90x90-000000-80-0-0.jpg"
+					image = image_resize(song_default_image, 90)
 
-				z = downloa.download_trackspo(
-					link,
-					quality = quality,
-					recursive_quality = True,
-					recursive_download = True,
-					not_interface = True
-				)
+				mode = downloa.download_trackspo
 
 			elif "deezer" in link:
 				ids = link.split("/")[-1]
+				api_link = api_track % ids
+				kind = "track"
 
 				try:
-					url = request(
-						"https://api.deezer.com/track/%s" % ids, chat_id, True
-					).json()['album']['cover_xl']
+					url = reque(api_link, chat_id, True).json()['album']['cover_xl']
 				except AttributeError:
 					return
 
-				image = check_image(url, ids).replace("1000x1000", "90x90")
-
-				z = downloa.download_trackdee(
-					link,
-					quality = quality,
-					recursive_quality = True,
-					recursive_download = True,
-					not_interface = True
+				image = image_resize(
+					check_image(url, ids, kind), 90
 				)
+
+				mode = downloa.download_trackdee
+
+			z = mode(
+				link,
+				quality = quality,
+				recursive_quality = True,
+				recursive_download = True,
+				not_interface = not_interface
+			)
 		except (exceptions.TrackNotFound, exceptions.NoDataApi):
 			sendMessage(chat_id, "Track doesn't %s exist on Deezer or maybe it isn't readable, it'll be downloaded from YouTube..." % link)
 
 			try:
 				if "spotify" in link:
-					z = dwytsongs.download_trackspo(
-						link,
-						recursive_download = True,
-						not_interface = True
-					)
+					mode = dwytsongs.download_trackspo
 
 				elif "deezer" in link:
-					z = dwytsongs.download_trackdee(
-						link,
-						recursive_download = True,
-						not_interface = True
-					)
+					mode = dwytsongs.download_trackdee
+
+				z = mode(
+					link,
+					recursive_download = True,
+					not_interface = not_interface
+				)
 
 				youtube = True
 			except:
 				sendMessage(chat_id, "Sorry I cannot download this song %s :(" % link)
 				return
 
-		image = request(image).content
+		image = get_image(image)
 		sendAudio(chat_id, z, link, image, youtube)
 
-def Link(link, chat_id, quality, msg):
+def Link(link, chat_id, quality, message_id):
 	global spo
 	global del1
 
 	del1 += 1
 	done = 0
-	links1 = []
-	links2 = []
 	quali = quality.split("MP3_")[-1]
 	link = link.split("?")[0]
+	ids = link.split("/")[-1]
 
 	try:
-		if "spotify" in link:
-			if "track/" in link:
+		if "track/" in link:
+			if "spotify" in link:
 				try:
 					url = spo.track(link)
 				except Exception as a:
 					if not "The access token expired" in str(a):
 						sendMessage(
 							chat_id, "Invalid link %s ;)" % link,
-							reply_to_message_id = msg['message_id']
+							reply_to_message_id = message_id
 						)
 
 						delete(chat_id)
@@ -444,35 +392,69 @@ def Link(link, chat_id, quality, msg):
 				try:
 					image1 = url['album']['images'][0]['url']
 				except IndexError:
-					image1 = "https://e-cdns-images.dzcdn.net/images/cover/1000x1000-000000-80-0-0.jpg"
+					image1 = song_default_image
+				
+				name = url['name']
+				artist = url['album']['artists'][0]['name']
+				album = url['album']['name']
+				date = url['album']['release_date']
 
+			elif "deezer" in link:
+				kind = "track"
+				api_link = api_track % ids
+
+				try:
+					url = reque(api_link, chat_id, True).json()
+				except AttributeError:
+					delete(chat_id)
+					return
+
+				image1 = check_image(
+					url['album']['cover_xl'], ids, kind
+				)
+
+				name = url['title']
+				artist = url['artist']['name']
+				album = url['album']['title']
+				date = url['album']['release_date']
+
+			if any(
+				a in link
+				for a in services_supported
+			):
 				sendPhoto(
 					chat_id, image1,
 					caption = (
 						send_image_track_query
 						% (
-							url['name'],
-							url['album']['artists'][0]['name'],
-							url['album']['name'],
-							url['album']['release_date']
+							name,
+							artist,
+							album,
+							date
 						)
 					)
 				)
 
 				track(link, chat_id, quality)
+			else:
+				sendMessage(chat_id, not_supported_links % link)
 
-			elif "album/" in link:
+		elif "album/" in link:
+			links = []
+			count = [0]
+
+			if "spotify" in link:
 				try:
 					tracks = spo.album(link)
 				except Exception as a:
 					if not "The access token expired" in str(a):
 						sendMessage(
 							chat_id, "Invalid link %s ;)" % link,
-							reply_to_message_id = msg['message_id']
+							reply_to_message_id = message_id
 						)
 
-					delete(chat_id)
-					return
+						delete(chat_id)
+						return
 
 					spo = Spotify(
 						generate_token()
@@ -482,44 +464,22 @@ def Link(link, chat_id, quality, msg):
 
 				try:
 					image3 = tracks['images'][2]['url']
-					image2 = tracks['images'][1]['url']
 					image1 = tracks['images'][0]['url']
 				except IndexError:
-					image3 = "https://e-cdns-images.dzcdn.net/images/cover/90x90-000000-80-0-0.jpg"
-					image2 = "https://e-cdns-images.dzcdn.net/images/cover/320x320-000000-80-0-0.jpg"
-					image1 = "https://e-cdns-images.dzcdn.net/images/cover/1000x1000-000000-80-0-0.jpg"
+					image3 = image_resize(song_default_image, 90)
+					image1 = song_default_image
 
+				name = tracks['name']
+				artist = tracks['artists'][0]['name']
+				date = tracks['release_date']
 				tot = tracks['total_tracks']
-				conn = connect(db_file)
-				c = conn.cursor()
-				lin = "album/%s" % link.split("/")[-1]
-				count = [0]
-
-				sendPhoto(
-					chat_id, image1,
-					caption = (
-						send_image_album_query
-						% (
-							tracks['name'],
-							tracks['artists'][0]['name'],
-							tracks['release_date'],
-							tot
-						)
-					)
-				)
 
 				def lazy(a):
 					count[0] += a['duration_ms']
-					lin = "track/%s" % a['external_urls']['spotify'].split("/")[-1]
 
-					c.execute(
-						where_query.format(lin, quali)
+					links.append(
+						a['external_urls']['spotify']
 					)
-
-					links2.append(lin)
-
-					if c.fetchone():
-						links1.append(lin)
 
 				for a in tracks['tracks']['items']:
 					lazy(a)
@@ -539,28 +499,97 @@ def Link(link, chat_id, quality, msg):
 					for a in tracks['items']:
 						lazy(a)
 
-				conn.close()
+				count[0] //= 1000
+				mode = downloa.download_albumspo
 
-				if (count[0] / 1000) > 40000:
+			elif "deezer" in link:
+				api_link = api_album % ids
+				kind = "album"
+
+				try:
+					url = reque(api_link, chat_id, True).json()
+				except AttributeError:
+					delete(chat_id)
+					return
+
+				count[0] = url['duration']
+				image1 = check_image(url['cover_xl'], ids, kind)
+				image3 = image_resize(image1, 90)
+				tot = url['nb_tracks']
+
+				links = [
+					a['link'] for a in url['tracks']['data']
+				]
+
+				name = url['title']
+				artist = url['artist']['name']
+				date = url['release_date']
+				mode = downloa.download_albumdee
+
+			if any(
+				a in link
+				for a in services_supported
+			):
+				if count[0] > seconds_limits_album:
 					sendMessage(chat_id, "If you do this again I will come to your home and I will ddos your ass :)")
 					delete(chat_id)
 					return
 
-				if len(links1) != tot:
-					z = downloa.download_albumspo(
+				message_id = sendPhoto(
+					chat_id, image1,
+					caption = (
+						send_image_album_query
+						% (
+							name,
+							artist,
+							date,
+							tot
+						)
+					)
+				)['message_id']
+
+				conn = connect(db_file)
+				c = conn.cursor()
+				exists = []
+
+				for a in links:
+					ids = a.split("/")[-1]
+					lins = "track/%s" % ids
+
+					exist = c.execute(
+						where_query.format(lins, quali)
+					).fetchone()
+
+					if exist:
+						exists.append(exist)
+
+				if len(exists) < len(links) // 3:
+					z = mode(
 						link,
 						quality = quality,
 						recursive_quality = True,
 						recursive_download = True,
-						not_interface = True
+						not_interface = not_interface
 					)
+
+					image3 = get_image(image3)
+
+					for a in range(
+						len(z)
+					):
+						sendAudio(chat_id, z[a], links[a], image3)
 				else:
-					for a in links2:
+					for a in links:
 						track(a, chat_id, quality)
 
 				done = 1
+			else:
+				sendMessage(chat_id, not_supported_links % link)
 
-			elif "playlist/" in link:
+		elif "playlist/" in link:
+			links = []
+
+			if "spotify" in link:
 				musi = link.split("/")
 
 				try:
@@ -569,7 +598,7 @@ def Link(link, chat_id, quality, msg):
 					if not "The access token expired" in str(a):
 						sendMessage(
 							chat_id, "Invalid link ;)",
-							reply_to_message_id = msg['message_id']
+							reply_to_message_id = message_id
 						)
 
 						delete(chat_id)
@@ -584,43 +613,21 @@ def Link(link, chat_id, quality, msg):
 				try:
 					image1 = tracks['images'][0]['url']
 				except IndexError:
-					image1 = "https://e-cdns-images.dzcdn.net/images/cover/1000x1000-000000-80-0-0.jpg"
-
-				tot = tracks['tracks']['total']
-
-				if tot > 500:
-					sendMessage(chat_id, "Fuck you")
-					delete(chat_id)
-					return
-
-				sendPhoto(
-					chat_id, image1,
-					caption = (
-						send_image_playlist_query
-						% (
-							tracks['tracks']['items'][0]['added_at'],
-							tracks['owner']['display_name'],
-							tot
-						)
-					)
-				)
+					image1 = song_default_image
 
 				def lazy(a):
 					try:
-						track(
-							a['track']['external_urls']['spotify'],
-							chat_id,
-							quality
+						links.append(
+							a['track']['external_urls']['spotify']
 						)
-					except:
-						try:
-							sendMessage(chat_id, "%s Not found :(" % a['track']['name'])
-						except:
-							sendMessage(chat_id, "Error :(")
+					except (KeyError, TypeError):
+						links.append("Error :(")
 
 				for a in tracks['tracks']['items']:
 					lazy(a)
 
+				added = tracks['tracks']['items'][0]['added_at']
+				owner = tracks['owner']['display_name']
 				tot = tracks['tracks']['total']
 				tracks = tracks['tracks']
 
@@ -637,219 +644,128 @@ def Link(link, chat_id, quality, msg):
 					for a in tracks['items']:
 						lazy(a)
 
-				done = 1
+			elif "deezer" in link:
+				api_link = api_playlist % ids
 
-			else:
-				sendMessage(chat_id, "Sorry :( The bot doesn't support this link")
-
-		elif "deezer" in link:
-			ids = link.split("/")[-1]
-
-			if "track/" in link:
 				try:
-					url = request(
-						"https://api.deezer.com/track/%s" % ids, chat_id, True
-					).json()
+					url = reque(api_link, chat_id, True).json()
 				except AttributeError:
 					delete(chat_id)
 					return
 
-				image1 = check_image(
-					url['album']['cover_xl'], ids
-				)
+				links = [
+					a['link']
+					for a in url['tracks']['data']
+				]
 
-				sendPhoto(
-					chat_id, image1,
-					caption = (
-						send_image_track_query
-						% (
-							url['title'],
-							url['artist']['name'],
-							url['album']['title'],
-							url['album']['release_date']
-						)
-					)
-				)
-
-				track(link, chat_id, quality)
-
-			elif "album/" in link:
-				try:
-					url = request(
-						"https://api.deezer.com/album/%s" % ids, chat_id, True
-					).json()
-				except AttributeError:
-					delete(chat_id)
-					return
-
-				if url['duration'] > 40000:
-					sendMessage(chat_id, "If you do this again I will come to your home and I will ddos your ass :)")
-					delete(chat_id)
-					return
-
-				image1 = url['cover_xl']
-
-				if not image1:
-					URL = "https://www.deezer.com/album/%s" % ids
-					image1 = request(URL).text
-
-					image1 = (
-						BeautifulSoup(image1, "html.parser")
-						.find("img", class_ = "img_main")
-						.get("src")
-						.replace("200x200", "1000x1000")
-					)
-
-				ima = request(image1).content
-
-				if len(ima) == 13:
-					image1 = "https://e-cdns-images.dzcdn.net/images/cover/1000x1000-000000-80-0-0.jpg"
-
-				image2 = image1.replace("1000x1000", "320x320")
-				image3 = image1.replace("1000x1000", "90x90")
-				conn = connect(db_file)
-				c = conn.cursor()
-				lin = "album/%s" % ids
-
-				for a in url['tracks']['data']:
-					lin = "track/%s" % a['link'].split("/")[-1]
-
-					c.execute(
-						where_query.format(lin, quali)
-					)
-
-					links2.append(lin)
-
-					if c.fetchone():
-						links1.append(lin)
-
-				conn.close()
+				image1 = url['picture_xl']
 				tot = url['nb_tracks']
+				added = url['creation_date']
+				owner = url['creator']['name']
 
-				sendPhoto(
-					chat_id, image1,
-					caption = (
-						send_image_album_query
-						% (
-							url['title'],
-							url['artist']['name'],
-							url['release_date'],
-							tot
-						)
-					)
-				)
+			if any(
+				a in link
+				for a in services_supported
+			):
 
-				if len(links1) != tot:
-					z = downloa.download_albumdee(
-						link,
-						quality = quality,
-						recursive_quality = True,
-						recursive_download = True,
-						not_interface = True
-					)
-				else:
-					for a in links2:
-						track(a, chat_id, quality)
-
-				done = 1
-
-			elif "playlist/" in link:
-				try:
-					url = request(
-						"https://api.deezer.com/playlist/%s" % ids, chat_id, True
-					).json()
-				except AttributeError:
-					delete(chat_id)
-					return
-
-				tot = url['nb_tracks']
-
-				if tot > 1000:
+				if tot > max_songs:
 					sendMessage(chat_id, "Fuck you")
 					delete(chat_id)
 					return
 
 				sendPhoto(
-					chat_id, url['picture_xl'],
+					chat_id, image1,
 					caption = (
 						send_image_playlist_query
 						% (
-							url['creation_date'],
-							url['creator']['name'],
+							added,
+							owner,
 							tot
 						)
 					)
 				)
 
-				for a in url['tracks']['data']:
-					try:
-						track(a['link'], chat_id, quality)
-					except:
-						song = "{} - {}".format(a['title'], a['artist']['name'])
-						sendMessage(chat_id, "Cannot download %s :(" % song)
+				for a in links:
+					if a.startswith("http"):
+						try:
+							track(a, chat_id, quality)
+						except:
+							sendMessage(chat_id, "Cannot download %s:(" % a)
+					else:
+						sendMessage(chat_id, a)
 
 				done = 1
-
-			elif "artist/" in link:
-				link = "https://api.deezer.com/artist/%s" % ids
+			else:
+				sendMessage(chat_id, not_supported_links % link)
+		
+		elif "artist/" in link:
+			if "deezer" in link:
+				api_link = api_artist % ids
 
 				try:
-					url = request(link, chat_id, True).json()
+					url = reque(api_link, chat_id, True).json()
 				except AttributeError:
 					delete(chat_id)
 					return
 
+				keyboard = [
+					[
+						InlineKeyboardButton(
+							queries['top']['text'],
+							callback_data = queries['top']['query'] % api_link
+						),
+						InlineKeyboardButton(
+							queries['albums']['text'],
+							callback_data = queries['albums']['query'] % api_link
+						)
+					],
+					[
+						InlineKeyboardButton(
+							queries['radio']['text'],
+							callback_data = queries['radio']['query'] % api_link
+						),
+						InlineKeyboardButton(
+							queries['related']['text'],
+							callback_data = queries['related']['query'] % api_link
+						)
+					]
+				]
+
+				image1 = url['picture_xl']
+				artist = url['name']
+				albums = url['nb_album']
+				fans = url['nb_fan']
+
+			if any(
+				a in link
+				for a in services_supported[1:]
+			):
 				sendPhoto(
-					chat_id, url['picture_xl'],
+					chat_id, image1,
 					caption = (
-						"👤 Artist: %s \n💽 Album numbers: %d \n👥 Fans on Deezer: %d"
+						send_image_artist_query
 						% (
-							url['name'],
-							url['nb_album'],
-							url['nb_fan']
+							artist,
+							albums,
+							fans
 						)
 					),
-					reply_markup = InlineKeyboardMarkup(
-						inline_keyboard = [
-							[
-								InlineKeyboardButton(
-									text = "TOP 30 🔝",
-									callback_data = "%s/top?limit=30" % link
-								),
-								InlineKeyboardButton(
-									text = "ALBUMS 💽",
-									callback_data = "%s/albums" % link
-								)
-							],
-							[
-								InlineKeyboardButton(
-									text = "RADIO 📻",
-									callback_data = "%s/radio" % link
-								),
-								InlineKeyboardButton(
-									text = "RELATED 🗣",
-									callback_data = "%s/related" % link
-								)
-							]
-						]
-					)
+					reply_markup = InlineKeyboardMarkup(keyboard)
 				)
-
 			else:
-				sendMessage(chat_id, "Sorry :( The bot doesn't support this link %s :(" % link)
+				sendMessage(chat_id, not_supported_links % link)
 
 		else:
-			sendMessage(chat_id, "Sorry :( The bot doesn't support this link %s :(" % link)
+			sendMessage(chat_id, not_supported_links % link)
 
-		try:
-			image3 = request(image3).content
+	except FileNotFoundError:
+		sendMessage(
+			chat_id, "Resend link please...",
+			reply_to_message_id = message_id
+		)
 
-			for a in range(
-				len(z)
-			):
-				sendAudio(chat_id, z[a], links2[a], image3)
-		except NameError:
-			pass
+	except error.TimedOut:
+		sendMessage(chat_id, "Retry after a few minutes")
 
 	except exceptions.QuotaExceeded:
 		sendMessage(chat_id, "Please send the link %s again :(" % link)
@@ -859,9 +775,9 @@ def Link(link, chat_id, quality, msg):
 		sendMessage(chat_id, "Try to search it throught inline mode or search the link on Deezer")
 
 	except Exception as a:
-		logging.warning(a)
-		logging.warning(quality)
-		logging.warning(link)
+		logging.error(a)
+		logging.error(quality)
+		logging.error(link)
 
 		sendMessage(
 			chat_id, "OPS :( Something went wrong please send to @An0nimia this link: {} {}, if this happens again".format(link, quality)
@@ -869,18 +785,9 @@ def Link(link, chat_id, quality, msg):
 
 	if done == 1:
 		sendMessage(
-			chat_id, "FINISHED :) Rate me here https://t.me/BotsArchive/298",
-			reply_to_message_id = msg['message_id'],
-			reply_markup = InlineKeyboardMarkup(
-				inline_keyboard = [
-					[
-						InlineKeyboardButton(
-							text = "SHARE",
-							url = "tg://msg?text=Start @%s for download all the songs which you want ;)" % bot_name
-						)
-					]
-				]
-			)
+			chat_id, end_message,
+			reply_to_message_id = message_id,
+			reply_markup = InlineKeyboardMarkup(end_keyboard)
 		)
 
 	delete(chat_id)
@@ -893,8 +800,8 @@ def Audio(audio, chat_id):
 	audi = "{}{}.ogg".format(loc_dir, audio)
 
 	try:
-		bot.download_file(audio, audi)
-	except telepot.exception.TelegramError:
+		bot.getFile(audio).download(audi)
+	except TelegramError:
 		sendMessage(chat_id, "File sent is too big, please send a file lower than 20 MB")
 		is_audio = 0
 		return
@@ -911,24 +818,25 @@ def Audio(audio, chat_id):
 		sendMessage(chat_id, "Sorry cannot detect the song from audio :(, retry...")
 		return
 
-	artist = audio['metadata']['music'][0]['artists'][0]['name']
-	track = audio['metadata']['music'][0]['title']
-	album = audio['metadata']['music'][0]['album']['name']
+	infos = audio['metadata']['music'][0]
+	artist = infos['artists'][0]['name']
+	track = infos['title']
+	album = infos['album']['name']
 
 	try:
-		date = audio['metadata']['music'][0]['release_date']
+		date = infos['release_date']
 		album += "_%s" % date
 	except KeyError:
 		album += "_"
 
 	try:
-		label = audio['metadata']['music'][0]['label']
+		label = infos['label']
 		album += "_%s" % label
 	except KeyError:
 		album += "_"
 
 	try:
-		genre = audio['metadata']['music'][0]['genres'][0]['name']
+		genre = infos['genres'][0]['name']
 		album += "_%s" % genre
 	except KeyError:
 		album += "_"
@@ -939,8 +847,8 @@ def Audio(audio, chat_id):
 	try:
 		song = "{} - {}".format(track, artist)
 		
-		url = request(
-			"https://api.deezer.com/search/track/?q=%s" % song.replace("#", ""), chat_id, True
+		url = reque(
+			api_search_trk % song.replace("#", ""), chat_id, True
 		).json()
 	except AttributeError:
 		return
@@ -953,7 +861,7 @@ def Audio(audio, chat_id):
 				break
 	except IndexError:
 		try:
-			ids = "https://open.spotify.com/track/%s" % audio['metadata']['music'][0]['external_metadata']['spotify']['track']['id']
+			ids = "https://open.spotify.com/track/%s" % infos['external_metadata']['spotify']['track']['id']
 
 			try:
 				url = spo.track(ids)
@@ -966,308 +874,351 @@ def Audio(audio, chat_id):
 
 			image = url['album']['images'][0]['url']
 		except KeyError:
-			pass
+			try:
+				ids = api_track % infos['external_metadata']['deezer']['track']['id']
 
-		try:
-			ids = "https://api.deezer.com/track/%s" % audio['metadata']['music'][0]['external_metadata']['deezer']['track']['id']
+				try:
+					url = reque(ids, chat_id, True).json()
+				except AttributeError:
+					return
+
+				image = url['album']['cover_xl']
+			except KeyError:
+				sendMessage(chat_id, "Sorry I can't Shazam the track :(")
+				return
+
+	keyboard = [
+		[
+			InlineKeyboardButton(
+				queries['download']['text'],
+				callback_data = ids
+			),
+			InlineKeyboardButton(
+				queries['info']['text'],
+				callback_data = album
+			)
+		]
+	]
+
+	sendPhoto(
+		chat_id, image,
+		caption = "{} - {}".format(track, artist),
+		reply_markup = InlineKeyboardMarkup(keyboard)
+	)
+
+def inline(message_id, chat_id, query_data, query_id, tongue):
+	try:
+		if query_data in settingss or query_data in qualities:
+			if query_data == "quality":
+				keyboard = qualities_keyboard
+
+			elif query_data == "tongue":
+				if users[chat_id]['tongue'] != "en":
+					users[chat_id]['tongue'] = "en"
+				else:
+					users[chat_id]['tongue'] = tongue
+
+				keyboard = create_keyboard(settingss, chat_id)
+
+			elif query_data in qualities:
+				users[chat_id]['quality'] = query_data
+				keyboard = create_keyboard(settingss, chat_id)
 
 			try:
-				url = request(ids, chat_id, True).json()
+				bot.editMessageReplyMarkup(
+					chat_id, message_id,
+					reply_markup = InlineKeyboardMarkup(keyboard)
+				)
+			except error.BadRequest:
+				pass
+
+			bot.answerCallbackQuery(
+				query_id,
+				translate(
+					users[chat_id]['tongue'], "DONE ✅"
+				)
+			)
+
+		elif "artist" in query_data:
+			keyboard = []
+			link = api_artist % query_data.split("/")[4]
+
+			try:
+				url = reque(
+					query_data.replace("down", ""),
+					chat_id, True
+				).json()
 			except AttributeError:
 				return
 
-			image = url['album']['cover_xl']
-		except KeyError:
-			pass
-
-	try:
-		sendPhoto(
-			chat_id, image,
-			caption = "{} - {}".format(track, artist),
-			reply_markup = InlineKeyboardMarkup(
-				inline_keyboard = [
+			if "album" in query_data:
+				keyboard += [
 					[
 						InlineKeyboardButton(
-							text = "Download ⬇️",
-							callback_data = ids
+							"{} - {}".format(a['title'], a['release_date']),
+							callback_data = a['link']
+						)
+					] for a in url['data']
+				]
+
+				keyboard.append(
+					[
+						InlineKeyboardButton(
+							queries['back']['text'],
+							callback_data = link
+						)
+					]
+				)
+
+			elif "down" in query_data:
+				if ans == "2":
+					if users[chat_id]['c_downloads'] == 3:
+						bot.answerCallbackQuery(
+							query_id,
+							translate(
+								users[chat_id]['tongue'],
+								"Wait the end and repeat the step, did you think you could download how much songs you wanted? ;)"
+							),
+							show_alert = True
+						)
+
+						return
+					else:
+						users[chat_id]['c_downloads'] += 1
+
+				bot.answerCallbackQuery(
+					query_id,
+					translate(
+						users[chat_id]['tongue'], "Songs are downloading ⬇️"
+					)
+				)
+
+				for a in url['data']:
+					Link(
+						"https://www.deezer.com/track/%d" % a['id'],
+						chat_id,
+						users[chat_id]['quality'],
+						message_id
+					)
+
+					if ans == "2":
+						users[chat_id]['c_downloads'] += 1
+
+				if ans == "2":
+					users[chat_id]['c_downloads'] -= 1
+
+			elif "radio" in query_data or "top" in query_data:
+				if "radio" in query_data:
+					method = "radio"
+				else:
+					method = "top?limit=30"
+
+				keyboard += [
+					[
+						InlineKeyboardButton(
+							"{} - {}".format(a['artist']['name'], a['title']),
+							callback_data = "https://www.deezer.com/track/%d" % a['id']
+						)
+					] for a in url['data']
+				]
+
+				keyboard.append(
+					[
+						InlineKeyboardButton(
+							"GET ALL ⬇️",
+							callback_data = "{}/{}/down".format(link, method)
+						)
+					]
+				)
+
+				keyboard.append(
+					[
+						InlineKeyboardButton(
+							queries['back']['text'],
+							callback_data = link
+						)
+					]
+				)
+
+			elif "related" in query_data:
+				keyboard = [
+					[
+						InlineKeyboardButton(
+							"{} - {}".format(a['name'], a['nb_fan']),
+							callback_data = api_artist % str(a['id'])
+						)
+					] for a in url['data']
+				]
+
+				keyboard.append(
+					[
+						InlineKeyboardButton(
+							queries['back']['text'],
+							callback_data = link
+						)
+					]
+				)
+
+			else:
+				keyboard = [
+					[
+						InlineKeyboardButton(
+							queries['top']['text'],
+							callback_data = queries['top']['query'] % link
 						),
 						InlineKeyboardButton(
-							text = "Info ❕",
-							callback_data = album
+							queries['albums']['text'],
+							callback_data = queries['albums']['query'] % link
+						)
+					],
+					[
+						InlineKeyboardButton(
+							queries['radio']['text'],
+							callback_data = queries['radio']['query'] % link
+						),
+						InlineKeyboardButton(
+							queries['related']['text'],
+							callback_data = queries['related']['query'] % link
 						)
 					]
 				]
-			)
-		)
-	except:
-		sendMessage(chat_id, "Error :(")
 
-def inline(msg, from_id, query_data, query_id):
-	if "artist" in query_data:
-		message_id = msg['message']['message_id']
-		keyboard = []
-		link = "https://api.deezer.com/artist/%s" % query_data.split("/")[4]
-
-		try:
-			url = request(
-				query_data.replace("down", ""),
-				from_id, True
-			).json()
-		except AttributeError:
-			return
-
-		if "album" in query_data:
-			keyboard += [
-				[
-					InlineKeyboardButton(
-						text = "{} - {}".format(a['title'], a['release_date']),
-						callback_data = a['link']
+				bot.editMessageMedia(
+					chat_id, message_id,
+					media = InputMediaPhoto(
+						url['picture_xl'],
+						caption = (
+							send_image_artist_query
+							% (
+								url['name'],
+								url['nb_album'],
+								url['nb_fan']
+							)
+						)
 					)
-				] for a in url['data']
-			]
-
-			keyboard.append(
-				[
-					InlineKeyboardButton(
-						text = "BACK 🔙",
-						callback_data = link
-					)
-				]
-			)
-
-		elif "down" in query_data:
-			if ans == "2":
-				if users[from_id]['c_downloads'] == 3:
-					bot.answerCallbackQuery(
-						query_id,
-						translate(
-							users[from_id]['tongue'],
-							"Wait the end and repeat the step, did you think you could download how much songs you wanted? ;)"
-						),
-						show_alert = True
-					)
-
-					return
-				else:
-					users[from_id]['c_downloads'] += 1
-
-			bot.answerCallbackQuery(
-				query_id,
-				translate(
-					users[from_id]['tongue'], "Songs are downloading ⬇️"
-				)
-			)
-
-			for a in url['data']:
-				Link(
-					"https://www.deezer.com/track/%d" % a['id'],
-					from_id,
-					users[from_id]['quality'],
-					msg['message']
 				)
 
-				if ans == "2":
-					users[from_id]['c_downloads'] += 1
-
-			if ans == "2":
-				users[from_id]['c_downloads'] -= 1
-
-		elif "radio" in query_data or "top" in query_data:
-			if "radio" in query_data:
-				method = "radio"
-			else:
-				method = "top?limit=30"
-
-			keyboard += [
-				[
-					InlineKeyboardButton(
-						text = "{} - {}".format(a['artist']['name'], a['title']),
-						callback_data = "https://www.deezer.com/track/%d" % a['id']
-					)
-				] for a in url['data']
-			]
-
-			keyboard.append(
-				[
-					InlineKeyboardButton(
-						text = "GET ALL ⬇️",
-						callback_data = "{}/{}/down".format(link, method)
-					)
-				]
-			)
-
-			keyboard.append(
-				[
-					InlineKeyboardButton(
-						text = "BACK 🔙",
-						callback_data = link
-					)
-				]
-			)
-
-		elif "related" in query_data:
-			keyboard = [
-				[
-					InlineKeyboardButton(
-						text = "{}- {}".format(a['name'], a['nb_fan']),
-						callback_data = "https://api.deezer.com/artist/%d" % a['id']
-					)
-				] for a in url['data']
-			]
-
-			keyboard.append(
-				[
-					InlineKeyboardButton(
-						text = "BACK 🔙",
-						callback_data = link
-					)
-				]
-			)
+			try:
+				bot.editMessageReplyMarkup(
+					chat_id, message_id,
+					reply_markup = InlineKeyboardMarkup(keyboard)
+				)
+			except error.BadRequest:
+				pass
 
 		else:
-			bot.deleteMessage(
-				(
-					from_id, message_id
+			tags = query_data.split("_")
 
+			if tags[0] == "Infos with too many bytes":
+				bot.answerCallbackQuery(
+					query_id,
+					translate(
+						users[chat_id]['tongue'], query_data
+					)
 				)
-			)
 
-			keyboard = [
-				[
-					InlineKeyboardButton(
-						text = "TOP 30 🔝",
-						callback_data = "%s/top?limit=30" % link
-					),
-					InlineKeyboardButton(
-						text = "ALBUMS 💽",
-						callback_data = "%s/albums" % link
-					)
-				],
-				[
-					InlineKeyboardButton(
-						text = "RADIO 📻",
-						callback_data = "%s/radio" % link
-					),
-					InlineKeyboardButton(
-						text = "RELATED 🗣",
-						callback_data = "%s/related" % link
-					)
-				]
-			]
-
-			sendPhoto(
-				from_id, url['picture_xl'],
-				caption = (
-					"👤 Artist: %s \n💽 Album numbers: %d \n👥 Fans on Deezer: %d"
-					% (
-						url['name'],
-						url['nb_album'],
-						url['nb_fan']
-					)
-				),
-				reply_markup = InlineKeyboardMarkup(
-					inline_keyboard = keyboard
-				)
-			)
-
-		try:
-			bot.editMessageReplyMarkup(
-				(
+			elif len(tags) == 4:
+				bot.answerCallbackQuery(
+					query_id,
 					(
-						from_id, message_id
-					)
-				),
-				reply_markup = InlineKeyboardMarkup(
-					inline_keyboard = keyboard
+						tags_query
+						% (
+							tags[0],
+							tags[1],
+							tags[2],
+							tags[3]
+						)
+					),
+					show_alert = True
 				)
-			)
-		except telepot.exception.TelegramError:
-			pass
-	else:
-		tags = query_data.split("_")
 
-		if tags[0] == "Infos with too many bytes":
-			bot.answerCallbackQuery(
-				query_id,
-				translate(
-					users[from_id]['tongue'], query_data
-				)
-			)
+			else:
+				if ans == "2":
+					if users[chat_id]['c_downloads'] == 3:
+						bot.answerCallbackQuery(
+							query_id,
+							translate(
+								users[chat_id]['tongue'], "Wait the end and repeat the step, did you think you could download how much songs you wanted? ;)"
+							),
+							show_alert = True
+						)
 
-		elif len(tags) == 4:
-			bot.answerCallbackQuery(
-				query_id,
-				text = (
-					"💽 Album: %s\n📅 Date: %s\n📀 Label: %s\n🎵 Genre: %s"
-					% (
-						tags[0],
-						tags[1],
-						tags[2],
-						tags[3]
+						return
+					else:
+						users[chat_id]['c_downloads'] += 1
+
+				bot.answerCallbackQuery(
+					query_id,
+					translate(
+						users[chat_id]['tongue'], "Song is downloading"
 					)
-				),
-				show_alert = True
-			)
-
-		else:
-			if ans == "2":
-				if users[from_id]['c_downloads'] == 3:
-					bot.answerCallbackQuery(
-						query_id,
-						translate(
-							users[from_id]['tongue'], "Wait the end and repeat the step, did you think you could download how much songs you wanted? ;)"
-						),
-						show_alert = True
-					)
-
-					return
-				else:
-					users[from_id]['c_downloads'] += 1
-
-			bot.answerCallbackQuery(
-				query_id,
-				translate(
-					users[from_id]['tongue'], "Song is downloading"
 				)
-			)
 
-			Link(
-				query_data, from_id,
-				users[from_id]['quality'], msg['message']
-			)
+				Link(
+					query_data, chat_id,
+					users[chat_id]['quality'], message_id
+				)
+	except TelegramError:
+		pass
 
-def download(msg):
-	query_id, from_id, query_data = telepot.glance(msg, flavor = "callback_query")
-	init_user(from_id, msg)
+def download(update, context):
+	infos_user = update.effective_user
+	chat_id = infos_user.id
+	infos_query = update.callback_query
+	message_id = infos_query.message.message_id
+	query_data = infos_query.data
+	query_id = infos_query.id
+
+	if not authorized(chat_id):
+		return
+
+	try:
+		tongue = infos_user.language_code
+	except AttributeError:
+		tongue = "en"
+
+	init_user(chat_id, tongue)
 
 	Thread(
 		target = inline,
 		args = (
-			msg, from_id,
-			query_data, query_id
+			message_id, chat_id,
+			query_data, query_id, tongue
 		)
 	).start()
 
-def search(msg):
-	query_id, from_id, query_string = telepot.glance(msg, flavor = "inline_query")
+def search(update, context):
+	infos_user = update.effective_user
+	chat_id = infos_user.id
+	infos_query = update.inline_query
+	query_string = infos_query.query
+	query_id = infos_query.id
 
-	if check_flood(from_id) == "BANNED":
+	if not authorized(chat_id):
 		return
 
-	init_user(from_id, msg)
+	try:
+		tongue = infos_user.language_code
+	except AttributeError:
+		tongue = "en"
 
-	if "" == query_string:
-		search1 = request("https://api.deezer.com/chart").json()
+	init_user(chat_id, tongue)
+
+	if ".chart." == query_string:
+		search1 = request(api_chart).json()
 
 		result = [
 			InlineQueryResultArticle(
 				id = a['link'],
 				title = a['title'],
-				description = a['artist']['name'],
+				description = (
+					"Artist: {}\nAlbum: {}".format(
+						a['artist']['name'],
+						a['album']['title']
+					)
+				),
 				thumb_url = a['album']['cover_big'],
-				input_message_content = InputTextMessageContent(
-					message_text = a['link']
-				)
+				input_message_content = InputTextMessageContent(a['link'])
 			) for a in search1['tracks']['data']
 		]
 
@@ -1275,10 +1226,15 @@ def search(msg):
 			InlineQueryResultArticle(
 				id = "https://www.deezer.com/album/%d" % a['id'],
 				title = "%s (Album)" %  a['title'],
-				description = a['artist']['name'],
+				description = (
+					"Artist: {}\nPosition: {}".format(
+						a['artist']['name'],
+						a['position']
+					)
+				),
 				thumb_url = a['cover_big'],
 				input_message_content = InputTextMessageContent(
-					message_text = "https://www.deezer.com/album/%d" % a['id']
+					"https://www.deezer.com/album/%d" % a['id']
 				)
 			) for a in search1['albums']['data']
 		]
@@ -1286,12 +1242,10 @@ def search(msg):
 		result += [
 			InlineQueryResultArticle(
 				id = a['link'],
-				title = "%d" % a['position'],
-				description = a['name'],
+				title = a['name'],
+				description = "Position: %d" % a['position'],
 				thumb_url = a['picture_big'],
-				input_message_content = InputTextMessageContent(
-					message_text = a['link']
-				)
+				input_message_content = InputTextMessageContent(a['link'])
 			) for a in search1['artists']['data']
 		]
 
@@ -1299,11 +1253,14 @@ def search(msg):
 			InlineQueryResultArticle(
 				id = a['link'],
 				title = a['title'],
-				description = "N° tracks: %d" % a['nb_tracks'],
+				description = (
+					"N° tracks: {}\nUser: {}".format(
+						a['nb_tracks'],
+						a['user']['name']
+					)
+				),
 				thumb_url = a['picture_big'],
-				input_message_content = InputTextMessageContent(
-					message_text = a['link']
-				)
+				input_message_content = InputTextMessageContent(a['link'])
 			) for a in search1['playlists']['data']
 		]
 	else:
@@ -1322,7 +1279,7 @@ def search(msg):
 				method = "playlist"
 
 			search1 = request(
-					"https://api.deezer.com/search/{}/?q={}".format(method, search)
+				api_type1.format(method, search)
 			).json()
 
 			try:
@@ -1336,11 +1293,14 @@ def search(msg):
 					InlineQueryResultArticle(
 						id = a['link'],
 						title = a['title'],
-						description = a['artist']['name'],
+						description = (
+							"Artist: {}\nTracks: {}".format(
+								a['artist']['name'],
+								a['nb_tracks']
+							)
+						),
 						thumb_url = a['cover_big'],
-						input_message_content = InputTextMessageContent(
-							message_text = a['link']
-						)
+						input_message_content = InputTextMessageContent(a['link'])
 					) for a in search1['data']
 				]
 
@@ -1349,10 +1309,14 @@ def search(msg):
 					InlineQueryResultArticle(
 						id = a['link'],
 						title = a['name'],
+						description = (
+							"Albums: {}\nFollowers: {}".format(
+								a['nb_album'],
+								a['nb_fan']
+							)
+						),
 						thumb_url = a['picture_big'],
-						input_message_content = InputTextMessageContent(
-							message_text = a['link']
-						)
+						input_message_content = InputTextMessageContent(a['link'])
 					) for a in search1['data']
 				]
 
@@ -1361,11 +1325,14 @@ def search(msg):
 					InlineQueryResultArticle(
 						id = a['link'],
 						title = a['title'],
-						description = "N° tracks: %d" % a['nb_tracks'],
+						description = (
+							"N° tracks: {}\nUser: {}".format(
+								a['nb_tracks'],
+								a['user']['name']
+							)
+						),
 						thumb_url = a['picture_big'],
-						input_message_content = InputTextMessageContent(
-							message_text = a['link']
-						)
+						input_message_content = InputTextMessageContent(a['link'])
 					) for a in search1['data']
 				]
 		else:
@@ -1374,11 +1341,12 @@ def search(msg):
 
 				if "lbl:" in query_string:
 					method = "label"
-				else:
+
+				elif "trk:" in query_string:
 					method = "track"
 
 			search1 = request(
-				"https://api.deezer.com/search/?q={}:'{}'".format(method, search)
+				api_type2.format(method, search)
 			).json()
 
 			try:
@@ -1391,164 +1359,128 @@ def search(msg):
 				InlineQueryResultArticle(
 					id = a['link'],
 					title = a['title'],
-					description = a['artist']['name'],
+					description = (
+						"Artist: {}\nAlbum: {}".format(
+							a['artist']['name'],
+							a['album']['title']
+						)
+					),
 					thumb_url = a['album']['cover_big'],
-					input_message_content = InputTextMessageContent(
-						message_text = a['link']
-					)
+					input_message_content = InputTextMessageContent(a['link'])
 				) for a in search1['data']
 			]
 
-			for a in search1['data']:
-				try:
-					if "https://www.deezer.com/album/%d" % a['album']['id'] in str(result):
-						continue
-				except KeyError:
-					continue
+			already = []
 
-				result += [
-					InlineQueryResultArticle(
-						id = "https://www.deezer.com/album/%d" % a['album']['id'],
-						title = "%s (Album)" % a['album']['title'],
-						description = a['artist']['name'],
-						thumb_url = a['album']['cover_big'],
-						input_message_content = InputTextMessageContent(
-							message_text = "https://www.deezer.com/album/%d" % a['album']['id']
+			for a in search1['data']:
+				ids = a['album']['id']
+
+				if not ids in already:
+					result += [
+						InlineQueryResultArticle(
+							id = ids,
+							title = "%s (Album)" % a['album']['title'],
+							description = a['artist']['name'],
+							thumb_url = a['album']['cover_big'],
+							input_message_content = InputTextMessageContent(
+								"https://www.deezer.com/album/%d" % a['album']['id']
+							)
 						)
-					)
-				]
+					]
+
+					already.append(ids)
 
 	try:
 		bot.answerInlineQuery(query_id, result)
-	except telepot.exception.TelegramError:
+	except (error.BadRequest, error.TimedOut):
 		pass
 
-def nada(msg):
-	pass
-
-def start(msg):
+def menu(update, context):
 	global free
 
-	content_type, chat_type, chat_id = telepot.glance(msg)
+	infos_chat = update.effective_chat
+	chat_id = infos_chat.id
+	infos_message = update.effective_message
+	date = infos_message.date.timestamp()
+	text = infos_message.text
+	caption = infos_message.caption
+	message_id = infos_message.message_id
+	is_audio = infos_message.audio
+	is_voice = infos_message.voice
+	things = infos_message.entities
+	infos_user = update.effective_user
 
-	if free == 0 and chat_id != root:
+	if not authorized(chat_id, date):
 		return
 
-	if check_flood(chat_id, msg['date']) == "BANNED" and chat_id != root:
+	if not text:
+		text = caption
+
+	if not view_db(user_exist % chat_id):
+		statisc(chat_id, "USERS")
+
+		bot.sendMessage(
+			chat_id, help_message,
+			reply_markup = InlineKeyboardMarkup(first_time_keyboard)
+		)
+
 		return
 
-	pprint(msg)
-	statisc(chat_id, "USERS")
-	init_user(chat_id, msg)
+	try:
+		tongue = infos_user.language_code
+	except AttributeError:
+		tongue = "en"
 
-	if content_type == "text" and msg['text'] == "/start":
-		try:
-			sendPhoto(
-				chat_id, open("example.jpg", "rb"),
-				caption = "Welcome to @%s \nPress '/' to get commands list" % bot_name
-			)
-		except FileNotFoundError:
-			pass
+	init_user(chat_id, tongue)
 
+	if text == "/start":
+		sendPhoto(
+			chat_id, open(photo, "rb"),
+			start_message
+		)
+
+		keyboard = [
+			[
+				InlineKeyboardButton(
+					queries['s_art']['text'],
+					switch_inline_query_current_chat = queries['s_art']['query'] % ""
+				),
+				InlineKeyboardButton(
+					queries['s_alb']['text'],
+					switch_inline_query_current_chat = queries['s_alb']['query'] % ""
+				)
+			],
+			[
+				InlineKeyboardButton(
+					queries['s_pla']['text'],
+					switch_inline_query_current_chat = queries['s_pla']['query'] % ""
+				),
+				InlineKeyboardButton(
+						queries['s_lbl']['text'],
+						switch_inline_query_current_chat = queries['s_lbl']['query'] % ""
+					)
+			],
+			[
+				InlineKeyboardButton(
+					queries['s_trk']['text'],
+					switch_inline_query_current_chat = queries['s_trk']['query'] % ""
+				),
+				InlineKeyboardButton(
+					queries['s_']['text'],
+					switch_inline_query_current_chat = queries['s_']['query'] % ".chart."
+				)
+			],
+		]
+
+		sendMessage(
+			chat_id, "Choose what you prefer",
+			reply_markup = InlineKeyboardMarkup(keyboard)
+		)
+
+	elif text == "/info":
 		sendMessage(
 			chat_id,
-			"Press for search what you prefer" +
-			"\nP.S. Remember you can do this digiting @ in your keyboard and select %s" % bot_name +
-			"\nSend a Deezer or Spotify link to download \nSend a song o vocal message to recognize the track",
-			reply_markup = InlineKeyboardMarkup(
-				inline_keyboard = [
-					[
-						InlineKeyboardButton(
-							text = "Search by artist 👤",
-							switch_inline_query_current_chat = "art: "
-						),
-						InlineKeyboardButton(
-							text = "Search by album 💽",
-							switch_inline_query_current_chat = "alb: "
-						)
-					],
-					[
-						InlineKeyboardButton(
-							text = "Search playlist 📂",
-							switch_inline_query_current_chat = "pla: "
-						),
-						InlineKeyboardButton(
-								text = "Search label 📀",
-								switch_inline_query_current_chat = "lbl: "
-							)
-					],
-					[
-						InlineKeyboardButton(
-							text = "Search track 🎧",
-							switch_inline_query_current_chat = "trk: "
-						),
-						InlineKeyboardButton(
-							text = "Global search 📊",
-							switch_inline_query_current_chat = ""
-						)
-					]
-				]
-			)
-		)
-
-	elif content_type == "text" and msg['text'] == "/translator":
-		if users[chat_id]['tongue'] != "en":
-			users[chat_id]['tongue'] = "en"
-			sendMessage(chat_id, "Now the language is english")
-		else:
-			users[chat_id]['tongue'] = msg['from']['language_code']
-			sendMessage(chat_id, "Now the bot will use the Telegram app language")
-
-	elif content_type == "text" and msg['text'] == "/quality":
-		sendMessage(
-			chat_id, "Select default download quality\nCURRENTLY: %s 🔊" % users[chat_id]['quality'],
-			reply_markup = ReplyKeyboardMarkup(
-				keyboard = [
-					[
-						KeyboardButton(
-							text = "FLAC"
-						),
-						KeyboardButton(
-							text = "MP3_320Kbps"
-						)
-					],
-					[
-						KeyboardButton(
-							text = "MP3_256Kbps"
-						),
-						KeyboardButton(
-							text = "MP3_128Kbps"
-						)
-					]
-				]
-			)
-		)
-
-	elif content_type == "text" and (
-		msg['text'] == "FLAC" or 
-		msg['text'] == "MP3_320Kbps" or 
-		msg['text'] == "MP3_256Kbps" or 
-		msg['text'] == "MP3_128Kbps"
-	):
-		users[chat_id]['quality'] = msg['text'].replace("Kbps", "")
-
-		sendMessage(
-			chat_id, "Songs will be downloaded in %s quality 🔊" % msg['text'],
-			reply_markup = ReplyKeyboardRemove()
-		)
-
-		sendMessage(chat_id, "Songs which cannot be downloaded in quality you have chosen will be downloaded in the best quality possible")
-
-	elif content_type == "voice" or content_type == "audio":
-		Thread(
-			target = Audio,
-			args = (msg[content_type]['file_id'], chat_id)
-		).start()
-
-	elif content_type == "text" and msg['text'] == "/info":
-		sendMessage(
-			chat_id,
-			"🔺 Version: %s \n🔻 Name: @%s \n✒️ Creator: @%s \n💵 Donation: %s \n📣 Forum: %s \n👥 Users: %d \n⬇️ Total downloads: %d"
+			info_msg
 			% (
 				version,
 				bot_name,
@@ -1560,89 +1492,126 @@ def start(msg):
 			)
 		)
 
-	elif content_type == "text" and chat_id == root and "the cat is on the table" in msg['text']:
-		what = msg['text'].split("the cat is on the table ")[-1]
+	elif text == "/settings":
+		sendMessage(
+			chat_id, "Settings",
+			reply_markup = InlineKeyboardMarkup(
+				create_keyboard(settingss, chat_id)
+			)
+		)
 
-		if what == "1":
-			free = 1
+	elif text == "/shazam":
+		sendMessage(chat_id, "Send the audio or voice message to identify the song")
 
-		elif what == "0":
-			free = 0
+	elif text == "/help":
+		bot.sendMessage(chat_id, help_message)
+
+	elif is_audio or is_voice:
+		if is_audio:
+			file_id = is_audio['file_id']
+		else:
+			file_id = is_voice['file_id']
+
+		Thread(
+			target = Audio,
+			args = (file_id, chat_id)
+		).start()
+
+	elif text:
+		if chat_id in roots and "the cat is on the table" in text:
+			what = text.split("the cat is on the table ")[-1]
+
+			if what == "1":
+				free = 1
+
+			elif what == "0":
+				free = 0
+
+		elif len(things) == 0:
+			keyboard = [
+				[
+					InlineKeyboardButton(
+						queries['s_art']['text'],
+						switch_inline_query_current_chat = queries['s_art']['query'] % text
+					),
+					InlineKeyboardButton(
+						queries['s_alb']['text'],
+						switch_inline_query_current_chat = queries['s_alb']['query'] % text
+					)
+				],
+				[
+					InlineKeyboardButton(
+						queries['s_pla']['text'],
+						switch_inline_query_current_chat = queries['s_pla']['query'] % text
+					),
+					InlineKeyboardButton(
+							queries['s_lbl']['text'],
+							switch_inline_query_current_chat = queries['s_lbl']['query'] % text
+						)
+				],
+				[
+					InlineKeyboardButton(
+						queries['s_trk']['text'],
+						switch_inline_query_current_chat = queries['s_trk']['query'] % text
+					),
+					InlineKeyboardButton(
+						queries['s_']['text'],
+						switch_inline_query_current_chat = queries['s_']['query'] % text
+					)
+				],
+			]
+
+			sendMessage(chat_id, "Press",
+				reply_markup = InlineKeyboardMarkup(keyboard)
+			)
 
 		else:
-			Thread(
-				target = sendall,
-				args = (what,)
-			).start()
-
-	elif content_type == "text":
-		text = msg['text'].replace("'", "")
-
-		try:
-			msg['entities']
-
 			if ans == "2" and users[chat_id]['c_downloads'] == 3:
 				sendMessage(chat_id, "Wait the end and repeat the step, did you think you could download how much songs you wanted? ;)")
 			else:
 				if ans == "2":
 					users[chat_id]['c_downloads'] += 1
-
+				
+				linked = infos_message.parse_entity(things[0])
+				
 				Thread(
 					target = Link,
 					args = (
-						text, chat_id,
-						users[chat_id]['quality'], msg
+						linked, chat_id,
+						users[chat_id]['quality'], message_id
 					)
 				).start()
-		except KeyError:
-			sendMessage(chat_id, "Press",
-				reply_markup = InlineKeyboardMarkup(
-					inline_keyboard = [
-						[
-							InlineKeyboardButton(
-								text = "Search artist 👤",
-								switch_inline_query_current_chat = "art: %s" % text
-							),
-							InlineKeyboardButton(
-								text = "Search album 💽",
-								switch_inline_query_current_chat = "alb: %s" % text
-							)
-						],
-						[
-							InlineKeyboardButton(
-								text = "Search playlist 📂",
-								switch_inline_query_current_chat = "pla: %s" % text
-							),
-							InlineKeyboardButton(
-								text = "Search label 📀",
-								switch_inline_query_current_chat = "lbl: %s" % text
-							)
-						],
-						[
-							InlineKeyboardButton(
-								text = "Search track 🎧",
-								switch_inline_query_current_chat = "trk: %s" % text
-							),
-							InlineKeyboardButton(
-								text = "Search global 📊",
-								switch_inline_query_current_chat = text
-							)
-						]
-					]
-				)
-			)
-
 
 try:
 	ans = "1"
-	bot.message_loop(
-		{
-			"chat": start,
-			"callback_query": download,
-			"inline_query": search,
-			"chosen_inline_result": nada
-		}
-	)
+
+	if ans == "1" or ans == "2":
+		for a in comandss:
+			sets.dispatcher.add_handler(
+				CommandHandler(a, menu)
+			)
+
+		sets.dispatcher.add_handler(
+			MessageHandler(
+				Filters.audio |
+				Filters.text |
+				Filters.voice |
+				Filters.photo,
+				menu
+			)
+		)
+
+		sets.dispatcher.add_handler(
+			InlineQueryHandler(search)
+		)
+
+		sets.dispatcher.add_handler(
+			CallbackQueryHandler(download)
+		)
+
+		sets.start_polling()
+	else:
+		raise KeyboardInterrupt
 
 	print("Bot started")
 
@@ -1651,9 +1620,10 @@ try:
 		path = os.statvfs("/")
 		free_space = path.f_bavail * path.f_frsize
 
-		if (del1 == del2 and is_audio == 0) or free_space <= 4000000000 or del2 > del1:
+		if (del1 <= del2 and is_audio == 0) or free_space <= limit:
 			del1 = 0
 			del2 = 0
-       
-except KeyboardInterrupt:        
-	print("\nSTOPPED")
+
+except KeyboardInterrupt:
+	print("\nSTOPPING...")
+
