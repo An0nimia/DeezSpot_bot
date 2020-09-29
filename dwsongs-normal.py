@@ -33,14 +33,9 @@ from telegram import (
 	InlineQueryResultArticle, InputTextMessageContent
 )
 
-#path = os.getcwd()
-#setting = path + "/DeezloaderAn0n_bot/settings.ini"
-
 config = ConfigParser()
 config.read(ini_file)
 
-#Path to Download the Songs
-local = "/media/pimedia/Deezloader/"
 try:
 	deezer_token = config['login']['token']
 	bot_token = config['bot']['token']
@@ -75,7 +70,7 @@ config = {
 acrcloud = ACRcloud(config)
 
 logging.basicConfig(
-	filename = local + "dwsongs.log",
+	filename = "dwsongs.log",
 	level = logging.ERROR,
 	format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
@@ -1583,7 +1578,9 @@ def menu(update, context):
 				).start()
 
 try:
-	ans = "1"
+	print("1): Free")
+	print("2): Strict")
+	ans = input("Choose: ")
 
 	if ans == "1" or ans == "2":
 		for a in comandss:
@@ -1624,6 +1621,15 @@ try:
 			del1 = 0
 			del2 = 0
 
+			for a in os.listdir(loc_dir):
+				try:
+					rmtree(loc_dir + a)
+				except NotADirectoryError:
+					os.remove(loc_dir + a)
+				except OSError:
+					pass
 except KeyboardInterrupt:
 	print("\nSTOPPING...")
-
+	sets.stop()
+	os.rmdir(loc_dir)
+	exit()
