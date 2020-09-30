@@ -2,9 +2,6 @@
 
 from telegram import InlineKeyboardButton
 
-#Path to Download the Songs
-#local = "/media/pimedia/Deezloader/"
-
 not_interface = False
 default_time = 0.0
 roots = [560950095]
@@ -25,7 +22,7 @@ api_type2 = "https://api.deezer.com/search/?q={}:\"{}\""
 song_default_image = "https://e-cdns-images.dzcdn.net/images/cover/1000x1000-000000-80-0-0.jpg"
 services_supported = ["spotify", "deezer"]
 comandss = ["start", "settings", "info", "shazam", "help"]
-settingss = ["quality", "tongue"]
+settingss = ["quality", "tongue", "server"]
 qualities = ["FLAC", "MP3_320", "MP3_256", "MP3_128"]
 send_image_track_query = "🎧 Track: %s \n👤 Artist: %s \n💽 Album: %s \n📅 Date: %s"
 send_image_album_query = "💽 Album: %s \n👤 Artist: %s \n📅 Date: %s \n🎧 Tracks amount: %d"
