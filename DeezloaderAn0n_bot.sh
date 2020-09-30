@@ -1,7 +1,7 @@
 #!/bin/sh
 
 path=`dirname "$0"`
-deezbot="${path}/dwsongs-normal.py"
+#deezbot="${path}/dwsongs-normal.py"
 
 case "$1" in
   start)
@@ -11,7 +11,8 @@ case "$1" in
         exit 1
     else
 	echo "DeezloaderAn0n_bot started!"
-	$deezbot
+  cd $path
+	./dwsongs-normal.py
     fi
 
     ;;
