@@ -74,7 +74,7 @@ config = {
 acrcloud = ACRcloud(config)
 
 logging.basicConfig(
-	filename = local + "dwsongs.log",
+	filename = "dwsongs.log",
 	level = logging.ERROR,
 	format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
