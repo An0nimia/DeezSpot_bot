@@ -2,6 +2,9 @@
 
 from telegram import InlineKeyboardButton
 
+#Path to Download the Songs
+local = "/media/pimedia/Deezloader/"
+
 not_interface = False
 default_time = 0.0
 roots = [560950095]
@@ -10,8 +13,8 @@ seconds_limits_album = 40000
 max_songs = 400
 telegram_file_api_limit = 1500000000
 telegram_audio_api_limit = 50000000
-db_file = "dwsongs.db"
-loc_dir = "Songs/"
+db_file = local + "dwsongs.db"
+loc_dir = local + "Songs/"
 ini_file = "settings.ini"
 photo = "example.png"
 bot_name = "DeezloaderAn0n_bot"

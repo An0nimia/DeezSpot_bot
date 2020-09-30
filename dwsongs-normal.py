@@ -33,8 +33,6 @@ from telegram import (
 	InlineQueryResultArticle, InputTextMessageContent
 )
 
-#path = os.getcwd()
-#setting = path + "/DeezloaderAn0n_bot/settings.ini"
 
 config = ConfigParser()
 config.read(ini_file)
