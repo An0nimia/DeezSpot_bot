@@ -1612,7 +1612,12 @@ def menu(update, context):
 
 
 try:
-    ans = "1"
+    if server_mode == False:
+        print("1): Free")
+        print("2): Strict")
+        ans = input("Choose: ")
+    else:
+        ans = "1"
 
     if ans == "1" or ans == "2":
         for a in comandss:
@@ -1653,5 +1658,22 @@ try:
             del1 = 0
             del2 = 0
 
+            if server_mode == False:
+                for a in os.listdir(loc_dir):
+                    try:
+                        rmtree(loc_dir + a)
+                    except NotADirectoryError:
+                        os.remove(loc_dir + a)
+                    except OSError:
+                        pass
+
 except KeyboardInterrupt:
-    print("\nSTOPPING...")
+    if server_mode == False:
+        print("\nSTOPPING...")
+        sets.stop()
+       	#os.rmdir(loc_dir)
+        exit()
+    else:
+        print("\nSTOPPING...")
+        sets.stop()
+        exit()
