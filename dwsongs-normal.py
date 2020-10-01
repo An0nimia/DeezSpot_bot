@@ -1671,7 +1671,7 @@ except KeyboardInterrupt:
     if server_mode == False:
         print("\nSTOPPING...")
         sets.stop()
-       	#os.rmdir(loc_dir)
+       	os.rmdir(loc_dir)
         exit()
     else:
         print("\nSTOPPING...")
