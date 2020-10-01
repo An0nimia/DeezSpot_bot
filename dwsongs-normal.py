@@ -246,47 +246,6 @@ def sendAudio(
         youtube=False
 ):
     sleep(default_time)
-    if server_mode == false:
-    	try:
-
-            if os.path.isfile(audio):
-                bot.sendChatAction(chat_id, "upload_audio")
-
-                try:
-                    tag = EasyID3(audio)
-                    duration = int(MP3(audio).info.length)
-                except ID3NoHeaderError:
-                    tag = FLAC(audio)
-                    duration = int(tag.info.length)
-
-                if os.path.getsize(audio) < telegram_audio_api_limit:
-                    file_id = bot.sendAudio(
-                        chat_id, open(audio, "rb"),
-                        thumb=open(image.url, "rb"),
-                        duration=duration,
-                        performer=tag['artist'][0],
-                        title=tag['title'][0]
-                    )['audio']['file_id']
-
-                    if not youtube:
-                        quality = fast_split(audio)
-                        link = "track/%s" % link.split("/")[-1]
-
-                        write_db(
-                            insert_query
-                            % (
-                                link,
-                                file_id,
-                                quality
-                            )
-                        )
-                else:
-                    sendMessage(chat_id, "Song too big :(")
-            else:
-                bot.sendAudio(chat_id, audio)
-    	except error.BadRequest:
-        	sendMessage(
-            	chat_id, "Sorry the track %s doesn't seem readable on Deezer :(" % link)
 
 
 def track(link, chat_id, quality):
