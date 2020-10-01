@@ -247,7 +247,7 @@ def sendAudio(
 ):
     sleep(default_time)
     try:
-        if server_mode == false:
+        if server_mode == False:
             if os.path.isfile(audio):
                 bot.sendChatAction(chat_id, "upload_audio")
 
