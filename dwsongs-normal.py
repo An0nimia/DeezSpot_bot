@@ -247,7 +247,8 @@ def sendAudio(
 ):
     sleep(default_time)
     try:
-	    if server_mode == false:
+        if server_mode == false:
+
             if os.path.isfile(audio):
                 bot.sendChatAction(chat_id, "upload_audio")
 
@@ -288,7 +289,6 @@ def sendAudio(
     except error.BadRequest:
         sendMessage(
             chat_id, "Sorry the track %s doesn't seem readable on Deezer :(" % link)
-
 
 
 def track(link, chat_id, quality):
