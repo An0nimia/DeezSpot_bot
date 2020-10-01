@@ -791,14 +791,13 @@ def Link(link, chat_id, quality, message_id):
             chat_id, "Try to search it throught inline mode or search the link on Deezer")
 
     except Exception as a:
-        if server_mode == false:
-            logging.error(a)
-            logging.error(quality)
-            logging.error(link)
+        logging.error(a)
+        logging.error(quality)
+        logging.error(link)
 
-            sendMessage(
-                chat_id, "OPS :( Something went wrong please send to @An0nimia this link: {} {}, if this happens again".format(link, quality)
-            )
+        sendMessage(
+            chat_id, "OPS :( Something went wrong please send to @An0nimia this link: {} {}, if this happens again".format(link, quality)
+        )
 
     if done == 1:
         sendMessage(
