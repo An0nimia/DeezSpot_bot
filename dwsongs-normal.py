@@ -246,7 +246,7 @@ def sendAudio(
         youtube=False
 ):
     sleep(default_time)
-    sendMessage(chat_id, "SendAudio")
+    sendMessage(chat_id, server_mode)
 
 
 def track(link, chat_id, quality):
