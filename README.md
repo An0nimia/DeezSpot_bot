@@ -33,3 +33,7 @@ This project has been created for integrate deezloader library in a Telegram bot
 	creator = An0nimia
 	donation = https://www.paypal.me/An0nimia
 	group = https://t.me/DeezloaderRMX_group
+
+	[download_mode]
+	server_mode = False #could be set as True of False -> while True the audio will not be send and kept stored on the server
+	#False operation like normal
