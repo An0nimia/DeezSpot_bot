@@ -246,9 +246,8 @@ def sendAudio(
         youtube=False
 ):
     sleep(default_time)
-    if server_mode == false:
-        try:
-
+    try:
+	    if server_mode == false:
             if os.path.isfile(audio):
                 bot.sendChatAction(chat_id, "upload_audio")
 
@@ -284,11 +283,12 @@ def sendAudio(
                     sendMessage(chat_id, "Song too big :(")
             else:
                 bot.sendAudio(chat_id, audio)
-        except error.BadRequest:
-            sendMessage(
-                chat_id, "Sorry the track %s doesn't seem readable on Deezer :(" % link)
-    else:
-        sendMessage(chat_id, "Done!")
+        else:
+            sendMessage(chat_id, "Done!")
+    except error.BadRequest:
+        sendMessage(
+            chat_id, "Sorry the track %s doesn't seem readable on Deezer :(" % link)
+
 
 
 def track(link, chat_id, quality):
@@ -792,13 +792,14 @@ def Link(link, chat_id, quality, message_id):
             chat_id, "Try to search it throught inline mode or search the link on Deezer")
 
     except Exception as a:
-        logging.error(a)
-        logging.error(quality)
-        logging.error(link)
+        if server_mode == false:
+            logging.error(a)
+            logging.error(quality)
+            logging.error(link)
 
-        sendMessage(
-            chat_id, "OPS :( Something went wrong please send to @An0nimia this link: {} {}, if this happens again".format(link, quality)
-        )
+            sendMessage(
+                chat_id, "OPS :( Something went wrong please send to @An0nimia this link: {} {}, if this happens again".format(link, quality)
+            )
 
     if done == 1:
         sendMessage(
