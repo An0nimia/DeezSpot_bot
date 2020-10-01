@@ -269,21 +269,23 @@ def sendAudio(
                     )['audio']['file_id']
 
                     if not youtube:
-                    	quality = fast_split(audio)
-                    	link = "track/%s" % link.split("/")[-1]
+                        quality = fast_split(audio)
+                        link = "track/%s" % link.split("/")[-1]
 
-                    	write_db(
-                        	insert_query
-                        	% (
-                            	link,
-                            	file_id,
-                            	quality
-                        	)
-                    	)
+                        write_db(
+                            insert_query
+                            % (
+                                link,
+                                file_id,
+                                quality
+                            )
+                        )
                 else:
                     sendMessage(chat_id, "Song too big :(")
             else:
                 bot.sendAudio(chat_id, audio)
+        else:
+            sendMessage(chat_id, "Done!")
     except error.BadRequest:
         sendMessage(
             chat_id, "Sorry the track %s doesn't seem readable on Deezer :(" % link)
