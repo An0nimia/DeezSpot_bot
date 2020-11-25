@@ -14,6 +14,7 @@ from mutagen.flac import FLAC
 from acrcloud import ACRcloud
 from mutagen.easyid3 import EasyID3
 from configparser import ConfigParser
+from deezloader.utils import what_kind
 from deezloader import Login, exceptions
 from mutagen.id3._util import ID3NoHeaderError
 
@@ -360,6 +361,7 @@ def Link(link, chat_id, quality, message_id):
 	del1 += 1
 	done = 0
 	quali = quality.split("MP3_")[-1]
+	link = what_kind(link)
 	link = link.split("?")[0]
 	ids = link.split("/")[-1]
 
