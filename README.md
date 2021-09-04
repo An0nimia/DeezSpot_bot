@@ -7,5 +7,4 @@
 - I do not recommend you doing this illegally or against Deezer's terms of service.
 - This project is licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
-## DeezloaderAn0n_bot
-	LOOK FOR THE OTHER BRANCH
+# I AM TOO LAZY TO WRITE A DOCUMENTATION RIGHT NOW :)
