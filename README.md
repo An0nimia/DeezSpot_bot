@@ -41,6 +41,7 @@ To install it just type this command
 
   - mail, password, token(arl) are deezer credentials used for login
   - the pyrogram api_id & api_hash can be created [here](https://my.telegram.org/auth?to=apps)
+  - for create a telegram bot look [here](https://t.me/BotFather)
   - for acrcloud key, secret, host look at [acrcloud](https://docs.acrcloud.com/tutorials/recognize-music)
 
   ### .set_configs.py
