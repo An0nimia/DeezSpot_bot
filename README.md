@@ -8,4 +8,4 @@
 - This project is licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
 # I AM TOO LAZY TO WRITE A DOCUMENTATION RIGHT NOW :)
-Just write to t.me/an0nimia if you have questions
+Just write to [anonimia](https://t.me/an0nimia) if you have questions
