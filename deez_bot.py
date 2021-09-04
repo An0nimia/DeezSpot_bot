@@ -81,7 +81,6 @@ to_ban = Filters.user(banned_ids)
 def ban_chat_id(chat_id):
 	write_banned(chat_id)
 	to_ban.add_chat_ids(chat_id)
-	roots_data[chat_id]['stage'] = None
 
 def help_check_user(chat_id, date = None):
 	if (mode_bot == 1) and (not chat_id in root_ids):
@@ -585,6 +584,7 @@ def msgs_handler(update: Update, context):
 	if chat_id in roots_data:
 		if roots_data[chat_id]['stage'] == "add_banned":
 			ban_chat_id(text)
+			roots_data[chat_id]['stage'] = None
 
 			bot.send_message(
 				chat_id = chat_id,
