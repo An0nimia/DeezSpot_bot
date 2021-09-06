@@ -49,3 +49,6 @@ To install it just type this command
   Go and modify [set_configs.py](https://github.com/An0nimia/DeezloaderBIB_bot/blob/master/configs/set_configs.py)
   
   If you don't want to login with arl, which expire, log with normal credentials & delete line 35
+  
+  ### Deploy to Heroku
+  <p><a href="https://github.com/An0nimia/DeezloaderBIB_bot/blob/heroku/heroku.md"> <img src="https://img.shields.io/badge/Heroku%20Deploy-blueviolet?style=for-the-badge&logo=heroku" width="180""/></a></p>
