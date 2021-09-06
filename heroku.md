@@ -1,14 +1,14 @@
 ## Deploying This bot using HEROKU-CLI
-heroku cli is the method which you can remotely your app via any terminal like windows-linux-android(Termux)
+Heroku cli is the method which you can remotely your app via any terminal like windows-linux-android(Termux)
 
 ## Pre-requisites
 - [`Heroku`](https://heroku.com) accounts
 - Node js + npm (android just nodejs)
-- python 3.9
+- Python 3.9
 - [`Heroku cli`](https://devcenter.heroku.com/articles/heroku-cli) on android use `npm i -g heroku` use [`TERMUX`](https://play.google.com/store/apps/details?id=com.termux)
 
 ## Tutorial
-- setup everything needed read [`This`](https://github.com/An0nimia/DeezloaderBIB_bot/tree/heroku#set-up)
+- Setup everything needed read [`This`](https://github.com/An0nimia/DeezloaderBIB_bot/tree/heroku#set-up)
 - Running it until completely fixed like [`This`](https://telegra.ph/file/41da7712f38693958c497.jpg)
 - Now delete & edit some code
   1. [`Delete This`](https://github.com/An0nimia/DeezloaderBIB_bot/blob/0cf46001bf8676293cf3b643d8d3f7678da4b408/deez_bot.py#L42) `, show_menu, create_tmux`
