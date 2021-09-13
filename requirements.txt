@@ -1,6 +1,6 @@
 deezloader
 python-telegram-bot
-pyrogram
+git+git://github.com/pyrogram/pyrogram@master
 tgcrypto
 python-acrcloud
 libtmux
