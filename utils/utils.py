@@ -23,7 +23,7 @@ from os import (
 
 from os.path import (
 	getsize, join,
-	islink, isdir
+	islink, isdir, exists
 )
 
 def check_config_file(config):
@@ -167,9 +167,14 @@ def create_log_dir():
 	if not isdir(logs_path):
 		mkdir(logs_path)
 
+	if not exists(log_downloads):
 		f = open(log_downloads, "w")
+		f.write("")
 		f.close()
+
+	if not exists(log_uploads):
 		f = open(log_uploads, "w")
+		f.write("")
 		f.close()
 
 def check_config_bot():
