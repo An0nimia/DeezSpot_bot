@@ -6,8 +6,6 @@ from pyrogram import Client
 from telegram import ChatAction
 from sqlite3 import IntegrityError
 from telegram.error import BadRequest
-from logging import error as log_error
-from contextlib import redirect_stdout
 from deezloader.models.track import Track
 from deezloader.models.album import Album
 from deezloader.__utils__ import what_kind
@@ -26,13 +24,13 @@ from deezloader.exceptions import (
 
 from utils.utils import (
 	get_quality, get_url_path,
-	set_path, get_size
+	set_path, get_size, logging_bot
 )
 
 from configs.customs import (
 	send_image_track_query, send_image_artist_query,
 	send_image_playlist_query, send_image_album_query,
-	album_too_long, track_too_long
+	album_too_long, track_too_long, empty_image_url
 )
 
 from utils.utils_data import (
@@ -48,11 +46,18 @@ from configs.bot_settings import (
 	method_save, output_songs,
 	recursive_quality, recursive_download,
 	make_zip, upload_max_size_user,
-	user_errors, log_uploads
+	user_errors, progress_status_rate
 )
 
 deezer_api = deezer_API()
 tg_bot = tg_bot_api.bot
+l_telegram, l_uploads, l_downloads = logging_bot()
+
+def log_info(log):
+	l_uploads.info(log)
+	
+def log_error(log, exc_info = False):
+	l_downloads.error(log, exc_info = exc_info)
 
 def write_db(track_md5, file_id, n_quality, chat_id):
 	try:
@@ -112,10 +117,7 @@ class DW:
 			)
 
 			sleep(0.1)
-
-			with open(log_uploads, "a") as f:
-				with redirect_stdout(f):
-					print(f"UPLOADING: {file_id}")
+			log_info(f"UPLOADING: {file_id}")
 
 			tg_bot.send_audio(
 				chat_id = self.__chat_id,
@@ -130,10 +132,7 @@ class DW:
 			)
 
 			sleep(0.1)
-
-			with open(log_uploads, "a") as f:
-				with redirect_stdout(f):
-					print(f"UPLOADING: {file_id}")
+			log_info(f"UPLOADING: {file_id}")
 
 			tg_bot.send_document(
 				chat_id = self.__chat_id,
@@ -236,13 +235,10 @@ class DW:
 				message_id = msg_id
 			)
 
-		if c_time % 10 == 0:
+		if (c_time % progress_status_rate == 0):
 			c_progress = f"{current * 100 / total:.1f}%"
 			c_text = f"Uploading {album_name}: {c_progress}"
-
-			with open(log_uploads, "a") as f:
-				with redirect_stdout(f):
-					print(c_text)
+			log_info(c_text)
 
 			if c_time == 0:
 				msg_id = tg_bot.send_message(
@@ -327,10 +323,7 @@ class DW:
 		file_name = set_path(tag, self.__n_quality, f_format, 1)
 		c_progress = f"Uploading ({num_track}/{nb_tracks}): {title}"
 		c_progress += f" {num_track * 100 / nb_tracks:.1f}%"
-
-		with open(log_uploads, "a") as f:
-			with redirect_stdout(f):
-				print(c_progress)
+		log_info(c_progress)
 
 		tg_bot.edit_message_text(
 			chat_id = self.__chat_id,
@@ -428,6 +421,8 @@ class DW:
 			text = err_str
 		)
 
+		sleep(0.1)
+
 		tg_bot.send_message(
 			chat_id = user_errors,
 			text = err_str
@@ -462,7 +457,6 @@ class DW:
 			file_id = match[0]
 
 			if file_id != "TOO BIG":
-				print(file_id)
 				try:
 					self.__upload_zip(file_id)
 				except BadRequest:
@@ -495,6 +489,28 @@ class DW:
 				self.__download_album(link)
 			except Exception as error:
 				self.__send_for_debug(link, error)
+
+	def __send_photo(
+		self, chat_id,
+		image_url, caption,
+		reply_markup = None
+	):
+		try:
+			data = tg_bot.send_photo(
+				chat_id = chat_id,
+				photo = image_url,
+				caption = caption,
+				reply_markup = reply_markup
+			)
+		except BadRequest:
+			data = tg_bot.send_photo(
+				chat_id = chat_id,
+				photo = empty_image_url,
+				caption = caption,
+				reply_markup = reply_markup
+			)
+
+		return data
 
 	def download(self, link):
 		try:
@@ -529,18 +545,18 @@ class DW:
 
 					return
 
-				msg_id = tg_bot.send_photo(
-					chat_id = self.__chat_id,
-					photo = image_url,
-					caption = (
-						send_image_track_query
-						% (
-							name,
-							artist,
-							album,
-							date
-						)
+				caption = (
+					send_image_track_query
+					% (
+						name,
+						artist,
+						album,
+						date
 					)
+				)
+
+				msg_id = self.__send_photo(
+					self.__chat_id, image_url, caption
 				).message_id
 
 				self.__check_track(link_dee)
@@ -554,18 +570,20 @@ class DW:
 				else:
 					return
 
-				msg_id = tg_bot.send_photo(
-					chat_id = self.__chat_id,
-					photo = image_url,
-					reply_markup = create_keyboard_artist(link),
-					caption = (
-						send_image_artist_query
-						% (
-							name,
-							nb_album,
-							nb_fan
-						)
+				caption = (
+					send_image_artist_query
+					% (
+						name,
+						nb_album,
+						nb_fan
 					)
+				)
+
+				reply_markup = create_keyboard_artist(link)
+
+				msg_id = self.__send_photo(
+					self.__chat_id, image_url, caption,
+					reply_markup = reply_markup
 				).message_id
 
 			elif "album/" in link:
@@ -589,18 +607,18 @@ class DW:
 
 					return
 
-				msg_id = tg_bot.send_photo(
-					chat_id = self.__chat_id,
-					photo = image_url,
-					caption = (
-						send_image_album_query
-						% (
-							album,
-							artist,
-							date,
-							nb_tracks
-						)
+				caption = (
+					send_image_album_query
+					% (
+						album,
+						artist,
+						date,
+						nb_tracks
 					)
+				)
+
+				msg_id = self.__send_photo(
+					self.__chat_id, image_url, caption
 				).message_id
 
 				self.__check_album(link_dee, tracks)
@@ -628,18 +646,18 @@ class DW:
 						image_url, creation_data,\
 							creator, tracks = playlist_dee_data(link)
 
-				msg_id = tg_bot.send_photo(
-					chat_id = self.__chat_id,
-					photo = image_url,
-					caption = (
-						send_image_playlist_query
-						% (
-							creation_data,
-							creator,
-							nb_tracks,
-							n_fans
-						)
+				caption = (
+					send_image_playlist_query
+					% (
+						creation_data,
+						creator,
+						nb_tracks,
+						n_fans
 					)
+				)
+
+				msg_id = self.__send_photo(
+					self.__chat_id, image_url, caption
 				).message_id
 
 				if nb_tracks > max_song_per_playlist:
