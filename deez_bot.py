@@ -1,13 +1,15 @@
 #!/usr/bin/python3
 
-from time import sleep
+from sys import argv
+from hashlib import md5
+#from signal import SIGTERM
+#from os import getpid, kill
+from time import sleep, time
 from telegram import ParseMode
-from logging import basicConfig, WARN
 from pyrogram import idle as tg_user_start
 from telegram import MessageEntity, Update
 from utils.special_thread import magicThread
 from utils.converter_bytes import convert_bytes_to
-from helpers.download_help import DOWNLOAD_HELP, DW
 from telegram.error import BadRequest, Unauthorized
 from configs.set_configs import tg_bot_api, tg_user_api
 from utils.utils_data import create_response_article, shazam_song
@@ -27,7 +29,7 @@ from configs.bot_settings import (
 	download_dir_max_size, time_sleep,
 	output_shazam, recorded_file_max_size,
 	root_ids, bunker_channel,
-	owl_channel, max_download_user, log_errors
+	owl_channel, max_download_user
 )
 
 from utils.utils_users_bot import (
@@ -39,7 +41,8 @@ from utils.utils_users_bot import (
 from utils.utils import (
 	is_supported_link, get_download_dir_size,
 	check_config_bot, clear_download_dir,
-	clear_recorded_dir, show_menu, create_tmux
+	clear_recorded_dir, my_round,
+	show_menu, create_tmux
 )
 
 from telegram.ext import (
@@ -56,6 +59,8 @@ from inlines.inline_keyboards import (
 
 check_config_bot()
 
+from helpers.download_help import DOWNLOAD_HELP, DW
+
 mode_bot = show_menu()
 bot_chat_id = tg_bot_api.bot.id
 bot = tg_bot_api.bot
@@ -68,12 +73,6 @@ roots_data = {}
 
 dw_helper = DOWNLOAD_HELP(
 	queues_started, queues_finished, tg_user_api
-)
-
-basicConfig(
-	format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-	level = WARN,
-	filename = log_errors
 )
 
 to_ban = Filters.user(banned_ids)
@@ -136,8 +135,8 @@ def help_download(link, chat_id):
 
 		return
 
-	to_hash = f"{link}{c_user_data['quality']}"
-	hash_link = hash(to_hash)
+	to_hash = f"{link}{c_user_data['quality']}{chat_id}{time()}".encode()
+	hash_link = md5(to_hash).hexdigest()
 	new_ins = DW(dw_helper, chat_id, c_user_data, hash_link)
 
 	t = magicThread(
@@ -255,15 +254,14 @@ def handle_callback_queries(update: Update, context):
 		mode = "kill"
 		answer = "DOWNLOAD DELETED :)"
 		c_hash = data.replace("/kill_dw_", "")
-		i_c_hash = int(c_hash)
 		c_dws = c_user_data['c_downloads']
 
-		if not i_c_hash in c_dws:
+		if not c_hash in c_dws:
 			answer = "THIS IS AN OLD DOWNLOAD :)"
 		else:
-			t = c_dws[i_c_hash]['thread']
+			t = c_dws[c_hash]['thread']
 			t.kill()
-			del c_dws[i_c_hash]
+			del c_dws[c_hash]
 
 	else:
 		mode = 1
@@ -777,7 +775,11 @@ tg_bot_api.start_polling()
 def checking():
 	while True:
 		sleep(time_sleep)
-		dir_size = get_download_dir_size()
+
+		dir_size = my_round(
+			get_download_dir_size()
+		)
+
 		print(f"STATUS DOWNLOADS {queues_started[0]}/{queues_finished[0]} {dir_size}/{download_dir_max_size}")
 
 		if (
@@ -794,8 +796,10 @@ def checking():
 			clear_recorded_dir()
 			tg_bot_api.start_polling()
 
-tmux_session = None
-tmux_session = create_tmux()
+if len(argv) == 1:
+	tmux_session = None
+else:
+	tmux_session = create_tmux()
 
 check_thread = magicThread(target = checking)
 check_thread.start()
@@ -804,7 +808,6 @@ tg_user_start()
 
 print("\nEXITTING WAIT A FEW SECONDS :)")
 tg_bot_api.stop()
-tg_user_api.stop()
 check_thread.kill()
 kill_threads(users_data)
 clear_download_dir()
@@ -812,3 +815,7 @@ clear_recorded_dir()
 
 if tmux_session:
 	tmux_session.kill_session()
+
+#kill(
+#	getpid(), SIGTERM
+#)
