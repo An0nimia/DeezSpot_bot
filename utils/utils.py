@@ -9,10 +9,15 @@ from .converter_bytes import convert_bytes_to
 from deezloader.__utils__ import __var_excape
 from deezloader.__deezer_settings__ import qualities
 
+from logging import (
+	getLogger, FileHandler,
+	Formatter, Logger
+)
+
 from configs.bot_settings import (
 	output_songs, supported_link, output_shazam,
-	log_errors, log_downloads,
-	log_uploads, logs_path
+	logs_path, logger_names,
+	log_uploads, log_downloads
 )
 
 from os import (
@@ -23,7 +28,7 @@ from os import (
 
 from os.path import (
 	getsize, join,
-	islink, isdir, exists
+	islink, isdir
 )
 
 def check_config_file(config):
@@ -97,11 +102,13 @@ def set_path(tag, song_quality, file_format, method):
 
 	song_path = f"{song_name[:n_tronc]}"
 	song_path += f" ({song_quality}){file_format}"
+
 	return song_path
 
 def get_quality(quality):
 	chosen = qualities[quality]
 	s_quality = chosen['s_quality']
+
 	return s_quality
 
 def get_url_path(link):
@@ -109,14 +116,17 @@ def get_url_path(link):
 	path = parsed.path
 	s_path = path.split("/")
 	path = f"{s_path[-2]}/{s_path[-1]}"
+
 	return path
 
 def my_round(num):
 	rounded = round(num, 2)
+
 	return rounded
 
 def get_image_bytes(image_url):
 	content = req_get(image_url).content
+
 	return content
 
 def get_avalaible_disk_space():
@@ -124,6 +134,7 @@ def get_avalaible_disk_space():
 	total = convert_bytes_to(total, "gb")
 	used = convert_bytes_to(used, "gb")
 	free = convert_bytes_to(free, "gb")
+
 	return free
 
 def get_download_dir_size():
@@ -137,6 +148,7 @@ def get_download_dir_size():
 				total_size += getsize(fp)
 
 	total_size = convert_bytes_to(total_size, "gb")
+
 	return total_size
 
 def clear_download_dir():
@@ -167,15 +179,22 @@ def create_log_dir():
 	if not isdir(logs_path):
 		mkdir(logs_path)
 
-	if not exists(log_downloads):
-		f = open(log_downloads, "w")
-		f.write("")
-		f.close()
+def logging_bot() -> list[Logger]:
+	formatter = Formatter(
+		"%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+	)
 
-	if not exists(log_uploads):
-		f = open(log_uploads, "w")
-		f.write("")
-		f.close()
+	loggers = []
+
+	for logger, level, log_path in logger_names:
+		fu = FileHandler(log_path)
+		fu.setFormatter(formatter)
+		c_logger = getLogger(logger)
+		c_logger.setLevel(level)
+		c_logger.addHandler(fu)
+		loggers.append(c_logger)
+
+	return loggers
 
 def check_config_bot():
 	initialize_db()
@@ -186,6 +205,7 @@ def check_config_bot():
 def get_size(f, size) -> float:
 	b_size = getsize(f)
 	mb_size = convert_bytes_to(b_size, size)
+
 	return mb_size
 
 def show_menu():
@@ -232,7 +252,7 @@ def create_tmux():
 
 	pan_top_right = window.split_window(vertical = False)
 	pan_top_right.send_keys(cclear)
-	pan_top_right.send_keys(f"tail -f {log_errors}")
+	pan_top_right.send_keys(f"tail -f {log_downloads}")
 	pan_bot_left = pan_top_right.split_window(vertical = True)
 	pan_bot_left.send_keys(cclear)
 	pan_bot_left.send_keys(f"tail -n2 -f {log_uploads}")
