@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-version = 1.0
+version = 1.1
 bot_name = "@Deez_bot"
 creator = "@Anonimia"
 donation = "https://www.paypal.com/paypalme/an0nimia"
@@ -12,6 +12,7 @@ date_start = datetime.now()
 last_reset = datetime.strftime(date_start, "%d/%m/%Y %H:%M:%S")
 
 not_found_query_gif = "https://i1.wp.com/blog-pantheon-prod.global.ssl.fastly.net/blog/wp-content/uploads/2017/03/coding-programming-errors-404-page-not-found.gif?resize=625%2C469&ssl=1"
+empty_image_url = "https://e-cdns-images.dzcdn.net/images/cover/1000x1000-000000-80-0-0.jpg"
 banning_msg1 = "WE ARE DETECTING A FLOOD OF MESSAGES PLEASE DON'T SEND TOO MUCH MESSAGES"
 banning_msg2 = "CONGRATULATIONS YOU ARE BANNED =)"
 album_too_long = "DON'T YOU GET BORE LISTENING AN ALBUM SO LONG :)))"
