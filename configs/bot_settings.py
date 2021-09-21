@@ -1,17 +1,25 @@
 #!/usr/bin/python3
 
+from logging import ERROR, INFO
 from utils.converter_bytes import convert_bytes_to
 from telegram.constants import MAX_FILESIZE_DOWNLOAD
 
 logs_path = "logs/"
-log_errors = f"{logs_path}deez_bot.log"
 log_downloads = f"{logs_path}downloads.log"
 log_uploads = f"{logs_path}uploads.log"
+log_telegram = f"{logs_path}telegram.log"
+
+logger_names = [
+	("telegram.ext.dispatcher", ERROR, log_telegram),
+	("uploads", INFO, log_uploads),
+	("downloads", ERROR, log_downloads)
+]
+
 warning_for_banning = 4
 user_session = "my_account"
-user_errors = None #Chat id user to send errors
-bunker_channel = None #Chat id channel to send all downloaded sons
-owl_channel = None #Chat id channel for send broadcast message
+user_errors = None #put yours
+bunker_channel = None #put yours
+owl_channel = None #put yours
 db_name = "deez_bot.db"
 settings_file = ".deez_settings.ini"
 root_ids = {1270777127}
@@ -22,7 +30,7 @@ recursive_download = True
 make_zip = True
 method_save = 2
 download_dir_max_size = 6 #GB
-donation_link = "https://www.paypal.com/paypalme/An0nimia"
+progress_status_rate = 15
 
 supported_link = [
 	"www.deezer.com", "open.spotify.com",
