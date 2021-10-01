@@ -2,10 +2,11 @@
 
 from datetime import datetime
 
-version = 1.1
-bot_name = "@Deez_bot"
+version = 1.2
+bot_name = "@Deez_BIB_bot"
 creator = "@Anonimia"
 donation = "https://www.paypal.com/paypalme/an0nimia"
+source_code = "https://github.com/An0nimia/DeezloaderBIB_bot"
 forum = "@deez_bib_group"
 active_since = "24/07/2021"
 date_start = datetime.now()
@@ -13,14 +14,18 @@ last_reset = datetime.strftime(date_start, "%d/%m/%Y %H:%M:%S")
 
 not_found_query_gif = "https://i1.wp.com/blog-pantheon-prod.global.ssl.fastly.net/blog/wp-content/uploads/2017/03/coding-programming-errors-404-page-not-found.gif?resize=625%2C469&ssl=1"
 empty_image_url = "https://e-cdns-images.dzcdn.net/images/cover/1000x1000-000000-80-0-0.jpg"
+
 banning_msg1 = "WE ARE DETECTING A FLOOD OF MESSAGES PLEASE DON'T SEND TOO MUCH MESSAGES"
 banning_msg2 = "CONGRATULATIONS YOU ARE BANNED =)"
+
 album_too_long = "DON'T YOU GET BORE LISTENING AN ALBUM SO LONG :)))"
 track_too_long = "IS THIS TRACK FOR A SATAN CELEBRATION? :)))"
+
 shazam_function_msg = "You found a fantastic function, if you send a vocal message or an audio, you will see :)"
 max_download_user_msg = "You have reached, max download per time avalaible, wait or kill someone :)"
 help_msg = f"WELCOME IN {bot_name} here you can find the commands avalaible, JUST TRY IT :)"
 help_photo = open("photos/help_msg.jpg", "rb")
+
 feedback_text = f"If you have any question, just ask to this dude {creator}"
 donate_text = f"If you are poor like me, I understand you, IF NOT, I will appreciate a little donation 🥺"
 
