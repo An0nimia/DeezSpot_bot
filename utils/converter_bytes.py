@@ -5,4 +5,5 @@ def convert_bytes_to(size, b_format):
 	index = b_formats.index(b_format) + 1
 	in_bytes = 1000 ** index
 	size /= in_bytes
+
 	return size

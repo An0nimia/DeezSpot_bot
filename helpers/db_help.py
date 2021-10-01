@@ -88,6 +88,7 @@ def select_dwsongs(link, quality):
 
 	match = cur.fetchone()
 	con.close()
+
 	return match
 
 def write_users_settings(
@@ -164,6 +165,7 @@ def select_banned(chat_id):
 
 	match = cur.fetchone()
 	con.close()
+
 	return match
 
 def select_all_banned():
@@ -173,6 +175,7 @@ def select_all_banned():
 	cur.execute(query_select_banned)
 	match = cur.fetchall()
 	con.close()
+
 	return match
 
 def update_users_settings(
@@ -221,6 +224,7 @@ def select_users_settings(chat_id):
 
 	match = cur.fetchone()
 	con.close()
+
 	return match
 
 def select_all_users():
@@ -230,6 +234,7 @@ def select_all_users():
 	cur.execute(query_select_users)
 	match = cur.fetchall()
 	con.close()
+
 	return match
 
 def select_all_downloads():
@@ -239,4 +244,35 @@ def select_all_downloads():
 	cur.execute(query_select_dwsongs)
 	match = cur.fetchall()
 	con.close()
+
+	return match
+
+def select_users_settings_date(c_month, c_year):
+	con = db_connect(db_name)
+	cur = con.cursor()
+
+	cur.execute(
+		"SELECT date FROM users_settings WHERE strftime('%m', date) = ? AND strftime('%Y', date) = ?",
+		(
+			c_month, c_year
+		)
+	)
+
+	match = cur.fetchall()
+	con.close()
+
+	return match
+
+def select_dwsongs_top_downloaders(many):
+	con = db_connect(db_name)
+	cur = con.cursor()
+
+	cur.execute(
+		"SELECT chat_id, COUNT(chat_id) as cnt FROM dwsongs GROUP BY chat_id ORDER BY cnt DESC LIMIT ?",
+		(many, )
+	)
+
+	match = cur.fetchall()
+	con.close()
+
 	return match

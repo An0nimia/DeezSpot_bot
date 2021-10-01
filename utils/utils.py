@@ -211,6 +211,8 @@ def get_size(f, size) -> float:
 def show_menu():
 	print("1): TEST MODE")
 	print("2): COOL MODE")
+	print("3): TEST MODE (NO ZIP)")
+	print("4): COOL MODE (NO ZIP)")
 
 	ans = input("How to use it?: ")
 
@@ -218,6 +220,10 @@ def show_menu():
 		choice = 1
 	elif ans == "2":
 		choice = 2
+	elif ans == "3":
+		choice = 3
+	elif ans == "4":
+		choice = 4
 	else:
 		exit()
 

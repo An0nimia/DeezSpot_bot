@@ -7,7 +7,8 @@ from configs.bot_settings import root_ids, warning_for_banning
 from configs.customs import (
 	bot_settings_config, banning_msg1, banning_msg2,
 	version, bot_name, creator,
-	forum, active_since, last_reset, date_start
+	forum, active_since,
+	last_reset, date_start
 )
 
 from helpers.db_help import (

@@ -1,5 +1,10 @@
 #!/usr/bin/python3
 
+from utils.utils import check_config_bot, show_menu
+
+check_config_bot()
+mode_bot = show_menu()
+
 from sys import argv
 from hashlib import md5
 #from signal import SIGTERM
@@ -7,12 +12,20 @@ from hashlib import md5
 from time import sleep, time
 from telegram import ParseMode
 from pyrogram import idle as tg_user_start
-from telegram import MessageEntity, Update
 from utils.special_thread import magicThread
 from utils.converter_bytes import convert_bytes_to
 from telegram.error import BadRequest, Unauthorized
+from helpers.download_help import DOWNLOAD_HELP, DW
 from configs.set_configs import tg_bot_api, tg_user_api
 from utils.utils_data import create_response_article, shazam_song
+
+from utils.utils_graphs import (
+	create_graph_users, create_graph_top_downloaders, get_data_downloaders
+)
+
+from telegram import (
+	MessageEntity, Update, InputMediaPhoto
+)
 
 from helpers.db_help import (
 	delete_banned, select_all_users, write_banned
@@ -40,9 +53,8 @@ from utils.utils_users_bot import (
 
 from utils.utils import (
 	is_supported_link, get_download_dir_size,
-	check_config_bot, clear_download_dir,
-	clear_recorded_dir, my_round,
-	show_menu, create_tmux
+	clear_download_dir, clear_recorded_dir,
+	my_round, create_tmux
 )
 
 from telegram.ext import (
@@ -54,14 +66,9 @@ from inlines.inline_keyboards import (
 	create_keyboad_search, create_keyboard_settings,
 	create_keyboard_qualities, create_shazamed_keyboard,
 	create_keyboard_search_method, create_banned_keyboard,
-	create_c_dws_user_keyboard, create_donation_keyboard
+	create_c_dws_user_keyboard, create_info_keyboard
 )
 
-check_config_bot()
-
-from helpers.download_help import DOWNLOAD_HELP, DW
-
-mode_bot = show_menu()
 bot_chat_id = tg_bot_api.bot.id
 bot = tg_bot_api.bot
 banned_ids = get_banned_ids()
@@ -71,18 +78,28 @@ tg_user_api.start()
 users_data = {}
 roots_data = {}
 
+if mode_bot in [3, 4]:
+	create_zips = False
+else:
+	create_zips = True
+
 dw_helper = DOWNLOAD_HELP(
-	queues_started, queues_finished, tg_user_api
+	queues_started, queues_finished,
+	tg_user_api, create_zips
 )
 
 to_ban = Filters.user(banned_ids)
+strict_modes = [1, 3]
 
 def ban_chat_id(chat_id):
 	write_banned(chat_id)
 	to_ban.add_chat_ids(chat_id)
 
 def help_check_user(chat_id, date = None):
-	if (mode_bot == 1) and (not chat_id in root_ids):
+	if (
+		(mode_bot in strict_modes) and 
+		(not chat_id in root_ids)
+	):
 		bot.send_message(
 			chat_id = chat_id,
 			text = "BOT IS UNDER MAINTENANCE"
@@ -515,12 +532,13 @@ def info_command(update: Update, context):
 	chat_id = msg.from_user.id
 	date = msg.date
 	help_check_user(chat_id, date)
+	users_graph = create_graph_users()
 
-	bot.send_message(
+	bot.send_photo(
 		chat_id = chat_id,
-		text = get_info(),
-		parse_mode = ParseMode.HTML,
-		reply_markup = create_donation_keyboard()
+		photo = users_graph,
+		caption = get_info(),
+		reply_markup = create_info_keyboard()
 	)
 
 def reasons_command(update: Update, context):
@@ -571,7 +589,39 @@ def donate_command(update: Update, context):
 	bot.send_message(
 		chat_id = chat_id,
 		text = donate_text,
-		reply_markup = create_donation_keyboard()
+		reply_markup = create_info_keyboard()
+	)
+
+def graphs_command(update: Update, context):
+	msg = update.message
+	chat_id = msg.from_user.id
+	date = msg.date
+	help_check_user(chat_id, date)
+	downloads_graph = create_graph_top_downloaders()
+	users_graph = create_graph_users()
+	users, nums_downloads = get_data_downloaders()
+
+	caption_text_download_graph = ""
+	times = 1
+
+	for user, num_downloads in zip(users, nums_downloads):
+		caption_text_download_graph += f"{times} Place: User `{user}` with {num_downloads} downloads\n"
+		times += 1
+
+	medias = [
+		InputMediaPhoto(
+			media = downloads_graph,
+			caption = caption_text_download_graph,
+			parse_mode = ParseMode.MARKDOWN_V2
+		),
+		InputMediaPhoto(
+			media = users_graph
+		)
+	]
+
+	bot.send_media_group(
+		chat_id = chat_id,
+		media = medias
 	)
 
 def msgs_handler(update: Update, context):
@@ -709,6 +759,14 @@ donate_handler = CommandHandler(
 
 dispatcher.add_handler(donate_handler)
 
+graphs_handler = CommandHandler(
+	"graphs",
+	graphs_command,
+	filters = ~ to_ban, run_async = True
+)
+
+dispatcher.add_handler(graphs_handler)
+
 filter_owl_channel = Filters.chat(owl_channel)
 
 send_global_msg_handler = MessageHandler(
@@ -807,15 +865,12 @@ check_thread.start()
 tg_user_start()
 
 print("\nEXITTING WAIT A FEW SECONDS :)")
-tg_bot_api.stop()
-check_thread.kill()
-kill_threads(users_data)
 clear_download_dir()
 clear_recorded_dir()
 
+tg_bot_api.stop()
+check_thread.kill()
+kill_threads(users_data)
+
 if tmux_session:
 	tmux_session.kill_session()
-
-#kill(
-#	getpid(), SIGTERM
-#)

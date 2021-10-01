@@ -11,7 +11,7 @@ from telegram import (
 from configs.customs import (
 	commands_queries, artist_commands_queries,
 	bot_settings_config, inline_textes,
-	search_methods, donation
+	search_methods, donation, source_code
 )
 
 __back_keyboard = [
@@ -222,16 +222,23 @@ def create_c_dws_user_keyboard(dws: dict):
 
 	return keyboad_dws
 
-def create_donation_keyboard():
-	keyboard_donation = [
+def create_info_keyboard():
+	keyboard_info = [
 		[
 			InlineKeyboardButton(
 				"💸 PAYPAL DONATION HERE 🥺",
 				url = donation
 			)
+		],
+		[
+			InlineKeyboardButton(
+				"👨‍💻 Source code HERE",
+				url = source_code
+
+			)
 		]
 	]
 
-	donation_keyboard = InlineKeyboardMarkup(keyboard_donation)
+	info_keyboard = InlineKeyboardMarkup(keyboard_info)
 
-	return donation_keyboard
+	return info_keyboard

@@ -1,33 +1,38 @@
 #!/usr/bin/python3
 
-import ctypes
-import threading
 from inspect import isclass
+from ctypes import pythonapi
+from ctypes import c_long, py_object
+
+from threading import (
+	Thread, ThreadError, _active
+)
 
 def _async_raise(tid, exctype):
 	if not isclass(exctype):
 		raise TypeError("Only types can be raised (not instances)")
 
-	res = ctypes.pythonapi.PyThreadState_SetAsyncExc(
-		ctypes.c_long(tid), ctypes.py_object(exctype)
+	res = pythonapi.PyThreadState_SetAsyncExc(
+		c_long(tid), py_object(exctype)
 	)
 
 	if res == 0:
 		raise ValueError("invalid thread id")
 
 	elif res != 1:
-		ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, 0)
+		pythonapi.PyThreadState_SetAsyncExc(tid, 0)
+
 		raise SystemError("PyThreadState_SetAsyncExc failed")
 
-class magicThread(threading.Thread):
+class magicThread(Thread):
 	def _get_my_tid(self):
 		if not self.is_alive():
-			raise threading.ThreadError("the thread is not active")
+			raise ThreadError("the thread is not active")
 
 		if hasattr(self, "_thread_id"):
 			return self._thread_id
 
-		for tid, tobj in threading._active.items():
+		for tid, tobj in _active.items():
 			if tobj is self:
 				self._thread_id = tid
 				return tid

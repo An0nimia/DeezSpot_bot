@@ -51,11 +51,8 @@ from configs.bot_settings import (
 
 deezer_api = deezer_API()
 tg_bot = tg_bot_api.bot
-l_telegram, l_uploads, l_downloads = logging_bot()
+l_telegram, l_uploads, l_downloads, l_links = logging_bot()
 
-def log_info(log):
-	l_uploads.info(log)
-	
 def log_error(log, exc_info = False):
 	l_downloads.error(log, exc_info = exc_info)
 
@@ -70,12 +67,18 @@ class DOWNLOAD_HELP:
 		self,
 		queues_started: list,
 		queues_finished: list,
-		tg_user_api: Client
+		tg_user_api: Client,
+		create_zips: bool,
 	) -> None:
+
+		global make_zip
 
 		self.tg_user_api = tg_user_api
 		self.queues_started = queues_started
 		self.queues_finished = queues_finished
+
+		if not create_zips:
+			make_zip = False
 
 class DW:
 	def __init__(
@@ -117,7 +120,7 @@ class DW:
 			)
 
 			sleep(0.1)
-			log_info(f"UPLOADING: {file_id}")
+			l_uploads.info(f"UPLOADING: {file_id}")
 
 			tg_bot.send_audio(
 				chat_id = self.__chat_id,
@@ -132,7 +135,7 @@ class DW:
 			)
 
 			sleep(0.1)
-			log_info(f"UPLOADING: {file_id}")
+			l_uploads.info(f"UPLOADING: {file_id}")
 
 			tg_bot.send_document(
 				chat_id = self.__chat_id,
@@ -238,7 +241,7 @@ class DW:
 		if (c_time % progress_status_rate == 0):
 			c_progress = f"{current * 100 / total:.1f}%"
 			c_text = f"Uploading {album_name}: {c_progress}"
-			log_info(c_text)
+			l_uploads.info(c_text)
 
 			if c_time == 0:
 				msg_id = tg_bot.send_message(
@@ -323,7 +326,7 @@ class DW:
 		file_name = set_path(tag, self.__n_quality, f_format, 1)
 		c_progress = f"Uploading ({num_track}/{nb_tracks}): {title}"
 		c_progress += f" {num_track * 100 / nb_tracks:.1f}%"
-		log_info(c_progress)
+		l_uploads.info(c_progress)
 
 		tg_bot.edit_message_text(
 			chat_id = self.__chat_id,
@@ -411,7 +414,13 @@ class DW:
 			message_id = progress_message_id
 		)
 
-		self.__upload_zip_album(album)
+		if make_zip:
+			self.__upload_zip_album(album)
+		else:
+			write_db(
+				album.album_md5, "TOO BIG",
+				self.__quality, self.__chat_id
+			)
 
 	def __send_for_debug(self, link, error):
 		err_str = f"ERROR WITH THIS LINK {link} {self.__quality}"
@@ -514,6 +523,7 @@ class DW:
 
 	def download(self, link):
 		try:
+			l_links.info(link)
 			stat = 1
 			self.__before_dw()
 			link = what_kind(link)
