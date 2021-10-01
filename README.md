@@ -49,3 +49,25 @@ To install it just type this command
   Go and modify [set_configs.py](https://github.com/An0nimia/DeezloaderBIB_bot/blob/master/configs/set_configs.py)
   
   If you don't want to login with arl, which expire, log with normal credentials & delete line 35
+
+# START IT
+
+## First method
+
+```bash
+python3 deez_bot.py
+```
+
+## OR
+
+If you know how tmux works
+
+```bash
+tmux new -s deez_bot
+```
+
+then when you are inside just type
+
+```bash
+python3 deez_bot.py 1
+```
