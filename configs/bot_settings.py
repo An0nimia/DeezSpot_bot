@@ -8,18 +8,20 @@ logs_path = "logs/"
 log_downloads = f"{logs_path}downloads.log"
 log_uploads = f"{logs_path}uploads.log"
 log_telegram = f"{logs_path}telegram.log"
+log_links = f"{logs_path}links.log"
 
 logger_names = [
 	("telegram.ext.dispatcher", ERROR, log_telegram),
 	("uploads", INFO, log_uploads),
-	("downloads", ERROR, log_downloads)
+	("downloads", ERROR, log_downloads),
+	("links", INFO, log_links)
 ]
 
 warning_for_banning = 4
 user_session = "my_account"
-user_errors = None #put yours
-bunker_channel = None #put yours
-owl_channel = None #put yours
+user_errors = None
+bunker_channel = None
+owl_channel = None
 db_name = "deez_bot.db"
 settings_file = ".deez_settings.ini"
 root_ids = {1270777127}
