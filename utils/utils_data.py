@@ -1,11 +1,11 @@
 #!/usr/bin/python3
 
-from utils.utils import get_quality
-from deezloader.__utils__ import get_ids
-from deezloader.__easy_spoty__ import Spo
+from deezloader.easy_spoty import Spo
+from configs.set_configs import SetConfigs
 from deezloader.exceptions import NoDataApi
-from deezloader.__dee_api__ import API as deezer_API
-from configs.set_configs import deez_api, acrcloud_api
+from deezloader.libutils.utils import get_ids
+from utils.utils import get_quality_dee_s_quality
+from deezloader.deezloader.dee_api import API as deezer_api
 
 from inlines.inline_query_results import (
 	create_result_article_artist, create_result_article_track,
@@ -17,11 +17,8 @@ from inlines.inline_query_results import (
 	create_result_article_track_and_audio
 )
 
-deezer_api = deezer_API()
-spotify_api = Spo()
-
 def shazam_song(song):
-	data = acrcloud_api.recognize_audio(song)
+	data = SetConfigs.acrcloud_api.recognize_audio(song)
 	status = data['status']
 
 	if status['msg'] != "Success":
@@ -76,10 +73,28 @@ def shazam_song(song):
 		release_date, title
 	)
 
-def track_spo_data(link):
-	link_dee = deez_api.convert_spoty_to_dee_link_track(link)
+#OLD SPOTIFY DOWNLOAD
+def track_spo_to_dee_data(link):
+	link_dee = SetConfigs.deez_api.convert_spoty_to_dee_link_track(link)
 	dee_data = track_dee_data(link_dee)
+
 	return dee_data
+
+def track_spo_data(link):
+	ids = get_ids(link)
+	data = Spo.get_track(ids)
+	image_url = data['album']['images'][0]['url']
+	name = data['name']
+	artist = data['artists'][0]['name']
+	album = data['album']['name']
+	date = data['album']['release_date']
+	duration = data['duration_ms'] // 1000
+
+	return (
+		image_url, name,
+		artist, album,
+		date, link, duration
+	)
 
 def track_dee_data(link):
 	ids = get_ids(link)
@@ -130,7 +145,7 @@ def playlist_dee_data(link):
 
 def playlist_spo_data(link):
 	ids = get_ids(link)
-	data = spotify_api.get_playlist(ids)
+	data = Spo.get_playlist(ids)
 	n_fans = data['followers']['total']
 	image_url = data['images'][0]['url']
 	creation_date = data['tracks']['items'][0]['added_at']
@@ -165,13 +180,38 @@ def album_dee_data(link):
 	)
 
 def convert_spoty_to_dee_link_track(link):
-	link_dee = deez_api.convert_spoty_to_dee_link_track(link)
+	link_dee = SetConfigs.deez_api.convert_spoty_to_dee_link_track(link)
+
 	return link_dee
 
-def album_spo_data(link):
-	link_dee = deez_api.convert_spoty_to_dee_link_album(link)
+def album_spo_data_to_dee(link):
+	link_dee = SetConfigs.deez_api.convert_spoty_to_dee_link_album(link)
 	dee_data = album_dee_data(link_dee)
+
 	return dee_data
+
+def album_spo_data(link):
+	ids = get_ids(link)
+	data = Spo.get_album(ids)
+	image_url = data['images'][0]['url']
+	album = data['name']
+	artist = data['artists'][0]['name']
+	date = data['release_date']
+	nb_tracks = data['total_tracks']
+	tracks = data['tracks']['items']
+	duration = 0
+
+	for track in tracks:
+		duration += track['duration_ms']
+
+	duration //= 1000
+
+	return (
+		image_url, album,
+		artist, date,
+		nb_tracks, tracks,
+		duration, link
+	)
 
 def __lazy_create(search_method):
 	if search_method == "results_audio":
@@ -199,7 +239,7 @@ def create_response_article(query: str, user_data):
 
 	if search_method.startswith("results_audio"):
 		user_quality = user_data['quality']
-		quality = get_quality(user_quality)
+		quality = get_quality_dee_s_quality(user_quality)
 
 	if query.startswith(s_art):
 		c_query = query.replace(s_art, "")

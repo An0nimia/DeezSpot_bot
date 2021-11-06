@@ -1,8 +1,10 @@
 #!/usr/bin/python3
 
 from inspect import isclass
-from ctypes import pythonapi
-from ctypes import c_long, py_object
+
+from ctypes import (
+	c_long, py_object, pythonapi
+)
 
 from threading import (
 	Thread, ThreadError, _active

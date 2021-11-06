@@ -19,18 +19,23 @@ logger_names = [
 
 warning_for_banning = 4
 user_session = "my_account"
-user_errors = None
-bunker_channel = None
-owl_channel = None
+user_errors = None #channel user where errors would be registred
+bunker_channel = None #channel where all songs will be maintened
+owl_channel = None #channel for broadcasting messages
 db_name = "deez_bot.db"
 settings_file = ".deez_settings.ini"
-root_ids = {1270777127}
+
+root_ids = {
+	1270777127
+}
+
 output_songs = "Songs/"
 output_shazam = "Records/"
 recursive_quality = True
 recursive_download = True
 make_zip = True
-method_save = 2
+method_save = 3
+is_thread = True
 download_dir_max_size = 6 #GB
 progress_status_rate = 15
 

@@ -6,8 +6,9 @@ from shutil import disk_usage, rmtree
 from helpers.db_help import initialize_db
 from libtmux import Server as tmux_server
 from .converter_bytes import convert_bytes_to
-from deezloader.__utils__ import __var_excape
-from deezloader.__deezer_settings__ import qualities
+from deezloader.libutils.utils import var_excape
+from deezloader.deezloader.deezer_settings import qualities as dee_qualities
+from deezloader.spotloader.spotify_settings import qualities as spo_qualities
 
 from logging import (
 	getLogger, FileHandler,
@@ -31,8 +32,16 @@ from os.path import (
 	islink, isdir
 )
 
+__qualities_dee = list(
+	dee_qualities.keys()
+)
+
+__qualities_spo = list(
+	spo_qualities.keys()
+)
+
 def check_config_file(config):
-	if not "token" in config['deez_login']:
+	if not "arl" in config['deez_login']:
 		print("Something went wrong with the login token in the configuration file")
 		exit()
 
@@ -58,6 +67,11 @@ def check_config_file(config):
 		print("Something went wrong with acrcloud in the configuration file")
 		exit()
 
+def get_netloc(link):
+	netloc = urlparse(link).netloc
+
+	return netloc
+
 def is_supported_link(link):
 	is_supported = True
 	netloc = urlparse(link).netloc
@@ -70,43 +84,59 @@ def is_supported_link(link):
 
 	return is_supported
 
-def set_path(tag, song_quality, file_format, method):
-	album = tag['album']
-	album = __var_excape(album)
-
-	if method == 0:
-		discnum = tag['discnum']
-		tracknum = tag['tracknum']
-		song_name = f"{album} CD {discnum} TRACK {tracknum}"
-
-	elif method == 1:
-		artist = __var_excape(tag['artist'])
-		music = __var_excape(tag['music'])
-		song_name = f"{music} - {artist}"
-
-	elif method == 2:
-		artist = __var_excape(tag['artist'])
-		music = __var_excape(tag['music'])
-		isrc = tag['isrc']
-		song_name = f"{music} - {artist} [{isrc}]"
-
+def __get_tronc(string):
 	l_encoded = len(
-		song_name.encode()
+		string.encode()
 	)
 
 	if l_encoded > 242:
-		n_tronc = l_encoded - 242
-		n_tronc = len(song_name) - n_tronc
+		n_tronc = len(string) - l_encoded - 242
 	else:
 		n_tronc = 242
 
-	song_path = f"{song_name[:n_tronc]}"
-	song_path += f" ({song_quality}){file_format}"
+	return n_tronc
+
+def set_path(song_metadata, song_quality, file_format, method_save):
+	album = var_excape(song_metadata['album'])
+	artist = var_excape(song_metadata['artist'])
+	music = var_excape(song_metadata['music'])
+
+	if method_save == 0:
+		discnum = song_metadata['discnum']
+		tracknum = song_metadata['tracknum']
+		song_name = f"{album} CD {discnum} TRACK {tracknum}"
+
+	elif method_save == 1:
+		song_name = f"{music} - {artist}"
+
+	elif method_save == 2:
+		isrc = song_metadata['isrc']
+		song_name = f"{music} - {artist} [{isrc}]"
+
+	elif method_save == 3:
+		discnum = song_metadata['discnum']
+		tracknum = song_metadata['tracknum']
+		song_name = f"{discnum}:{tracknum} - {music} - {artist}"
+
+	n_tronc = __get_tronc(song_name)
+	song_path = f"{song_name[:n_tronc]} ({song_quality}){file_format}"
 
 	return song_path
 
-def get_quality(quality):
-	chosen = qualities[quality]
+def get_quality_dee_s_quality(dee_quality):
+	chosen = dee_qualities[dee_quality]
+	s_quality = chosen['s_quality']
+
+	return s_quality
+
+def get_quality_spo(dee_quality):
+	index = __qualities_dee.index(dee_quality)
+	chosen = __qualities_spo[index]
+
+	return chosen
+
+def get_quality_spo_s_quality(spo_quality):
+	chosen = spo_qualities[spo_quality]
 	s_quality = chosen['s_quality']
 
 	return s_quality

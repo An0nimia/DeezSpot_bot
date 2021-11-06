@@ -19,10 +19,13 @@ from helpers.db_help import (
 )
 
 def users_set_cache(chat_id, users_data):
+	user_exist = True
+
 	if not chat_id in users_data:
 		match = select_users_settings(chat_id)
 
 		if not match:
+			user_exist = False
 			quality = bot_settings_config[0][2]
 			zips = bot_settings_config[1][2]
 			tracks = bot_settings_config[2][2]
@@ -52,6 +55,8 @@ def users_set_cache(chat_id, users_data):
 			"times": 0,
 			"c_downloads": {}
 		}
+
+	return user_exist
 
 def user_setting_save_db(chat_id, user_data):
 	quality = user_data['quality']

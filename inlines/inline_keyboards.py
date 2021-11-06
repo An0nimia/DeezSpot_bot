@@ -1,8 +1,9 @@
 #!/usr/bin/python3
 
-from deezloader.__utils__ import get_ids
+from deezloader.libutils.utils import get_ids
 from helpers.db_help import select_all_banned
-from deezloader.__deezer_settings__ import qualities
+from deezloader.deezloader.deezer_settings import qualities as dee_qualities
+from deezloader.spotloader.spotify_settings import qualities as spo_qualities
 
 from telegram import (
 	InlineKeyboardMarkup, InlineKeyboardButton
@@ -10,8 +11,8 @@ from telegram import (
 
 from configs.customs import (
 	commands_queries, artist_commands_queries,
-	bot_settings_config, inline_textes,
-	search_methods, donation, source_code
+	bot_settings_config, inline_textes, search_methods,
+	donation, source_code_bot, source_code_lib
 )
 
 __back_keyboard = [
@@ -117,28 +118,38 @@ def create_keyboard_settings(datas):
 	settings_keyboard = InlineKeyboardMarkup(keyboard_settings)
 	return settings_keyboard
 
-__qualities = list(
-	qualities.keys()
+__qualities_dee = list(
+	dee_qualities.keys()
 )
 
-__l_qualities = len(__qualities)
+__qualities_spo = list(
+	spo_qualities.keys()
+)
+
+__l_qualities = len(__qualities_dee)
 
 def create_keyboard_qualities():
 	keyboad_qualities = [
 		[
 			InlineKeyboardButton(
-				quality,
-				callback_data = f"/edit_setting_quality_{quality}"
+				f"{quality_dee}/{quality_spo}",
+				callback_data = f"/edit_setting_quality_{quality_dee}"
 			)
-			for quality in __qualities[
-				line:line + 2
-			]
+			for quality_dee, quality_spo in zip(
+				__qualities_dee[
+					line:line + 2
+				],
+				__qualities_spo[
+					line:line + 2
+				]
+			)
 		]
 		for line in range(0, __l_qualities, 2)
 	]
 
 	keyboad_qualities += __back_keyboard
 	qualities_keyboard = InlineKeyboardMarkup(keyboad_qualities)
+
 	return qualities_keyboard
 
 __l_search_methods = len(search_methods)
@@ -232,8 +243,15 @@ def create_info_keyboard():
 		],
 		[
 			InlineKeyboardButton(
-				"👨‍💻 Source code HERE",
-				url = source_code
+				"👨‍💻 BOT Source code HERE",
+				url = source_code_bot
+
+			)
+		],
+		[
+			InlineKeyboardButton(
+				"👨‍💻 LIB Source code HERE",
+				url = source_code_lib
 
 			)
 		]

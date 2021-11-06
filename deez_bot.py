@@ -5,18 +5,21 @@ from utils.utils import check_config_bot, show_menu
 check_config_bot()
 mode_bot = show_menu()
 
+from configs.set_configs import SetConfigs
+
+SetConfigs(mode_bot)
+
 from sys import argv
 from hashlib import md5
 #from signal import SIGTERM
 #from os import getpid, kill
 from time import sleep, time
 from telegram import ParseMode
+from helpers.download_help import DW
 from pyrogram import idle as tg_user_start
 from utils.special_thread import magicThread
 from utils.converter_bytes import convert_bytes_to
 from telegram.error import BadRequest, Unauthorized
-from helpers.download_help import DOWNLOAD_HELP, DW
-from configs.set_configs import tg_bot_api, tg_user_api
 from utils.utils_data import create_response_article, shazam_song
 
 from utils.utils_graphs import (
@@ -35,7 +38,7 @@ from configs.customs import (
 	not_found_query_gif, shazam_audio_query,
 	shazam_function_msg, max_download_user_msg,
 	help_msg, help_photo, feedback_text, what_can_I_do,
-	donate_text, reasons_text
+	donate_text, reasons_text, startup_text
 )
 
 from configs.bot_settings import (
@@ -69,24 +72,13 @@ from inlines.inline_keyboards import (
 	create_c_dws_user_keyboard, create_info_keyboard
 )
 
-bot_chat_id = tg_bot_api.bot.id
-bot = tg_bot_api.bot
+bot_chat_id = SetConfigs.tg_bot_api.bot.id
+bot = SetConfigs.tg_bot_api.bot
+
 banned_ids = get_banned_ids()
-queues_started = [0]
-queues_finished = [0]
-tg_user_api.start()
+
 users_data = {}
 roots_data = {}
-
-if mode_bot in [3, 4]:
-	create_zips = False
-else:
-	create_zips = True
-
-dw_helper = DOWNLOAD_HELP(
-	queues_started, queues_finished,
-	tg_user_api, create_zips
-)
 
 to_ban = Filters.user(banned_ids)
 strict_modes = [1, 3]
@@ -109,7 +101,7 @@ def help_check_user(chat_id, date = None):
 
 		return
 
-	users_set_cache(chat_id, users_data)
+	user_exist = users_set_cache(chat_id, users_data)
 
 	if date:
 		user_data = users_data[chat_id]
@@ -126,6 +118,13 @@ def help_check_user(chat_id, date = None):
 			if mode == 1:
 				to_ban.add_chat_ids(chat_id)
 				del users_data[chat_id]
+
+	if not user_exist:
+		bot.send_message(
+			chat_id = chat_id,
+			text = startup_text,
+			parse_mode = ParseMode.MARKDOWN
+		)
 
 def help_download(link, chat_id):
 	if chat_id in to_ban.user_ids:
@@ -154,7 +153,7 @@ def help_download(link, chat_id):
 
 	to_hash = f"{link}{c_user_data['quality']}{chat_id}{time()}".encode()
 	hash_link = md5(to_hash).hexdigest()
-	new_ins = DW(dw_helper, chat_id, c_user_data, hash_link)
+	new_ins = DW(chat_id, c_user_data, hash_link)
 
 	t = magicThread(
 		target = new_ins.download,
@@ -331,7 +330,7 @@ def audio_handler(update: Update, context):
 	c_file = bot.get_file(file_id)
 
 	try:
-		queues_started[0] += 1
+		SetConfigs.queues_started += 1
 
 		out = c_file.download(
 			custom_path = f"{output_shazam}{file_id}"
@@ -339,7 +338,7 @@ def audio_handler(update: Update, context):
 
 		resp = shazam_song(out)
 	finally:
-		queues_finished[0] += 1
+		SetConfigs.queues_finished += 1
 
 	if not resp:
 		bot.send_message(
@@ -659,7 +658,7 @@ def controls_links(update: Update, context):
 	link = msg.parse_entity(entity_link)
 	help_download(link, chat_id)
 
-dispatcher = tg_bot_api.dispatcher
+dispatcher = SetConfigs.tg_bot_api.dispatcher
 
 start_handler = CommandHandler(
 	"start",
@@ -828,7 +827,7 @@ callback_queries = CallbackQueryHandler(
 
 dispatcher.add_handler(callback_queries)
 
-tg_bot_api.start_polling()
+SetConfigs.tg_bot_api.start_polling()
 
 def checking():
 	while True:
@@ -838,21 +837,23 @@ def checking():
 			get_download_dir_size()
 		)
 
-		print(f"STATUS DOWNLOADS {queues_started[0]}/{queues_finished[0]} {dir_size}/{download_dir_max_size}")
+		print(
+			f"STATUS DOWNLOADS {SetConfigs.queues_started}/{SetConfigs.queues_finished} {dir_size}/{download_dir_max_size}"
+		)
 
 		if (
 			dir_size >= download_dir_max_size
 		) or (
-			queues_started[0] == queues_finished[0]
+			SetConfigs.queues_started == SetConfigs.queues_finished
 		):
-			tg_bot_api.stop()
+			SetConfigs.tg_bot_api.stop()
 			kill_threads(users_data)
 			sleep(3)
-			queues_started[0] = 0
-			queues_finished[0] = 0
+			SetConfigs.queues_started = 0
+			SetConfigs.queues_finished = 0
 			clear_download_dir()
 			clear_recorded_dir()
-			tg_bot_api.start_polling()
+			SetConfigs.tg_bot_api.start_polling()
 
 if len(argv) == 1:
 	tmux_session = None
@@ -868,7 +869,7 @@ print("\nEXITTING WAIT A FEW SECONDS :)")
 clear_download_dir()
 clear_recorded_dir()
 
-tg_bot_api.stop()
+SetConfigs.tg_bot_api.stop()
 check_thread.kill()
 kill_threads(users_data)
 

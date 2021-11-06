@@ -2,12 +2,13 @@
 
 from datetime import datetime
 
-version = 1.2
-bot_name = "@Deez_BIB_bot"
+version = 1.0
+bot_name = "@DeezSpot_bot"
 creator = "@Anonimia"
 donation = "https://www.paypal.com/paypalme/an0nimia"
-source_code = "https://github.com/An0nimia/DeezloaderBIB_bot"
-forum = "@deez_bib_group"
+source_code_bot = "https://github.com/An0nimia/DeezloaderBIB_bot"
+source_code_lib = "https://pypi.org/project/deezloader/"
+forum = "@deezspot_group"
 active_since = "24/07/2021"
 date_start = datetime.now()
 last_reset = datetime.strftime(date_start, "%d/%m/%Y %H:%M:%S")
@@ -29,12 +30,27 @@ help_photo = open("photos/help_msg.jpg", "rb")
 feedback_text = f"If you have any question, just ask to this dude {creator}"
 donate_text = f"If you are poor like me, I understand you, IF NOT, I will appreciate a little donation 🥺"
 
+startup_text = (
+	f"""
+	Hello guys welcome in {bot_name}⚡️, developed by {creator}.
+	If you want to stay updated join to {forum}
+	If you like my project support my buying a kebab [DONATE]({donation})
+
+		*DISCLAIMER*:
+			1): DO NOT USE THIS BOT FOR YOUR OWN PURPOSE
+			2): I AM NOT RESPONSABLE FOR ANY ILLEGIT USAGE
+			3): The source code can be found here:
+					a): [DeezSpot_bot]({source_code_bot})
+					b): [Main lib]({source_code_lib})
+			5): For the artists songs I don't think would get poor if someone doesn't pay for their content.
+			6): ENJOY THE MUSIC ART🔥
+	"""
+)
+
 reasons_text = (
 	"WHY I MADE THIS BOT?\
 	\n1): This was a nice challenge for me as a little dev\
-	\n2): No all of us have the possibility to pay for music content, so I did this to give to everybody for free the chance to download songs\
-	\n3): I am thinking about put this code opensource, but last time I did, some people just copied it and used for their own purpose, so IDK :)))\
-	\n4): THIS BOT PROBABLY WILL LASTS FOR A FEW TIME, so USE IT UNTIL YOU CAN =)"
+	\n2): No all of us have the possibility to pay for music content, so I did this to give to everybody for free the chance to download songs"
 )
 
 what_can_I_do = (
