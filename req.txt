@@ -5,3 +5,4 @@ tgcrypto
 python-acrcloud
 libtmux
 psutil
+matplotlib
