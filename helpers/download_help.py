@@ -2,6 +2,7 @@
 
 from time import sleep
 from io import BytesIO
+from os.path import isfile
 from telegram import ChatAction
 from sqlite3 import IntegrityError
 from telegram.error import BadRequest
@@ -151,6 +152,15 @@ class DW:
 		track_quality = track.quality
 
 		file_name = set_path(tag, self.__n_quality, f_format, method_save)
+
+		if not isfile(c_path):
+			bot.send_message(
+				chat_id = self.__chat_id,
+				text = f"Cannot download {track.link} :("
+			)
+
+			return
+
 		track_size = get_size(c_path, "gb")
 
 		if track_size > upload_max_size_user:
@@ -351,6 +361,14 @@ class DW:
 		)
 
 		if track.success:
+			if not isfile(c_path):
+				bot.send_message(
+					chat_id = self.__chat_id,
+					text = f"Cannot download {track.link} :("
+				)
+
+				return
+	
 			track_size = get_size(c_path, "gb")
 
 			if track_size > upload_max_size_user:

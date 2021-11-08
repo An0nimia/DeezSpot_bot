@@ -2,3 +2,8 @@ __pycache__/
 logs/
 Songs/
 Records/
+deez_bot.db
+.cache_spoty_token
+.deez_settings.ini
+.spotloader_credentials.json
+my_account.session
