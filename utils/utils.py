@@ -6,8 +6,8 @@ from shutil import disk_usage, rmtree
 from helpers.db_help import initialize_db
 from libtmux import Server as tmux_server
 from .converter_bytes import convert_bytes_to
-from deezloader.__utils__ import __var_excape
-from deezloader.__deezer_settings__ import qualities
+from deezloader.libutils.utils import var_excape
+from deezloader.deezloader.deezer_settings import qualities
 
 from configs.bot_settings import (
 	output_songs, supported_link, output_shazam,
