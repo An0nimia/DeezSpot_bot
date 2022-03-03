@@ -8,7 +8,7 @@ interested = [
 	"pid", "name"
 ]
 
-script = "deez_bot_an0nimia.py"
+script = "deez_bot.py"
 cmd = f"screen -S Deez_Bot_Anonimia python3 {script}"
 
 def bot_exist():
