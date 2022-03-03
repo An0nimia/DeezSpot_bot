@@ -80,7 +80,10 @@ def track_spo_to_dee_data(link):
 
 	return dee_data
 
-def track_spo_data(link):
+def track_spo_data(link, conv: bool):
+	if conv:
+		return track_spo_to_dee_data(link)
+
 	ids = get_ids(link)
 	data = Spo.get_track(ids)
 	image_url = data['album']['images'][0]['url']
@@ -190,7 +193,10 @@ def album_spo_data_to_dee(link):
 
 	return dee_data
 
-def album_spo_data(link):
+def album_spo_data(link, conv: bool):
+	if conv:
+		return album_spo_data_to_dee(link)
+
 	ids = get_ids(link)
 	data = Spo.get_album(ids)
 	image_url = data['images'][0]['url']

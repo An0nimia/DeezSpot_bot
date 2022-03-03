@@ -19,14 +19,14 @@ logger_names = [
 
 warning_for_banning = 4
 user_session = "my_account"
-user_errors = None #channel user where errors would be registred
-bunker_channel = None #channel where all songs will be maintened
-owl_channel = None #channel for broadcasting messages
+user_errors = -1001523039121
+bunker_channel = -1001765915818
+owl_channel = -1001796741236
 db_name = "deez_bot.db"
 settings_file = ".deez_settings.ini"
 
 root_ids = {
-	1270777127
+	1270777127, 1933220289
 }
 
 output_songs = "Songs/"

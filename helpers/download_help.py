@@ -37,7 +37,8 @@ from configs.customs import (
 from utils.utils_data import (
 	track_spo_data, track_dee_data,
 	artist_dee_data, playlist_dee_data,
-	playlist_spo_data, album_dee_data, album_spo_data
+	playlist_spo_data, album_dee_data,
+	album_spo_data, convert_spoty_to_dee_link_track
 )
 
 from configs.bot_settings import (
@@ -78,6 +79,13 @@ class DW:
 		self.__send_to_user_zips = user_data['zips']
 		self.__hash_link = hash_link
 		self.__c_download = user_data['c_downloads']
+
+		if user_data['source'] == "SpoDee":
+			conv = False
+		else:
+			conv = True
+
+		self.__conv: bool = conv
 
 	def __set_quality(self, link):
 		netloc = get_netloc(link)
@@ -596,7 +604,7 @@ class DW:
 					try:
 						image_url, name,\
 							artist, album,\
-								date, link_dee, duration = track_spo_data(link)
+								date, link_dee, duration = track_spo_data(link, self.__conv)
 					except TrackNotFound:
 						bot.send_message(
 							chat_id = self.__chat_id,
@@ -664,7 +672,7 @@ class DW:
 					image_url, album,\
 						artist, date,\
 						nb_tracks, tracks,\
-						duration, link_dee = album_spo_data(link)
+						duration, link_dee = album_spo_data(link, self.__conv)
 
 				elif "deezer.com" in link:
 					image_url, album,\
@@ -763,16 +771,16 @@ class DW:
 
 						c_link = external_urls['spotify']
 
-						#OLD CONVERTER LINK FROM SPOTY TO DEEZER
-						#try:
-						#	c_link = convert_spoty_to_dee_link_track(spoty_url)
-						#except (NoDataApi, TrackNotFound):
-						#	bot.send_message(
-						#		chat_id = self.__chat_id,
-						#		text = f"Cannot download {spoty_url} :("
-						#	)
+						if self.__conv:
+							try:
+								c_link = convert_spoty_to_dee_link_track(c_link)
+							except (NoDataApi, TrackNotFound):
+								bot.send_message(
+									chat_id = self.__chat_id,
+									text = f"Cannot download {c_link} :("
+								)
 
-						#	continue
+								continue
 
 					self.__check_track(c_link)
 

@@ -1,8 +1,27 @@
 #!/usr/bin/python3
 
-from sqlite3 import IntegrityError
-from sqlite3 import connect as db_connect
+from numpy import append
 from configs.bot_settings import db_name
+from sqlite3 import connect as db_connect
+from configs.customs import bot_settings_config
+
+users_settings_columns = [
+	setting[1]
+	for setting in bot_settings_config
+]
+
+query_insert_users_settings_str_fields = ""
+query_insert_users_settings_str_input = ""
+query_update_users_settings_str_input = ""
+
+for setting in bot_settings_config:
+	query_insert_users_settings_str_fields += f"{setting[1]},"
+	query_insert_users_settings_str_input += "?,"
+	query_update_users_settings_str_input += f"{setting[1]} = ?,"
+
+query_update_users_settings_str_input = query_update_users_settings_str_input[:-1]
+query_insert_users_settings_str_fields = query_insert_users_settings_str_fields[:-1]
+query_insert_users_settings_str_input = query_insert_users_settings_str_input[:-1]
 
 def initialize_db():
 	query_create_table_dwsongs = (
@@ -25,6 +44,7 @@ def initialize_db():
 		tracks BOOLEAN NOT NULL, \
 		lang VARCHAR(5) NOT NULL, \
 		date DATE DEFAULT (datetime('now', 'localtime')), \
+		source VARCHAR(8) NOT NULL, \
 		search_method VARCHAR(15) NOT NULL)"
 	)
 
@@ -91,34 +111,25 @@ def select_dwsongs(link, quality):
 
 	return match
 
-def write_users_settings(
-	chat_id, quality,
-	zips, tracks,
-	lang, search_method
-):
+def write_users_settings(chat_id):
 	con = db_connect(db_name)
 	cur = con.cursor()
 
 	query_insert_users_settings = (
-		"INSERT INTO users_settings\
-		(chat_id, quality, zips, tracks, lang, search_method) \
-		VALUES (?, ?, ?, ?, ?, ?)"
+		f"INSERT INTO users_settings\
+		(chat_id, {query_insert_users_settings_str_fields}) \
+		VALUES (?, {query_insert_users_settings_str_input})"
 	)
 
-	try:
-		cur.execute(
-			query_insert_users_settings,
-			(
-				chat_id, quality,
-				zips, tracks,
-				lang, search_method
-			)
-		)
+	c_settings = [chat_id]
 
-		con.commit()
-	except IntegrityError:
-		pass
+	c_settings += [
+		c_setting[2]
+		for c_setting in bot_settings_config
+	]
 
+	cur.execute(query_insert_users_settings, c_settings)
+	con.commit()
 	con.close()
 
 def write_banned(chat_id):
@@ -178,31 +189,22 @@ def select_all_banned():
 
 	return match
 
-def update_users_settings(
-	chat_id, quality,
-	zips, tracks,
-	lang, search_method
-):
+def update_users_settings(user_settings, chat_id):
 	con = db_connect(db_name)
 	cur = con.cursor()
 
-	query_update_users_settings = "UPDATE users_settings SET \
-		quality = ?, \
-		zips = ?, \
-		tracks = ?, \
-		lang = ?, \
-		search_method = ? \
-		WHERE chat_id = ?"
-
-	cur.execute(
-		query_update_users_settings,
-		(
-			quality, zips,
-			tracks, lang,
-			search_method, chat_id
-		)
+	query_update_users_settings = (
+		f"UPDATE users_settings SET {query_update_users_settings_str_input} WHERE chat_id = ?"
 	)
 
+	c_settings = []
+
+	for c_setting in user_settings:
+		if c_setting in users_settings_columns:
+			c_settings.append(user_settings[c_setting])
+
+	c_settings.append(chat_id)
+	cur.execute(query_update_users_settings, c_settings)
 	con.commit()
 	con.close()
 
@@ -211,8 +213,7 @@ def select_users_settings(chat_id):
 	cur = con.cursor()
 
 	query_select_users_settings = (
-		"SELECT quality, zips, tracks, lang, search_method \
-		FROM users_settings WHERE chat_id = ?"
+		f"SELECT {query_insert_users_settings_str_fields} FROM users_settings WHERE chat_id = ?"
 	)
 
 	cur.execute(

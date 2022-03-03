@@ -8,7 +8,7 @@ creator = "@Anonimia"
 donation = "https://www.paypal.com/paypalme/an0nimia"
 source_code_bot = "https://github.com/An0nimia/DeezloaderBIB_bot"
 source_code_lib = "https://pypi.org/project/deezloader/"
-forum = "@deez_bib_group"
+forum = "@deezspot_group"
 active_since = "24/07/2021"
 date_start = datetime.now()
 last_reset = datetime.strftime(date_start, "%d/%m/%Y %H:%M:%S")
@@ -67,6 +67,7 @@ bot_settings_config = [
 	("Send zips", "zips", True),
 	("Send tracks", "tracks", True),
 	("Language", "lang", "en"),
+	("Download Source", "source", "SpoDee"),
 	("Search Method", "search_method", "results_audio_article")
 ]
 

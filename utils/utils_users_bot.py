@@ -5,7 +5,7 @@ from datetime import datetime
 from configs.bot_settings import root_ids, warning_for_banning
 
 from configs.customs import (
-	bot_settings_config, banning_msg1, banning_msg2,
+	banning_msg1, banning_msg2,
 	version, bot_name, creator,
 	forum, active_since,
 	last_reset, date_start
@@ -26,29 +26,22 @@ def users_set_cache(chat_id, users_data):
 
 		if not match:
 			user_exist = False
-			quality = bot_settings_config[0][2]
-			zips = bot_settings_config[1][2]
-			tracks = bot_settings_config[2][2]
-			lang = bot_settings_config[3][2]
-			search_method = bot_settings_config[4][2]
+			write_users_settings(chat_id)
+			match = select_users_settings(chat_id)
 
-			write_users_settings(
-				chat_id, quality,
-				zips, tracks,
-				lang, search_method
-			)
-		else:
-			quality = match[0]
-			zips = bool(match[1])
-			tracks = bool(match[2])
-			lang = match[3]
-			search_method = match[4]
+		quality = match[0]
+		zips = bool(match[1])
+		tracks = bool(match[2])
+		lang = match[3]
+		source = match[4]
+		search_method = match[5]
 
 		users_data[chat_id] = {
 			"quality": quality,
 			"zips": zips,
 			"tracks": tracks,
 			"lang": lang,
+			"source": source,
 			"search_method": search_method,
 			"last_message": None,
 			"messages_sent": 0,
@@ -59,17 +52,7 @@ def users_set_cache(chat_id, users_data):
 	return user_exist
 
 def user_setting_save_db(chat_id, user_data):
-	quality = user_data['quality']
-	zips = user_data['zips']
-	tracks = user_data['tracks']
-	lang = user_data['lang']
-	search_method = user_data['search_method']
-
-	update_users_settings(
-		chat_id, quality,
-		zips, tracks,
-		lang, search_method
-	)
+	update_users_settings(user_data, chat_id)
 
 def check_flood(date, user_data, chat_id):
 	if chat_id in root_ids:
