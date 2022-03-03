@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
 from datetime import datetime
-
 from configs.bot_settings import root_ids, warning_for_banning
 
 from configs.customs import (

@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 
-from numpy import append
 from configs.bot_settings import db_name
 from sqlite3 import connect as db_connect
 from configs.customs import bot_settings_config
