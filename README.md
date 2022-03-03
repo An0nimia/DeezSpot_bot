@@ -1,5 +1,5 @@
-# DeezBIB_bot
-- A new bot is avalaible here [Deez_BIB_bot](https://t.me/deez_bib_bot). ENJOY :)
+# DeezSpot_bot
+- A new bot is avalaible here [DeezSpot_bot](https://t.me/DeezSpot_bot). ENJOY :)
 
 # Disclaimer
 
