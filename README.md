@@ -19,9 +19,14 @@
 
 ## INSTALLATION
 
+Let create a own env
+
+    pip install virtualenv bot_env
+    source bot_env/bin/activate
+
 To install it just type this command
 
-    git clone https://github.com/An0nimia/DeezloaderBIB_bot.git && cd DeezloaderBIB_bot && pip3 install -r req.txt
+    git clone https://github.com/An0nimia/DeezSpot_bot.git && cd DeezSpot_bot && pip3 install -r req.txt
 
 ## Configurations
 
