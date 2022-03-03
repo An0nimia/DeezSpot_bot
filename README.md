@@ -21,20 +21,19 @@
 
 Let create a own env
 
-    pip install virtualenv bot_env
-    source bot_env/bin/activate
+    pip install virtualenv
 
 To install it just type this command
 
-    git clone https://github.com/An0nimia/DeezSpot_bot.git && cd DeezSpot_bot && pip3 install -r req.txt
+    git clone https://github.com/An0nimia/DeezSpot_bot.git && cd DeezSpot_bot && virtualenv bot_env && source bot_env/bin/activate && pip3 install -r req.txt
 
 ## Configurations
 
   ### bot_settings.py
 
-  Go and modify [bot_settings.py](https://github.com/An0nimia/DeezloaderBIB_bot/blob/master/configs/bot_settings.py)
+  Go and modify [bot_settings.py](https://github.com/An0nimia/DeezSpot_bot/blob/master/configs/bot_settings.py)
 
-  ![Image](https://github.com/An0nimia/DeezloaderBIB_bot/blob/master/photos/screen_1.png)
+  ![Image](https://github.com/An0nimia/DeezSpot_bot/blob/master/photos/screen_1.png)
 
   - Read the code comments
   - If you don't know how to get chat id send messages to him [@JsonDumpBot](https://t.me/JsonDumpBot)
@@ -42,7 +41,7 @@ To install it just type this command
   ### .deez_settings.ini
 
 
-  Go and modify [.deez_settings.ini](https://github.com/An0nimia/DeezloaderBIB_bot/blob/master/.deez_settings.ini)
+  Go and modify [.deez_settings.ini](https://github.com/An0nimia/DeezSpot_bot/blob/master/.deez_settings.ini)
 
   - mail, password, token(arl) are deezer credentials used for login
   - the pyrogram api_id & api_hash can be created [here](https://my.telegram.org/auth?to=apps)
@@ -51,7 +50,7 @@ To install it just type this command
 
   ### .set_configs.py
   
-  Go and modify [set_configs.py](https://github.com/An0nimia/DeezloaderBIB_bot/blob/master/configs/set_configs.py)
+  Go and modify [set_configs.py](https://github.com/An0nimia/DeezSpot_bot/blob/master/configs/set_configs.py)
   
   If you don't want to login with arl, which expire, log with normal credentials & delete line 35
 
