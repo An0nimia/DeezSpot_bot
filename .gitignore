@@ -153,3 +153,4 @@ cython_debug/
 
 *.session
 *.ini
+*.json

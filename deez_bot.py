@@ -487,15 +487,18 @@ def send_global_msg_command(update: Update, context):
 		to_send = photo[0].file_id
 		method = bot.send_photo
 
-	all_user = select_all_users()
-	
-	for user_id in all_user:
-		c_user_id = user_id[0]
+	def broadcast():
+		all_user = select_all_users()
+		
+		for user_id in all_user:
+			c_user_id = user_id[0]
 
-		try:
-			method(c_user_id, to_send)
-		except (BadRequest, Unauthorized):
-			pass
+			try:
+				method(c_user_id, to_send)
+			except (BadRequest, Unauthorized):
+				pass
+
+	magicThread(target = broadcast).start()
 
 def shazam_command(update: Update, context):
 	msg = update.message
