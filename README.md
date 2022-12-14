@@ -17,16 +17,6 @@
 
 # SET UP
 
-## INSTALLATION
-
-Let create a own env
-
-    pip install virtualenv
-
-To install it just type this command
-
-    git clone https://github.com/An0nimia/DeezSpot_bot.git && cd DeezSpot_bot && virtualenv bot_env && source bot_env/bin/activate && pip3 install -r req.txt
-
 ## Configurations
 
   ### bot_settings.py
@@ -36,6 +26,9 @@ To install it just type this command
   ![Image](https://github.com/An0nimia/DeezSpot_bot/blob/master/photos/screen_1.png)
 
   - Read the code comments
+  - Add your chat_id to root_ids
+  - Modify the bunker_channel variable with your channel id (the others one are optional, but suggested. YES you should create 3 channels :))
+  - Be sure that in the channel you have setted the bot as admin, you have setted the right permissions and you added as admin also your user bot(personal account) as admin in the channel ALSO IT WON'T WORK
   - If you don't know how to get chat id send messages to him [@JsonDumpBot](https://t.me/JsonDumpBot)
 
   ### .deez_settings.ini
@@ -46,13 +39,51 @@ To install it just type this command
   - mail, password, token(arl) are deezer credentials used for login
   - the pyrogram api_id & api_hash can be created [here](https://my.telegram.org/auth?to=apps)
   - for create a telegram bot look [here](https://t.me/BotFather)
-  - for acrcloud key, secret, host look at [acrcloud](https://docs.acrcloud.com/tutorials/recognize-music)
+  - for acrcloud key, secret, host look at [acrcloud](https://docs.acrcloud.com/tutorials/recognize-music) (NOW YOU CAN LEAVE HOST VAR EMPTY IF YOU DON'T WANT TO USE IT)
 
   ### .set_configs.py
   
   Go and modify [set_configs.py](https://github.com/An0nimia/DeezSpot_bot/blob/master/configs/set_configs.py)
   
   If you don't want to login with arl, which expire, log with normal credentials & delete line 35
+
+## INSTALLATION WITH DOCKER
+
+### Be sure you made all the configurations as explained above
+
+Let create a volume
+
+    docker volume create deezspot_disk
+
+Build the image
+
+    docker build -t deezspot .
+
+Run the container
+  
+    docker run -v deezspot_disk:/app --rm -it deezspot bash
+    python deez_bot.py
+
+  ### OR  
+    docker run -v deezspot_disk:/app --rm -it deezspot python deez_bot.py
+
+Detach the container
+
+    Press (CTRL + P) + (CTRL + Q) as explained here https://stackoverflow.com/questions/19688314/how-do-you-attach-and-detach-from-dockers-process
+
+Attach the container
+
+    docker attach <container_id> # you can find it with docker ps
+
+## INSTALLATION NORMAL
+
+Let create a own env
+
+    pip install virtualenv
+
+To install it just type this command
+
+    git clone https://github.com/An0nimia/DeezSpot_bot.git && cd DeezSpot_bot && virtualenv bot_env && source bot_env/bin/activate && pip3 install -r req.txt
 
 # START IT
 

@@ -56,6 +56,10 @@ class SetConfigs:
 
 		cls.spot_api = SpoLogin(cls.__email_spo, cls.__pwd_spo)
 
-		cls.acrcloud_api = ACRcloud(cls.__acrcloud_config)
-		cls.tg_user_api = Client(user_session, config_file = settings_file)
+		cls.acrcloud_api = None
+
+		if cls.__acrcloud_host:
+			cls.acrcloud_api = ACRcloud(cls.__acrcloud_config)
+
+		cls.tg_user_api = Client(user_session, cls.__api_id, cls.__api_hash)
 		cls.tg_user_api.start()
